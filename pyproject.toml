@@ -1,6 +1,6 @@
 [project]
 name = "searxngr"
-version = "0.1.0"
+dynamic = ["version"]
 description = "SearXNG from the terminal"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,3 +20,6 @@ Issues = "https://github.com/scross01/searxngr/issues"
 
 [project.scripts]
 searxngr = "searxngr:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "searxngr.__version__"}

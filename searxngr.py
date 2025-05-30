@@ -11,6 +11,8 @@ import platform
 import random
 
 
+__version__ = "0.2.0-dev"
+
 # Default settings. Use config file or command line to modify.
 SAMPLE_SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
 SEARXNG_URL = ""
@@ -179,7 +181,7 @@ def main():
     # command line settings
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
     parser.add_argument(
-        "query", type=str, nargs="+", metavar="QUERY", help="search query"
+        "query", type=str, nargs="*", metavar="QUERY", help="search query"
     )
     parser.add_argument(
         "--searxng-url",
@@ -273,6 +275,12 @@ def main():
         metavar="UTIL",
         help=f"Command to open URLs in the browser (default: {url_handler})",
     )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store_true",
+        help="show program's version number and exit",
+    )
     args = parser.parse_args()
 
     global DEBUG
@@ -302,6 +310,10 @@ def main():
     # set safe-search to 'none' if unsafe option is set
     if args.unsafe:
         args.safe_search = "none"
+    # show version and exit
+    if args.version:
+        print(__version__)
+        exit(0)
 
     query = " ".join(args.query)
 
