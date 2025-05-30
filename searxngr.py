@@ -32,7 +32,8 @@ URL_HANDLER = {
     "Windows": "explorer",  # Command to open URLs in the default browser on Windows
 }
 
-TIME_RANGE_OPTIONS = ["day", "month", "year"]
+TIME_RANGE_OPTIONS = ["day", "week", "month", "year"]
+TIME_RANGE_SHORT_OPTIONS = ["d", "w", "m", "y"]  # Short options for time range
 
 
 # print search results to the terminal
@@ -277,14 +278,19 @@ def main():
     if not args.searxng_url:
         print(f"Error: searxng_url is not set in {config_file}")
         return
-    # validate time range format
-    if args.time_range and args.time_range not in TIME_RANGE_OPTIONS:
-        print("Error: Invalid time range format. Use 'day', 'month', or 'year'")
-        return
     # validate safe search is a valid value
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
         print("Error: Invalid safe search option. Use 'none', 'moderate', or 'strict'")
         return
+    # validate time range format
+    if args.time_range and args.time_range not in set(TIME_RANGE_OPTIONS).union(TIME_RANGE_SHORT_OPTIONS):
+        print("Error: Invalid time range format. Use 'd', 'day', 'w', 'week', 'm', 'month', or 'y', 'year'")
+        return
+    # update time range option to the full keyword
+    if args.time_range in TIME_RANGE_SHORT_OPTIONS:
+        args.time_range = (
+            args.time_range.replace("y", "year").replace("m", "month").replace("w", "week").replace("d", "day")
+        )
 
     # override results count if first option is requested
     if args.first:
