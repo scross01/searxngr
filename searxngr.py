@@ -1,11 +1,13 @@
 import json
 import requests
 from rich import print
+from rich.prompt import Prompt
 import textwrap
 import os
 import argparse
 from xdg_base_dirs import xdg_config_home
 import configparser
+import platform
 
 
 # Default settings. Use config file or command line modify.
@@ -21,6 +23,12 @@ SAFE_SEARCH_OPTIONS = {
     "none": 0,  # Unsafe search
     "moderate": 1,  # Moderate safe search
     "strict": 2,  # Strict safe search
+}
+
+URL_HANDLER = {
+    "Darwin": "open",  # Command to open URLs in the default browser on macOS
+    "Linux": "xdg-open",  # Command to open URLs in the default browser on Linux
+    "Windows": "explorer",  # Command to open URLs in the default browser on Windows
 }
 
 TIME_RANGE_OPTIONS = ["day", "month", "year"]
@@ -106,13 +114,13 @@ def create_config_file(config_path):
     config_file = os.path.join(config_path, CONFIG_FILE)
 
     # request user to input the searxng instance url
-    search_url = input(f"Enter your SearXNG instance URL [{SAMPLE_SEARXNG_URL}]: ")
+    searxng_url = input(f"Enter your SearXNG instance URL [{SAMPLE_SEARXNG_URL}]: ")
 
     # construct the initial config file
     default_config = textwrap.dedent(
         f"""
         [searxngr]
-        search_url = {search_url}
+        searxng_url = {searxng_url}
         # result_count = {RESULT_COUNT}
         # safe_search = {SAFE_SEARCH}
         # engines = google duckduckgo brave
@@ -123,7 +131,7 @@ def create_config_file(config_path):
     with open(config_file, "w") as f:
         f.write(default_config)
 
-    print(f"[dim]additional default settings can be updated in {config_file}[/dim]")
+    print(f"[dim]created {config_file}[/dim]")
 
 
 def get_config_str(config, key, default):
@@ -153,12 +161,16 @@ def main():
     if "searxngr" not in config:
         # config file content is missing, create new configuration file
         create_config_file(config_path)
+        config.read(config_file)
 
     searxng_url = get_config_str(config, "searxng_url", None)
     result_count = get_config_int(config, "result_count", RESULT_COUNT)
     safe_search = get_config_str(config, "safe_search", SAFE_SEARCH)
     engines = get_config_str(config, "engines", ENGINES)
     expand = get_config_bool(config, "expand", EXPAND)
+    url_handler = get_config_str(
+        config, "url_handler", URL_HANDLER.get(platform.system())
+    )
     debug = get_config_bool(config, "debug", False)
 
     # command line settings
@@ -221,6 +233,13 @@ def main():
         metavar="TIME_RANGE",
         help="search results within a specific time range ('day', 'month', 'year')",
     )
+    parser.add_argument(
+        "--url_handler",
+        type=str,
+        default=url_handler,
+        metavar="UTIL",
+        help=f"Command to open URLs in the browser (default: {url_handler})",
+    )
     args = parser.parse_args()
 
     global DEBUG
@@ -240,26 +259,66 @@ def main():
         print("Error: Invalid safe search option. Use 'none', 'moderate', or 'strict'")
         return
 
-    results = []
-    while len(results) < args.num:
-        results.extend(
-            searxng_search(
-                " ".join(args.query),
-                searxng_url=args.searxng_url,
-                safe_search=args.safe_search,
-                engines=args.engines,
-                # language=args.language,
-                time_range=args.time_range,
-                site=args.site,
-            )
-        )
-        if args.num == 0:
-            break
+    query = " ".join(args.query)
 
-    if results:
-        print_results(results, count=args.num, expand=args.expand)
-    else:
-        print("No results found or an error occurred during the search.")
+    # load results and loop for prompt
+    while True:
+        results = []
+        while len(results) < args.num:
+            results.extend(
+                searxng_search(
+                    query,
+                    searxng_url=args.searxng_url,
+                    safe_search=args.safe_search,
+                    engines=args.engines,
+                    # language=args.language,
+                    time_range=args.time_range,
+                    site=args.site,
+                )
+            )
+            if args.num == 0:
+                break
+
+        if results:
+            print_results(results, count=args.num, expand=args.expand)
+        else:
+            print("No results found or an error occurred during the search.")
+
+        # process prompt commands
+        while True:
+            try:
+                new_query = Prompt.ask("[bold]searxngr[/bold] [dim](? for help)[/dim] ")
+            except KeyboardInterrupt:
+                exit(0)
+            if new_query.lower() in ["q", "quit", "exit"]:
+                exit(0)
+            elif new_query.lower() in ["?"]:
+                print(
+                    textwrap.dedent(
+                        """
+                        - Enter a search query to perform a new search.
+                        - Type the index (1, 2, 3, etc) open the search index page in a browser.
+                        - Type 'q', 'quit', or 'exit' to exit the program.
+                        - Type '?' for this help message.
+                        """
+                    )
+                )
+                continue
+            elif new_query.strip().isdigit() and int(new_query.strip()) in range(
+                1, (len(results) if args.num == 0 else args.num) + 1
+            ):
+                # open the selected result in the browser
+                index = int(new_query.strip()) - 1
+                url = results[index].get("url")
+                if url:
+                    os.system(f"{args.url_handler} '{url}'")
+                else:
+                    print("[red]Error:[/red] No URL found for the selected result.")
+                continue
+            else:
+                # run the new query
+                query = new_query.strip()
+                break
 
 
 if __name__ == "__main__":
