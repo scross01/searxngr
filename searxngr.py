@@ -10,7 +10,7 @@ import configparser
 import platform
 
 
-# Default settings. Use config file or command line modify.
+# Default settings. Use config file or command line to modify.
 SAMPLE_SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
 SEARXNG_URL = ""
 RESULT_COUNT = 10  # Default number of results to show per page
@@ -43,10 +43,10 @@ def print_results(results, count, expand=False):
         title = textwrap.shorten(title, width=70, placeholder="...")
 
         # extract just the domain name from the URL
-        url = result.get("url", "No URL")
+        url = result.get("url", None)
         domain = url.split("//")[1].split("/")[0]
 
-        engine = result.get("engine", "No engine")
+        engine = result.get("engine", None)
 
         # wrap the content to the terminal width with indentation
         content = result.get("content", "No content")
@@ -67,7 +67,7 @@ def print_results(results, count, expand=False):
 def searxng_search(
     query,
     searxng_url,
-    pageno=1,
+    pageno=0,
     safe_search=None,
     engines=None,
     language=None,
@@ -78,12 +78,10 @@ def searxng_search(
     query = f"site:{site} {query}" if site else query
     # construct the query url
     url = f"{searxng_url}/?q={query}&format=json"
-    url += f"&engines={','.join(engines)}" if engines else ""
+    url += f"&engines={engines.replace(" ",",")}" if engines else ""
     url += f"&language={language}" if language else ""
     url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
     url += f"&time_range={time_range}" if time_range else ""
-    # searxng does not have a limit option, we will always a fixed number of
-    # results per page depending on the searxng instance e.g. 20
     url += f"&pageno={pageno}" if pageno > 1 else ""
 
     print(f"Searching: {url}") if DEBUG else None
@@ -94,6 +92,7 @@ def searxng_search(
         data = response.json()
 
         if data and "results" in data:
+            print(f"Returned {len(data['results'])} results") if DEBUG else None
             return data["results"]
         else:
             return None
@@ -125,6 +124,7 @@ def create_config_file(config_path):
         # safe_search = {SAFE_SEARCH}
         # engines = google duckduckgo brave
         # expand = false
+        # language = en
     """
     ).split("\n", 1)[1:][0]
 
@@ -168,6 +168,7 @@ def main():
     safe_search = get_config_str(config, "safe_search", SAFE_SEARCH)
     engines = get_config_str(config, "engines", ENGINES)
     expand = get_config_bool(config, "expand", EXPAND)
+    language = get_config_str(config, "language", None)
     url_handler = get_config_str(
         config, "url_handler", URL_HANDLER.get(platform.system())
     )
@@ -203,6 +204,20 @@ def main():
         action="store_true",
         default=expand,
         help="Show complete url in search results",
+    )
+    parser.add_argument(
+        "-l",
+        "--language",
+        type=str,
+        metavar="LANGUAGE",
+        help="search results in a specific language (e.g., 'en', 'de', 'fr')"
+        + (f" (default: {language})" if language else ""),
+    )
+    parser.add_argument(
+        "--np",
+        "--noprompt",
+        action="store_true",
+        help="just search and exit, do not prompt",
     )
     parser.add_argument(
         "-n",
@@ -264,18 +279,23 @@ def main():
     # load results and loop for prompt
     while True:
         results = []
-        while len(results) < args.num:
+        pageno = 1
+        # searxng does not have a limit option, we will always get a varied number of
+        # results per page.Interate until we have enough results.
+        while len(results) <= args.num:
             results.extend(
                 searxng_search(
                     query,
                     searxng_url=args.searxng_url,
                     safe_search=args.safe_search,
                     engines=args.engines,
-                    # language=args.language,
+                    language=args.language,
                     time_range=args.time_range,
                     site=args.site,
+                    pageno=pageno,
                 )
             )
+            pageno += 1
             if args.num == 0:
                 break
 
@@ -283,6 +303,10 @@ def main():
             print_results(results, count=args.num, expand=args.expand)
         else:
             print("No results found or an error occurred during the search.")
+
+        # if no prompt is requested, just exit after the search
+        if args.np:
+            exit(0)
 
         # process prompt commands
         while True:
