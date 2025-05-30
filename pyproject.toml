@@ -3,10 +3,11 @@ name = "searxngr"
 version = "0.1.0"
 description = "SearXNG from the terminal"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "requests>=2.32.3",
     "rich>=14.0.0",
+    "xdg-base-dirs>=6.0.2",
 ]
 
 [project.scripts]
