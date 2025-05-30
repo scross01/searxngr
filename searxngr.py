@@ -262,6 +262,11 @@ def main():
         help="search results within a specific time range ('day', 'month', 'year')",
     )
     parser.add_argument(
+        "--unsafe",
+        action="store_true",
+        help="allow unsafe search results (same as --safe-search none)",
+    )
+    parser.add_argument(
         "--url_handler",
         type=str,
         default=url_handler,
@@ -291,10 +296,12 @@ def main():
         args.time_range = (
             args.time_range.replace("y", "year").replace("m", "month").replace("w", "week").replace("d", "day")
         )
-
     # override results count if first option is requested
     if args.first:
         args.num = 1
+    # set safe-search to 'none' if unsafe option is set
+    if args.unsafe:
+        args.safe_search = "none"
 
     query = " ".join(args.query)
 

@@ -13,3 +13,5 @@ Change Log
 - added `-j` `--first` command line option to open the first result and exit
 - added `--lucky` command line option to open a random result and exit
 - added `week` option to `--time-range` option and enabled `d`, `w`, `m`, `y` as short codes
+- added `--unsafe` command line option as alternative for `--safe-search none`
+ 
