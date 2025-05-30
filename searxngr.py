@@ -8,6 +8,7 @@ import argparse
 from xdg_base_dirs import xdg_config_home
 import configparser
 import platform
+import random
 
 
 # Default settings. Use config file or command line to modify.
@@ -206,12 +207,23 @@ def main():
         help="Show complete url in search results",
     )
     parser.add_argument(
+        "-j",
+        "--first",
+        action="store_true",
+        help="open the first result in web browser and exit",
+    )
+    parser.add_argument(
         "-l",
         "--language",
         type=str,
         metavar="LANGUAGE",
         help="search results in a specific language (e.g., 'en', 'de', 'fr')"
         + (f" (default: {language})" if language else ""),
+    )
+    parser.add_argument(
+        "--lucky",
+        action="store_true",
+        help="opens a random result in web browser and exit",
     )
     parser.add_argument(
         "--np",
@@ -274,6 +286,10 @@ def main():
         print("Error: Invalid safe search option. Use 'none', 'moderate', or 'strict'")
         return
 
+    # override results count if first option is requested
+    if args.first:
+        args.num = 1
+
     query = " ".join(args.query)
 
     # load results and loop for prompt
@@ -295,13 +311,28 @@ def main():
                     pageno=pageno,
                 )
             )
-            pageno += 1
+            # if number of results is not set just return all initial results
             if args.num == 0:
                 break
+            pageno += 1
 
         if results:
+            if args.first:
+                # if first or lucky search is requested, open the first result and exit
+                url = results[0].get("url")
+                os.system(f"{args.url_handler} '{url}'")
+                exit(0)
+
+            if args.lucky:
+                # open a random result in the browser and exit
+                url = random.choice(results).get("url")
+                os.system(f"{args.url_handler} '{url}'")
+                exit(0)
+
+            # print the results
             print_results(results, count=args.num, expand=args.expand)
         else:
+            # no results found or an error occurred
             print("No results found or an error occurred during the search.")
 
         # if no prompt is requested, just exit after the search
