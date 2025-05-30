@@ -7,13 +7,15 @@ import argparse
 from xdg_base_dirs import xdg_config_home
 import configparser
 
+
 # Default settings. Use config file or command line modify.
-SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
+SAMPLE_SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
+SEARXNG_URL = ""
 RESULT_COUNT = 10  # Default number of results to show per page
 SAFE_SEARCH = "strict"  # Default safe search setting
 ENGINES = None  # Default to all default engines
 EXPAND = False  # Default show expand url setting
-DEBUG = False  # Debug mode
+CONFIG_FILE = "config.ini"
 
 SAFE_SEARCH_OPTIONS = {
     "none": 0,  # Unsafe search
@@ -64,17 +66,17 @@ def searxng_search(
     time_range=None,
     site=None,
 ):
-    # searxng does not have a limit option, we will always a fixed number of
-    # results per page depending on the searxng instance e.g. 20
-
+    # update the query string with modifiers
     query = f"site:{site} {query}" if site else query
-
+    # construct the query url
     url = f"{searxng_url}/?q={query}&format=json"
     url += f"&engines={','.join(engines)}" if engines else ""
     url += f"&language={language}" if language else ""
-    url += f"&pageno={pageno}" if pageno > 1 else ""
     url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
     url += f"&time_range={time_range}" if time_range else ""
+    # searxng does not have a limit option, we will always a fixed number of
+    # results per page depending on the searxng instance e.g. 20
+    url += f"&pageno={pageno}" if pageno > 1 else ""
 
     print(f"Searching: {url}") if DEBUG else None
 
@@ -89,35 +91,77 @@ def searxng_search(
             return None
 
     except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
+        print(f"[red]Error:[/red]: {e}")
+        exit(1)
     except json.JSONDecodeError:
-        print("Error: Could not decode JSON response.")
+        print("[red]Error:[/red] Could not decode JSON response.")
+        exit(1)
+
+
+def create_config_file(config_path):
+
+    if not os.path.isdir(config_path):
+        os.makedirs(config_path)
+
+    config_file = os.path.join(config_path, CONFIG_FILE)
+
+    # request user to input the searxng instance url
+    search_url = input(f"Enter your SearXNG instance URL [{SAMPLE_SEARXNG_URL}]: ")
+
+    # construct the initial config file
+    default_config = textwrap.dedent(
+        f"""
+        [searxngr]
+        search_url = {search_url}
+        # result_count = {RESULT_COUNT}
+        # safe_search = {SAFE_SEARCH}
+        # engines = google duckduckgo brave
+        # expand = false
+    """
+    ).split("\n", 1)[1:][0]
+
+    with open(config_file, "w") as f:
+        f.write(default_config)
+
+    print(f"[dim]additional default settings can be updated in {config_file}[/dim]")
+
+
+def get_config_str(config, key, default):
+    return config["searxngr"][key] if key in config["searxngr"] else default
+
+
+def get_config_int(config, key, default):
+    return int(config["searxngr"][key]) if key in config["searxngr"] else default
+
+
+def get_config_bool(config, key, default):
+    return config["searxngr"].getboolean(key) if key in config["searxngr"] else default
 
 
 def main():
-
     # Load configuration from a file if it exists
-    config_file = os.path.join(xdg_config_home(), "searxngr", "config.ini")
-    if os.path.exists(config_file):
-        config = configparser.ConfigParser()
-        config.read(config_file)
-        if "searxngr" in config:
-            if "searxng_url" in config["searxngr"]:
-                global SEARXNG_URL
-                SEARXNG_URL = config["searxngr"]["searxng_url"]
-            if "results_per_page" in config["searxngr"]:
-                global RESULT_COUNT
-                RESULT_COUNT = int(config["searxngr"]["results_per_page"])
-            if "unsafe" in config["searxngr"]:
-                global UNSAFE
-                UNSAFE = config["searxngr"].getboolean("unsafe")
-            if "engines" in config["searxngr"]:
-                global ENGINES
-                ENGINES = config["searxngr"]["engines"]
-            if "expand" in config["searxngr"]:
-                global EXPAND
-                EXPAND = config["searxngr"].getboolean("expand")
+    config_path = os.path.join(xdg_config_home(), "searxngr")
+    config_file = os.path.join(config_path, CONFIG_FILE)
 
+    if not os.path.exists(config_file):
+        # first time setup, create new configuration file
+        create_config_file(config_path)
+
+    # read the settings frm the config file
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    if "searxngr" not in config:
+        # config file content is missing, create new configuration file
+        create_config_file(config_path)
+
+    searxng_url = get_config_str(config, "searxng_url", None)
+    result_count = get_config_int(config, "result_count", RESULT_COUNT)
+    safe_search = get_config_str(config, "safe_search", SAFE_SEARCH)
+    engines = get_config_str(config, "engines", ENGINES)
+    expand = get_config_bool(config, "expand", EXPAND)
+    debug = get_config_bool(config, "debug", False)
+
+    # command line settings
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
     parser.add_argument(
         "query", type=str, nargs="+", metavar="QUERY", help="search query"
@@ -125,40 +169,43 @@ def main():
     parser.add_argument(
         "--searxng-url",
         type=str,
-        default=SEARXNG_URL,
+        default=searxng_url,
         metavar="SEARXNG_URL",
-        help="SearXNG instance URL",
+        help=f"SearXNG instance URL (default: {searxng_url if searxng_url else 'NOT SET'})",
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true", default=debug, help="show debug output"
     )
     parser.add_argument(
         "-e",
         "--engines",
         type=str,
         nargs="*",
-        default=ENGINES,
+        default=engines,
         metavar="ENGINE",
-        help=f"list of engines to use for the search (default: {ENGINES if ENGINES else 'all available engines'})",
+        help=f"list of engines to use for the search (default: {engines if engines else 'all available engines'})",
     )
     parser.add_argument(
         "-x",
         "--expand",
         action="store_true",
-        default=EXPAND,
+        default=expand,
         help="Show complete url in search results",
     )
     parser.add_argument(
         "-n",
         "--num",
         type=int,
-        default=RESULT_COUNT,
+        default=result_count,
         metavar="N",
-        help=f"show N results per page (default: {RESULT_COUNT}); N=0 uses the servers default per page",
+        help=f"show N results per page (default: {result_count}); N=0 uses the servers default per page",
     )
     parser.add_argument(
         "--safe-search",
         type=str,
-        default=SAFE_SEARCH,
+        default=safe_search,
         metavar="FILTER",
-        help=f"Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: {SAFE_SEARCH})",
+        help=f"Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: {safe_search})",
     )
     parser.add_argument(
         "-w",
@@ -176,12 +223,19 @@ def main():
     )
     args = parser.parse_args()
 
-    print(args) if DEBUG else None
+    global DEBUG
+    DEBUG = args.debug
+    print(f"Config: {args}") if DEBUG else None
 
+    # valid that searxng url is set
+    if not args.searxng_url:
+        print(f"Error: searxng_url is not set in {config_file}")
+        return
     # validate time range format
     if args.time_range and args.time_range not in TIME_RANGE_OPTIONS:
         print("Error: Invalid time range format. Use 'day', 'month', or 'year'")
         return
+    # validate safe search is a valid value
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
         print("Error: Invalid safe search option. Use 'none', 'moderate', or 'strict'")
         return

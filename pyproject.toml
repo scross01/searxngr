@@ -10,5 +10,13 @@ dependencies = [
     "xdg-base-dirs>=6.0.2",
 ]
 
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/scross01/searxngr"
+Issues = "https://github.com/scross01/searxngr/issues"
+
 [project.scripts]
 searxngr = "searxngr:main"
