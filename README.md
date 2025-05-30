@@ -7,9 +7,7 @@ Installation
 ------------
 
 ```shell
-git clone https://github.com/scross01/searxngr.git
-uv sync
-uv tool install .
+uv tool install https://github.com/scross01/searxngr.git
 ```
 
 Configuration
