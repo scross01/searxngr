@@ -1,9 +1,14 @@
 Change Log
 ==========
 
+## v0.2.3
+
+- updated pacakging and build system resolve install issues
+- 
+
 ## v0.2.2
 
--- fixed issue `--engines` command line option
+- fixed issue `--engines` command line option
 
 ## v0.2.1
 

@@ -8,8 +8,20 @@ SearXNG from the command line, inspired by `ddgr` and `googler`.
 Installation
 ------------
 
+Installation requires the [`uv`](https://docs.astral.sh/uv/getting-started/installation/) package manager.
+
 ```shell
 uv tool install https://github.com/scross01/searxngr.git
+```
+
+To install from source
+
+```shell
+git clone https://github.com/scross01/searxngr.git
+cd searxngr
+uv venv && source .venv/bin/activate # (optional)
+uv sync
+uv tool install .
 ```
 
 Configuration
