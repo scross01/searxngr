@@ -389,6 +389,10 @@ def main():
     if args.version:
         print(__version__)
         exit(0)
+    # if no query is provided, show usage and exit
+    if not args.query:
+        parser.print_usage()
+        exit(0)
 
     query = " ".join(args.query)
 
