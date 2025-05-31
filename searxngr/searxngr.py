@@ -118,6 +118,9 @@ def searxng_search(
     else:
         raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
 
+    # remove non printable characters from the URL
+    url = "".join(c for c in url if c.isprintable())
+
     try:
         response = None
         default_headers = {
@@ -151,6 +154,9 @@ def searxng_search(
 
     except httpx.HTTPStatusError as e:
         print(f"[red]Error:[/red]: {e}")
+        exit(1)
+    except httpx.ConnectError as ce:
+        print(f"[red]Error:[/red] Could not connect to SearXNG instance at {searxng_url}\n{ce}")
         exit(1)
     except json.JSONDecodeError:
         print("[red]Error:[/red] Could not decode JSON response.")

@@ -3,8 +3,10 @@ Change Log
 
 ## v0.2.3
 
-- updated pacakging and build system resolve install issues
+- updated packaging and build system resolve install issues
 - show usage and exit if no search query provided
+- improved ssl verification error handling
+- strip non printable characters from url
 
 ## v0.2.2
 
