@@ -51,21 +51,21 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --searxng-url SEARXNG_URL
-                        SearXNG instance URL (default: https://searxng.stephencross.site)
+                        SearXNG instance URL (default: https://searxng.example.com)
   -d, --debug           show debug output
   -e, --engines [ENGINE ...]
-                        list of engines to use for the search (default: google duckduckgo)
+                        list of engines to use for the search (default: all available engines)
   -x, --expand          Show complete url in search results
   --no-verify-ssl       do not verify SSL certificates when making requests (not recommended)
   -j, --first           open the first result in web browser and exit
   --http-method METHOD  HTTP method to use for search requests. GET or POST (default: GET)
   -l, --language LANGUAGE
-                        search results in a specific language (e.g., 'en', 'de', 'fr') (default: en-CA)
+                        search results in a specific language (e.g., 'en', 'de', 'fr')
   --lucky               opens a random result in web browser and exit
   --np, --noprompt      just search and exit, do not prompt
   --noua                disable user agent
   -n, --num N           show N results per page (default: 10); N=0 uses the servers default per page
-  --safe-search FILTER  Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: moderate)
+  --safe-search FILTER  Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: strict)
   -w, --site SITE       search sites using site: operator
   -t, --time-range TIME_RANGE
                         search results within a specific time range ('day', 'month', 'year')
