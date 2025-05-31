@@ -5,7 +5,7 @@ description = "SearXNG from the terminal"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "requests>=2.32.3",
+    "httpx>=0.28.1",
     "rich>=14.0.0",
     "xdg-base-dirs>=6.0.2",
 ]

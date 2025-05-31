@@ -57,3 +57,20 @@ options:
   --safe-search FILTER  Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: strict)
   -w, --site SITE       search sites using site: operator
 ```
+
+## Troubleshooting
+
+### Error:: Client error '429 Too Many Requests' for url 'https://searxng.example.com'
+
+The SearXNG server is limiting access to the search API. Update server limiter setting or disable limiter for private instances in the service `searxng/settings.toml`
+
+### Error: Could not decode JSON response.
+
+The SearXNG instance may be returning the results in html format.  On the SearXNG servers you need to modify the supported search formats to include json in `searxng/settings.yml`.
+
+```yaml
+search:
+  formats:
+    - html
+    -json
+```

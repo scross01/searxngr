@@ -1,5 +1,5 @@
 import json
-import requests
+import httpx
 from rich import print
 from rich.prompt import Prompt
 import textwrap
@@ -21,6 +21,8 @@ SAFE_SEARCH = "strict"  # Default safe search setting
 ENGINES = None  # Default to all default engines
 EXPAND = False  # Default show expand url setting
 CONFIG_FILE = "config.ini"
+HTTP_METHOD = "GET"  # Default HTTP method for search requests
+USER_AGENT = f"searxngr/{__version__}"
 
 SAFE_SEARCH_OPTIONS = {
     "none": 0,  # Unsafe search
@@ -77,21 +79,65 @@ def searxng_search(
     language=None,
     time_range=None,
     site=None,
+    verify_ssl=True,
+    http_method="GET",
+    no_user_agent=False,
 ):
-    # update the query string with modifiers
     query = f"site:{site} {query}" if site else query
-    # construct the query url
-    url = f"{searxng_url}/?q={query}&format=json"
-    url += f"&engines={engines.replace(" ",",")}" if engines else ""
-    url += f"&language={language}" if language else ""
-    url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
-    url += f"&time_range={time_range}" if time_range else ""
-    url += f"&pageno={pageno}" if pageno > 1 else ""
+    url = None
+    body = None
 
-    print(f"Searching: {url}") if DEBUG else None
+    # if http_method is POST, construct the body for the request
+    if http_method == "POST":
+        url = f"{searxng_url}/search"
+        body = {
+            "q": query,
+            "format": "json",
+            "engines": engines.replace(" ", ",") if engines else "",
+            "safesearch": SAFE_SEARCH_OPTIONS[safe_search] if safe_search else "",
+            "time_range": time_range,
+        }
+        if language:
+            body["language"] = language
+        if pageno > 1:
+            body["pageno"] = pageno
+
+        print(f"Searching: {url} with body: {body}") if DEBUG else None
+    # if http_method is GET, construct the query url with parameters
+    elif http_method == "GET":
+        # construct the query url
+        url = f"{searxng_url}/?q={query}&format=json"
+        url += f"&engines={engines.replace(" ", ",")}" if engines else ""
+        url += f"&language={language}" if language else ""
+        url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
+        url += f"&time_range={time_range}" if time_range else ""
+        url += f"&pageno={pageno}" if pageno > 1 else ""
+        print(f"Searching: {url}") if DEBUG else None
+    else:
+        raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
 
     try:
-        response = requests.get(url)
+        response = None
+        default_headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate",
+            "User-Agent": USER_AGENT,
+        }
+
+        client = httpx.Client(verify=verify_ssl)
+        if no_user_agent:
+            del client.headers["User-Agent"]
+            del default_headers["User-Agent"]
+
+        if http_method == "POST":
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded",
+            }.update(default_headers)
+            response = client.post(url, data=body, headers=headers, follow_redirects=True)
+        else:
+            headers = default_headers
+            response = client.get(url, headers=headers, follow_redirects=True)
+
         response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         data = response.json()
 
@@ -101,7 +147,7 @@ def searxng_search(
         else:
             return None
 
-    except requests.exceptions.RequestException as e:
+    except httpx.HTTPStatusError as e:
         print(f"[red]Error:[/red]: {e}")
         exit(1)
     except json.JSONDecodeError:
@@ -129,6 +175,9 @@ def create_config_file(config_path):
         # engines = google duckduckgo brave
         # expand = false
         # language = en
+        # http_method = {HTTP_METHOD}
+        # no_verify_ssl = false
+        # no_user_agent = false
     """
     ).split("\n", 1)[1:][0]
 
@@ -177,6 +226,7 @@ def main():
         config, "url_handler", URL_HANDLER.get(platform.system())
     )
     debug = get_config_bool(config, "debug", False)
+    http_methed = get_config_str(config, "http_method", HTTP_METHOD)
 
     # command line settings
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
@@ -210,10 +260,23 @@ def main():
         help="Show complete url in search results",
     )
     parser.add_argument(
+        "--no-verify-ssl",
+        action="store_true",
+        help="do not verify SSL certificates when making requests (not recommended)",
+    )
+    parser.add_argument(
         "-j",
         "--first",
         action="store_true",
         help="open the first result in web browser and exit",
+    )
+    parser.add_argument(
+        "--http-method",
+        type=str,
+        default=http_methed,
+        choices=["GET", "POST"],
+        metavar="METHOD",
+        help=f"HTTP method to use for search requests. GET or POST (default: {http_methed.upper()})",
     )
     parser.add_argument(
         "-l",
@@ -233,6 +296,11 @@ def main():
         "--noprompt",
         action="store_true",
         help="just search and exit, do not prompt",
+    )
+    parser.add_argument(
+        "--noua",
+        action="store_true",
+        help="disable user agent",
     )
     parser.add_argument(
         "-n",
@@ -334,6 +402,9 @@ def main():
                     time_range=args.time_range,
                     site=args.site,
                     pageno=pageno,
+                    verify_ssl=not args.no_verify_ssl,
+                    http_method=args.http_method.upper(),
+                    no_user_agent=args.noua,
                 )
             )
             # if number of results is not set just return all initial results
