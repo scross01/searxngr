@@ -10,8 +10,7 @@ import configparser
 import platform
 import random
 
-
-__version__ = "0.2.2"
+from .__version__ import __version__
 
 # Default settings. Use config file or command line to modify.
 SAMPLE_SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
