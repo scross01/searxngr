@@ -3,6 +3,8 @@ searxngr
 
 SearXNG from the command line, inspired by `ddgr` and `googler`.
 
+![demo](demo/demo.gif)
+
 Installation
 ------------
 
@@ -76,11 +78,11 @@ options:
 
 ## Troubleshooting
 
-### Error:: Client error '429 Too Many Requests' for url 'https://searxng.example.com'
+**Error:: Client error '429 Too Many Requests' for url 'https://searxng.example.com'**
 
 The SearXNG server is limiting access to the search API. Update server limiter setting or disable limiter for private instances in the service `searxng/settings.toml`
 
-### Error: Could not decode JSON response.
+**Error: Could not decode JSON response.**
 
 The SearXNG instance may be returning the results in html format.  On the SearXNG servers you need to modify the supported search formats to include json in `searxng/settings.yml`.
 
@@ -88,5 +90,5 @@ The SearXNG instance may be returning the results in html format.  On the SearXN
 search:
   formats:
     - html
-    -json
+    - json
 ```
