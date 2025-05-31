@@ -11,7 +11,7 @@ import platform
 import random
 
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 # Default settings. Use config file or command line to modify.
 SAMPLE_SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
@@ -329,7 +329,7 @@ def main():
         "--time-range",
         type=str,
         metavar="TIME_RANGE",
-        help="search results within a specific time range ('day', 'month', 'year')",
+        help=f"search results within a specific time range ({', '.join(TIME_RANGE_OPTIONS)})",
     )
     parser.add_argument(
         "--unsafe",

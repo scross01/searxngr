@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+## v0.2.1
+
+- fixed missing time option in help output
+
 ## v0.2.0
 
 - fixed multi-page queries when `--num N` was greater that the initial result size

@@ -17,7 +17,7 @@ Configuration
 
 The `searxngr` configuration is stored in `$XDG_CONFIG_HOME/searxng/config.ini`, on Mac and Linux this is typical under `$HOME/.config` and on Windows its under `%APPDATA%`
 
-If the config file it not found is will be created and populated with a configuration template.  On first run `searxng` will prompt for your SearXNG instance URL to populate the configuation file.
+If the config file it not found is will be created and populated with a configuration template.  On first run `searxngr` will prompt for your SearXNG instance URL to populate the configuation file.
 
 ```ini
 [searxngr]
@@ -32,7 +32,7 @@ Usage
 -----
 
 ```shell
-$ searxng why is the sky blue
+$ searxngr why is the sky blue
 ```
 
 ### Options
@@ -70,7 +70,7 @@ options:
   --safe-search FILTER  Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: strict)
   -w, --site SITE       search sites using site: operator
   -t, --time-range TIME_RANGE
-                        search results within a specific time range ('day', 'month', 'year')
+                        search results within a specific time range (day, week, month, year)
   --unsafe              allow unsafe search results (same as --safe-search none)
   --url_handler UTIL    Command to open URLs in the browser (default: open)
   -v, --version         show program's version number and exit
