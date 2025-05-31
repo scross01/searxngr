@@ -11,7 +11,7 @@ import platform
 import random
 
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 # Default settings. Use config file or command line to modify.
 SAMPLE_SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
@@ -93,21 +93,24 @@ def searxng_search(
         body = {
             "q": query,
             "format": "json",
-            "engines": engines.replace(" ", ",") if engines else "",
-            "safesearch": SAFE_SEARCH_OPTIONS[safe_search] if safe_search else "",
-            "time_range": time_range,
         }
+        if engines:
+            body["engines"] = engines
         if language:
             body["language"] = language
         if pageno > 1:
             body["pageno"] = pageno
+        if safe_search:
+            body["safesearch"] = SAFE_SEARCH_OPTIONS[safe_search]
+        if time_range:
+            body["time_range"] = time_range
 
         print(f"Searching: {url} with body: {body}") if DEBUG else None
     # if http_method is GET, construct the query url with parameters
     elif http_method == "GET":
         # construct the query url
         url = f"{searxng_url}/?q={query}&format=json"
-        url += f"&engines={engines.replace(" ", ",")}" if engines else ""
+        url += f"&engines={engines}" if engines else ""
         url += f"&language={language}" if language else ""
         url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
         url += f"&time_range={time_range}" if time_range else ""
@@ -355,7 +358,7 @@ def main():
     DEBUG = args.debug
     print(f"Config: {args}") if DEBUG else None
 
-    # valid that searxng url is set
+    # validate that searxng url is set
     if not args.searxng_url:
         print(f"Error: searxng_url is not set in {config_file}")
         return
@@ -372,6 +375,11 @@ def main():
         args.time_range = (
             args.time_range.replace("y", "year").replace("m", "month").replace("w", "week").replace("d", "day")
         )
+    # update engines to a comma-separated string if it's a list
+    if isinstance(args.engines, list):
+        args.engines = ",".join(args.engines).strip()
+    else:
+        args.engines = args.engines.strip().replace(" ", ",") if args.engines else None
     # override results count if first option is requested
     if args.first:
         args.num = 1

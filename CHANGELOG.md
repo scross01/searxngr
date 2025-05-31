@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+## v0.2.2
+
+-- fixed issue `--engines` command line option
+
 ## v0.2.1
 
 - fixed missing time option in help output
