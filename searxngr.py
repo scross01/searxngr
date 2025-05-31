@@ -11,7 +11,7 @@ import platform
 import random
 
 
-__version__ = "0.2.0-dev"
+__version__ = "0.2.0"
 
 # Default settings. Use config file or command line to modify.
 SAMPLE_SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
