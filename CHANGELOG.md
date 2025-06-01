@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-## v0.3.0-dev
+## v0.3.0
 
 - added `n`, `p`, `f` prompt options to fetch the next, prev or first set of search results based on the result count size
 - added `x` prompt option to toggle url expansion
