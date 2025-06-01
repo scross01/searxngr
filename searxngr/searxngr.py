@@ -70,11 +70,8 @@ SEARXNG_CATEGORIES = [
 def print_results(results, count, start_at=0, expand=False):
     console.print()
     for i, result in enumerate(
-        results[start_at : start_at + count], start=start_at + 1
+        results[start_at:(start_at + count)], start=start_at + 1
     ):
-
-        # console.print(f"Result {json.dumps(result, indent=2)}") if DEBUG else None  # XXX
-
         title = result.get("title", "No title")
         # truncate the title to 70 characters if it's too long
         title = textwrap.shorten(title, width=70, placeholder="...")
@@ -283,8 +280,6 @@ def searxng_search(
         response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         data = response.json()
 
-        # console.print(f"Response: {json.dumps(data)}") if DEBUG else None  # XXX
-
         if data and "results" in data:
             console.print(f"Returned {len(data['results'])} results") if DEBUG else None
             return data["results"]
@@ -301,6 +296,7 @@ def searxng_search(
         exit(1)
     except json.JSONDecodeError:
         console.print("[red]Error:[/red] Could not decode JSON response.")
+        console.print(f"[dim]{response.text if response else 'No response received.'}[/dim]")
         exit(1)
 
 
@@ -715,17 +711,22 @@ def main():
             except KeyboardInterrupt:
                 exit(0)
 
-            if new_query.lower() in ["q", "quit", "exit"]:
+            if new_query.strip().lower() in ["q", "quit", "exit"]:
                 exit(0)
-            elif new_query in ["?"]:
+            elif new_query.strip() in ["?"]:
                 console.print(
                     textwrap.dedent(
                         """
                         - Enter a search query to perform a new search.
-                        - Type `n`, `p`, and `f` to navigate to the next, previos and first page of results.
+                        - Type 'n', 'p', and 'f' to navigate to the next, previos and first page of results.
                         - Type the index (1, 2, 3, etc) open the search index page in a browser.
-                        - Type `c` plus the index (c 1, c 2) to copy the result URL to clipboard.
-                        - Type `x` to toggle showing to result URL.
+                        - Type 'c' plus the index ('c 1', 'c 2') to copy the result URL to clipboard.
+                        - Type 't timerange' to change the search time range (e.g. `t week`).
+                        - Type 'site:example.com' to filter results by a specific site.
+                        - Type 'x' to toggle showing to result URL.
+                        - Type 's' to show the current configuration settings.
+                        - Type 'd' to toggle debug output.
+                        - Type 'j' plus the index ('j 1', 'j 2') to show the JSON result for the specified index.
                         - Type 'q', 'quit', or 'exit' to exit the program.
                         - Type '?' for this help message.
                         """
@@ -745,7 +746,7 @@ def main():
                         "[red]Error:[/red] No URL found for the selected result."
                     )
                 continue
-            elif new_query.startswith("c "):
+            elif new_query.strip().startswith("c "):
                 # copy the result URL to clipboard
                 index = new_query[2:].strip()
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
@@ -786,12 +787,77 @@ def main():
                     results, count=args.num, start_at=start_at, expand=args.expand
                 )
                 continue
+            elif new_query.strip().startswith("t "):
+                # change the time range filter
+                time_range = new_query[2:].strip()
+                if time_range not in TIME_RANGE_OPTIONS and time_range not in TIME_RANGE_SHORT_OPTIONS:
+                    console.print(
+                        f"[red]Error:[/red] Invalid time range '{time_range}'. "
+                        f"Use one of: {', '.join(TIME_RANGE_OPTIONS)}"
+                    )
+                    continue
+                else:
+                    if time_range in TIME_RANGE_SHORT_OPTIONS:
+                        args.time_range = (
+                            time_range.replace("y", "year")
+                            .replace("m", "month")
+                            .replace("w", "week")
+                            .replace("d", "day")
+                        )
+                    else:
+                        args.time_range = time_range
+                    new_query = query
+                    start_at = 0
+                    pageno = 1
+                    results = []
+                    break
+            elif new_query.strip().startswith("site:"):
+                # change the site filter
+                site = new_query[5:].strip()
+                args.site = site
+                new_query = query
+                start_at = 0
+                pageno = 1
+                results = []
+                break
             elif new_query.strip() == "x":
                 # toggle the expand URL setting
                 args.expand = not args.expand
                 print_results(
                     results, count=args.num, start_at=start_at, expand=args.expand
                 )
+                continue
+            elif new_query.strip() == "s":
+                # show the current configuration settings
+                console.print(
+                    textwrap.dedent(
+                        f"""
+                        SearXNG URL:       {args.searxng_url}
+                        HTTP method:       {args.http_method}
+                        Verify SSL:        {'enabled' if not args.no_verify_ssl else 'disabled'}
+                        Result per page:   {args.num if args.num > 0 else '[dim]default[/dim]'}
+                        Engines:           {args.engines if args.engines else '[dim]not set[/dim]'}
+                        Categories:        {args.categories}
+                        Language:          {args.language if args.language else '[dim]not set[/dim]'}
+                        Safe search:       {args.safe_search}
+                        Site filter:       {args.site if args.site else '[dim]not set[/dim]'}
+                        Time range filter: {args.time_range if args.time_range else '[dim]not set[/dim]'}
+                        Expand URLs:       {'enabled' if args.expand else '[dim]disabled[/dim]'}
+                        """))
+                continue
+            elif new_query.strip() == "d":
+                # toggle debug mode
+                DEBUG = not DEBUG
+                console.print(f"Debug mode {'enabled' if DEBUG else 'disabled'}")
+                continue
+            elif new_query.strip().startswith("j "):
+                # show the json result for the specified index
+                index = new_query[2:].strip()
+                if index.isdigit() and int(index) in range(1, len(results) + 1):
+                    index = int(index) - 1
+                    console.print(
+                        json.dumps(results[index], indent=2, ensure_ascii=False)
+                    )
                 continue
             else:
                 # run the new query

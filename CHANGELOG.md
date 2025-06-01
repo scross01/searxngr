@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+## v0.4.0-dev
+
+- added `s` prompt option to show the current settings
+- added `d` prompt to toggle debug mode
+- added `j index` prompt to output the full json of a specfic result
+- added `t time-range` prompt to change the search time range (e.g. `t week`)
+- added `site:` prompt to change the site filter
+
 ## v0.3.0
 
 - added `n`, `p`, `f` prompt options to fetch the next, prev or first set of search results based on the result count size
