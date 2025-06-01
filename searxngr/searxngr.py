@@ -28,7 +28,7 @@ EXPAND = False  # Default show expand url setting
 CONFIG_FILE = "config.ini"
 HTTP_METHOD = "GET"  # Default HTTP method for search requests
 USER_AGENT = f"searxngr/{__version__}"
-CATEGORIES = "general"  # Default categories to search in
+CATEGORIES = ""  # Default categories to search in
 MAX_CONTENT_WORDS = 128  # Maximum number of words to show in content
 
 SAFE_SEARCH_OPTIONS = {
@@ -93,12 +93,14 @@ def print_results(results, count, start_at=0, expand=False):
             content = " ".join(content_words)
         content = textwrap.wrap(content, width=os.get_terminal_size().columns - 5)
 
+        # parse the published date if available
         published_date = (
             format_date(parse(result.get("publishedDate").strip()))
             if result.get("publishedDate")
             else None
         )
 
+        # output the result in a formatted way
         console.print(
             f" [cyan]{i:>2}.[/cyan] [bold green]{title}[/bold green] [yellow]\\[{domain}][/yellow]",
         )
@@ -163,8 +165,10 @@ def print_results(results, count, start_at=0, expand=False):
             longitude = result.get("longitude")
             latitude = result.get("latitude")
             console.print(f"     [cyan dim]{latitude}, {longitude}[/cyan dim]")
+        # if the result is it category, we do not print anything specific
         if category == "it":
             pass
+        # if the result is a science article, output the journal and publisher
         if category == "science":
             journal = result.get("journal")
             publisher = result.get("publisher")
@@ -174,6 +178,7 @@ def print_results(results, count, start_at=0, expand=False):
                 + f"{publisher + ' ' if publisher else ''}[/cyan dim]",
                 highlight=False,
             )
+        # if the result is a file, output the magnet link or file properties
         if category == "files":
             if template == "torrent.html":
                 magnet_link = result.get("magnetlink")
@@ -188,12 +193,17 @@ def print_results(results, count, start_at=0, expand=False):
                 metadata = result.get("metadata")
                 size = result.get("size")
                 console.print(f"     [cyan dim]{size} {metadata}[/cyan dim]")
+        # if the result is a social media post, output the published date 
         if category == "social media":
             if published_date:
                 console.print(f"     [cyan dim]{published_date}[/cyan dim]")
 
-        if engine:
-            console.print(f"     [dim]\\[{engine}][/dim]")
+        # print the engines that generated the result
+        engines = result.get("engines", None)
+        engines.remove(engine) if engine in engines else None
+        console.print(
+            f"     [dim]\\[[bold]{engine}[/bold]{(', ' + ", ".join(engines)) if len(engines) > 0 else ''}][/dim]"
+        )
         console.print()
 
 
@@ -366,7 +376,7 @@ def main():
     searxng_url = get_config_str(config, "searxng_url", None)
     result_count = get_config_int(config, "result_count", RESULT_COUNT)
     safe_search = get_config_str(config, "safe_search", SAFE_SEARCH)
-    categories = get_config_str(config, "categories", CATEGORIES).strip().split(" ")
+    categories = get_config_str(config, "categories", CATEGORIES).strip().split(" ") 
     engines = get_config_str(config, "engines", ENGINES)
     expand = get_config_bool(config, "expand", EXPAND)
     language = get_config_str(config, "language", None)

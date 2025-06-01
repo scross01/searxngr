@@ -3,6 +3,8 @@ Change Log
 
 ## v0.4.0-dev
 
+- fixes issue where default cateogry selection was peventing engine selection
+- output now shows all engines that provided the result, not just the primary response
 - added `s` prompt option to show the current settings
 - added `d` prompt to toggle debug mode
 - added `j index` prompt to output the full json of a specfic result
