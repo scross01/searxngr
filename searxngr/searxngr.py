@@ -1,6 +1,6 @@
 import json
 import httpx
-from rich import print
+from rich.console import Console
 from rich.prompt import Prompt
 import textwrap
 import os
@@ -14,6 +14,8 @@ from babel.dates import format_date
 from html2text import html2text
 
 from .__version__ import __version__
+
+console = Console()
 
 # Default settings. Use config file or command line to modify.
 SAMPLE_SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
@@ -65,10 +67,10 @@ SEARXNG_CATEGORIES = [
 
 # print search results to the terminal
 def print_results(results, count, expand=False):
-    print()
+    console.print()
     for i, result in enumerate(results[0:count], start=1):
 
-        # print(f"Result {json.dumps(result, indent=2)}") if DEBUG else None  # XXX
+        # console.print(f"Result {json.dumps(result, indent=2)}") if DEBUG else None  # XXX
 
         title = result.get("title", "No title")
         # truncate the title to 70 characters if it's too long
@@ -97,28 +99,28 @@ def print_results(results, count, expand=False):
             else None
         )
 
-        print(
-            f" [cyan]{i:>2}.[/cyan] [bold green]{title}[/bold green] [yellow]\\[{domain}][/yellow]"
+        console.print(
+            f" [cyan]{i:>2}.[/cyan] [bold green]{title}[/bold green] [yellow]\\[{domain}][/yellow]",
         )
         if expand:
-            print(f"     [link={url}]{url}[/link]")
+            console.print(f"     [link={url}]{url}[/link]")
         if content:
             for line in content:
-                print(f"     {line}")
+                console.print(f"     {line}", highlight=False)
 
         # if the result is a news article, output the published date
         if category == "news" and published_date:
-            print(f"     [cyan dim]{published_date}[/cyan dim]")
+            console.print(f"     [cyan dim]{published_date}[/cyan dim]", highlight=False)
         # if the result is an image, output additioanl image detials
         if category == "images":
             source = result.get("source")
             resolution = result.get("resolution")
             img_src = result.get("img_src")
             if source or resolution:
-                print(
+                console.print(
                     f"     [cyan dim]{resolution if resolution else ''}[/cyan dim] {source if source else ''}"
                 )
-            print(f"     [link={img_src}]{img_src}[/link]")
+            console.print(f"     [link={img_src}]{img_src}[/link]", highlight=False)
         # if the result is a video, output the author and length
         if category == "videos":
             author = result.get("author")
@@ -127,7 +129,7 @@ def print_results(results, count, expand=False):
                 # if length is not in HH:MM:SS format, convert it to that format
                 length = f"{int(length // 60):02}:{int(length % 6):02}"
             if author or length:
-                print(
+                console.print(
                     f"     [cyan dim]{length if length else ''}[/cyan dim] {author if author else ''}"
                 )
         # if the result is a music, output the published date
@@ -138,11 +140,10 @@ def print_results(results, count, expand=False):
                 # if length is not in HH:MM:SS format, convert it to that format
                 length = f"{int(length // 60):02}:{int(length % 6):02}"
             if author or length:
-                print(
+                console.print(
                     f"     [cyan dim]{length if length else ''}[/cyan dim] {author if author else ''}"
                 )
-            # published_date = format_date(parse(result.get("publishedDate")))
-            # print(f"     [cyan dim]{published_date}[/cyan dim]")
+            # console.print(f"     [cyan dim]{published_date}[/cyan dim]")
         # if the result is a map, output the coordinates
         if category == "map":
             if result.get("address"):
@@ -152,23 +153,24 @@ def print_results(results, count, expand=False):
                 locality = address.get("locality")
                 postcode = address.get("postcode")
                 country = address.get("country")
-                print(
+                console.print(
                     f"     {house_number + ' ' if house_number else ''}{road if road else ''}\n",
                     f"    {locality if locality else ''}, {postcode if postcode else ''}\n",
                     f"    {country if country else ''}",
                 )
             longitude = result.get("longitude")
             latitude = result.get("latitude")
-            print(f"     [cyan dim]{latitude}, {longitude}[/cyan dim]")
+            console.print(f"     [cyan dim]{latitude}, {longitude}[/cyan dim]")
         if category == "it":
             pass
         if category == "science":
             journal = result.get("journal")
             publisher = result.get("publisher")
-            print(
+            console.print(
                 f"     [cyan dim][bold]{published_date + ' ' if published_date else ''}[/bold]" +
                 f"{journal + ' ' if journal else ''}" +
-                f"{publisher + ' ' if publisher else ''}[/cyan dim]"
+                f"{publisher + ' ' if publisher else ''}[/cyan dim]", 
+                highlight=False
             )
         if category == "files":
             if template == "torrent.html":
@@ -176,23 +178,25 @@ def print_results(results, count, expand=False):
                 seed = result.get("seed")
                 leech = result.get("leech")
                 filesize = result.get("filesize")
-                print(
-                    f"     [cyan dim][link={magnet_link}]{magnet_link}[/link][/cyan dim]"
+
+                console.print(
+                    f"     [cyan dim]{magnet_link}[/cyan dim]",
+                    highlight=False
                 )
-                print(
-                    f"     [cyan dim]{filesize}[/cyan dim]] ↑{seed} seeders, ↓{leech} leechers"
+                console.print(
+                    f"     [cyan dim]{filesize}[/cyan dim] ↑{seed} seeders, ↓{leech} leechers"
                 )
             elif template == "files.html":
                 metadata = result.get("metadata")
                 size = result.get("size")
-                print(f"     [cyan dim]{size} {metadata}[/cyan dim]")
+                console.print(f"     [cyan dim]{size} {metadata}[/cyan dim]")
         if category == "social media":
             if published_date:
-                print(f"     [cyan dim]{published_date}[/cyan dim]")
+                console.print(f"     [cyan dim]{published_date}[/cyan dim]")
 
         if engine:
-            print(f"     [dim]\\[{engine}][/dim]")
-        print()
+            console.print(f"     [dim]\\[{engine}][/dim]")
+        console.print()
 
 
 def searxng_search(
@@ -233,7 +237,7 @@ def searxng_search(
         if time_range:
             body["time_range"] = time_range
 
-        print(f"Searching: {url} with body: {body}") if DEBUG else None
+        console.print(f"Searching: {url} with body: {body}") if DEBUG else None
     # if http_method is GET, construct the query url with parameters
     elif http_method == "GET":
         # construct the query url
@@ -244,7 +248,7 @@ def searxng_search(
         url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
         url += f"&time_range={time_range}" if time_range else ""
         url += f"&pageno={pageno}" if pageno > 1 else ""
-        print(f"Searching: {url}") if DEBUG else None
+        console.print(f"Searching: {url}") if DEBUG else None
     else:
         raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
 
@@ -278,24 +282,24 @@ def searxng_search(
         response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         data = response.json()
 
-        # print(f"Response: {json.dumps(data)}") if DEBUG else None  # XXX
+        # console.print(f"Response: {json.dumps(data)}") if DEBUG else None  # XXX
 
         if data and "results" in data:
-            print(f"Returned {len(data['results'])} results") if DEBUG else None
+            console.print(f"Returned {len(data['results'])} results") if DEBUG else None
             return data["results"]
         else:
             return None
 
     except httpx.HTTPStatusError as e:
-        print(f"[red]Error:[/red]: {e}")
+        console.print(f"[red]Error:[/red]: {e}")
         exit(1)
     except httpx.ConnectError as ce:
-        print(
+        console.print(
             f"[red]Error:[/red] Could not connect to SearXNG instance at {searxng_url}\n{ce}"
         )
         exit(1)
     except json.JSONDecodeError:
-        print("[red]Error:[/red] Could not decode JSON response.")
+        console.print("[red]Error:[/red] Could not decode JSON response.")
         exit(1)
 
 
@@ -329,7 +333,7 @@ def create_config_file(config_path):
     with open(config_file, "w") as f:
         f.write(default_config)
 
-    print(f"[dim]created {config_file}[/dim]")
+    console.print(f"[dim]created {config_file}[/dim]")
 
 
 def get_config_str(config, key, default):
@@ -537,27 +541,27 @@ def main():
 
     global DEBUG
     DEBUG = args.debug
-    print(f"Config: {args}") if DEBUG else None
+    console.print(f"Config: {args}") if DEBUG else None
 
     # validate that searxng url is set
     if not args.searxng_url:
-        print(f"[red]Error:[/red] searxng_url is not set in {config_file}")
+        console.print(f"[red]Error:[/red] searxng_url is not set in {config_file}")
         return
     # validate safe search is a valid value
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
-        print(
+        console.print(
             "[red]Error:[/red] Invalid safe search option. Use 'none', 'moderate', or 'strict'"
         )
         return
     # validate only one of --news or --videos is set
     if args.news and args.videos:
-        print("[red]Error:[/red] You can only use one of --news or --videos at a time.")
+        console.print("[red]Error:[/red] You can only use one of --news or --videos at a time.")
         exit(1)
     # validate time range format
     if args.time_range and args.time_range not in set(TIME_RANGE_OPTIONS).union(
         TIME_RANGE_SHORT_OPTIONS
     ):
-        print(
+        console.print(
             "[red]Error:[/red] Invalid time range format. Use 'd', 'day', 'w', 'week', 'm', 'month', or 'y', 'year'"
         )
         return
@@ -587,7 +591,7 @@ def main():
         # check if categories are valid
         for category in categories:
             if category not in SEARXNG_CATEGORIES:
-                print(
+                console.print(
                     f"[red]Error:[/red] Invalid category '{category}'. " + ""
                     f"Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
                 )
@@ -611,7 +615,7 @@ def main():
         exit(0)
     # show version and exit
     if args.version:
-        print(__version__)
+        console.print(__version__)
         exit(0)
     # if no query is provided, show usage and exit
     if not args.query:
@@ -669,7 +673,7 @@ def main():
             print_results(results, count=args.num, expand=args.expand)
         else:
             # no results found or an error occurred
-            print("\nNo results found or an error occurred during the search.\n")
+            console.print("\nNo results found or an error occurred during the search.\n")
 
         # if no prompt is requested, just exit after the search
         if args.np:
@@ -684,7 +688,7 @@ def main():
             if new_query.lower() in ["q", "quit", "exit"]:
                 exit(0)
             elif new_query.lower() in ["?"]:
-                print(
+                console.print(
                     textwrap.dedent(
                         """
                         - Enter a search query to perform a new search.
@@ -704,7 +708,7 @@ def main():
                 if url:
                     os.system(f"{args.url_handler} '{url}'")
                 else:
-                    print("[red]Error:[/red] No URL found for the selected result.")
+                    console.print("[red]Error:[/red] No URL found for the selected result.")
                 continue
             else:
                 # run the new query
