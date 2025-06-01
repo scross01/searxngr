@@ -110,7 +110,9 @@ def print_results(results, count, expand=False):
 
         # if the result is a news article, output the published date
         if category == "news" and published_date:
-            console.print(f"     [cyan dim]{published_date}[/cyan dim]", highlight=False)
+            console.print(
+                f"     [cyan dim]{published_date}[/cyan dim]", highlight=False
+            )
         # if the result is an image, output additioanl image detials
         if category == "images":
             source = result.get("source")
@@ -167,10 +169,10 @@ def print_results(results, count, expand=False):
             journal = result.get("journal")
             publisher = result.get("publisher")
             console.print(
-                f"     [cyan dim][bold]{published_date + ' ' if published_date else ''}[/bold]" +
-                f"{journal + ' ' if journal else ''}" +
-                f"{publisher + ' ' if publisher else ''}[/cyan dim]", 
-                highlight=False
+                f"     [cyan dim][bold]{published_date + ' ' if published_date else ''}[/bold]"
+                + f"{journal + ' ' if journal else ''}"
+                + f"{publisher + ' ' if publisher else ''}[/cyan dim]",
+                highlight=False,
             )
         if category == "files":
             if template == "torrent.html":
@@ -178,11 +180,7 @@ def print_results(results, count, expand=False):
                 seed = result.get("seed")
                 leech = result.get("leech")
                 filesize = result.get("filesize")
-
-                console.print(
-                    f"     [cyan dim]{magnet_link}[/cyan dim]",
-                    highlight=False
-                )
+                console.print(f"     [dim]{magnet_link}[/dim]", highlight=Fals)
                 console.print(
                     f"     [cyan dim]{filesize}[/cyan dim] ↑{seed} seeders, ↓{leech} leechers"
                 )
@@ -402,7 +400,7 @@ def main():
     parser.add_argument(
         "--config",
         action="store_true",
-        help="open the configuration file in a default system text editor"
+        help="open the configuration file in a default system text editor",
     )
     parser.add_argument(
         "-d", "--debug", action="store_true", default=debug, help="show debug output"
@@ -555,7 +553,9 @@ def main():
         return
     # validate only one of --news or --videos is set
     if args.news and args.videos:
-        console.print("[red]Error:[/red] You can only use one of --news or --videos at a time.")
+        console.print(
+            "[red]Error:[/red] You can only use one of --news or --videos at a time."
+        )
         exit(1)
     # validate time range format
     if args.time_range and args.time_range not in set(TIME_RANGE_OPTIONS).union(
@@ -673,7 +673,9 @@ def main():
             print_results(results, count=args.num, expand=args.expand)
         else:
             # no results found or an error occurred
-            console.print("\nNo results found or an error occurred during the search.\n")
+            console.print(
+                "\nNo results found or an error occurred during the search.\n"
+            )
 
         # if no prompt is requested, just exit after the search
         if args.np:
@@ -708,7 +710,9 @@ def main():
                 if url:
                     os.system(f"{args.url_handler} '{url}'")
                 else:
-                    console.print("[red]Error:[/red] No URL found for the selected result.")
+                    console.print(
+                        "[red]Error:[/red] No URL found for the selected result."
+                    )
                 continue
             else:
                 # run the new query
