@@ -709,13 +709,14 @@ def main():
 
             if new_query.lower() in ["q", "quit", "exit"]:
                 exit(0)
-            elif new_query.lower() in ["?"]:
+            elif new_query in ["?"]:
                 console.print(
                     textwrap.dedent(
                         """
                         - Enter a search query to perform a new search.
                         - Type the index (1, 2, 3, etc) open the search index page in a browser.
                         - Type `c` plus the index (c 1, c 2) to copy the result URL to clipboard.
+                        - Type `x` to toggle showing to result URL
                         - Type 'q', 'quit', or 'exit' to exit the program.
                         - Type '?' for this help message.
                         """
@@ -735,7 +736,7 @@ def main():
                         "[red]Error:[/red] No URL found for the selected result."
                     )
                 continue
-            if new_query.lower().startswith("c "):
+            elif new_query.startswith("c "):
                 # copy the result URL to clipboard
                 index = new_query[2:].strip()
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
@@ -748,6 +749,11 @@ def main():
                         )
                 else:
                     console.print("[red]Error:[/red] Invalid index specified.")
+                continue
+            elif new_query == "x":
+                # toggle the expand URL setting
+                args.expand = not args.expand
+                print_results(results, count=args.num, expand=args.expand)
                 continue
             else:
                 # run the new query

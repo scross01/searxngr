@@ -3,6 +3,7 @@ Change Log
 
 ## v0.3.0-dev
 
+- added `x` prompt option to toggle url expansion
 - interactive console now maintains a history of commands and queries
 - added `c index` prompt option to copy url to clipboard
 - added `--nocolor` command line option to disable rich color formatted output to terminal
