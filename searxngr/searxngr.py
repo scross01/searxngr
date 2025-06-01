@@ -1,6 +1,5 @@
 import json
 import httpx
-from rich.console import Console
 from rich.prompt import Prompt
 import textwrap
 import os
@@ -12,7 +11,9 @@ import random
 from dateutil.parser import parse
 from babel.dates import format_date
 from html2text import html2text
+import pyperclip
 
+from .console import InteractiveConsole as Console
 from .__version__ import __version__
 
 console = Console()
@@ -63,7 +64,6 @@ SEARXNG_CATEGORIES = [
     "files",
     "social+media",
 ]
-
 
 # print search results to the terminal
 def print_results(results, count, expand=False):
@@ -549,9 +549,14 @@ def main():
 
     args = parser.parse_args()
 
+    query = " ".join(args.query) if args.query else None
+
     # if no color is requested, disable rich console color output
     global console
-    console = Console(color_system=None, force_terminal=True) if args.nocolor else console
+    if args.nocolor:
+        console = Console(history=[query], color_system=None, force_terminal=True)
+    else:
+        console = Console(history=[query])
 
     global DEBUG
     DEBUG = args.debug
@@ -638,8 +643,6 @@ def main():
         parser.print_usage()
         exit(0)
 
-    query = " ".join(args.query)
-
     # load results and loop for prompt
     while True:
         results = []
@@ -700,9 +703,10 @@ def main():
         # process prompt commands
         while True:
             try:
-                new_query = Prompt.ask("[bold]searxngr[/bold] [dim](? for help)[/dim] ")
+                new_query = Prompt.ask("[bold]searxngr[/bold] [dim](? for help)[/dim] ", console=console)
             except KeyboardInterrupt:
                 exit(0)
+
             if new_query.lower() in ["q", "quit", "exit"]:
                 exit(0)
             elif new_query.lower() in ["?"]:
@@ -711,6 +715,7 @@ def main():
                         """
                         - Enter a search query to perform a new search.
                         - Type the index (1, 2, 3, etc) open the search index page in a browser.
+                        - Type `c` plus the index (c 1, c 2) to copy the result URL to clipboard.
                         - Type 'q', 'quit', or 'exit' to exit the program.
                         - Type '?' for this help message.
                         """
@@ -729,6 +734,20 @@ def main():
                     console.print(
                         "[red]Error:[/red] No URL found for the selected result."
                     )
+                continue
+            if new_query.lower().startswith("c "):
+                # copy the result URL to clipboard
+                index = new_query[2:].strip()
+                if index.isdigit() and int(index) in range(1, len(results) + 1):
+                    url = results[int(index) - 1].get("url")
+                    if url:
+                        pyperclip.copy(url)
+                    else:
+                        console.print(
+                            "[red]Error:[/red] No URL found for the selected result."
+                        )
+                else:
+                    console.print("[red]Error:[/red] Invalid index specified.")
                 continue
             else:
                 # run the new query

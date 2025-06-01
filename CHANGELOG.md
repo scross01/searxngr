@@ -3,6 +3,8 @@ Change Log
 
 ## v0.3.0-dev
 
+- interactive console now maintains a history of commands and queries
+- added `c index` prompt option to copy url to clipboard
 - added `--nocolor` command line option to disable rich color formatted output to terminal
 - added `--json` command line option to output the query response json and exit
 - added `--config` command line option to open configuraiton file in system default editor
