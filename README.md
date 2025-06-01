@@ -52,9 +52,8 @@ $ searxngr why is the sky blue
 Command line options can be used to modify the output and override the configuraiton defaults.
 
 ```txt
-usage: searxngr [-h] [--searxng-url SEARXNG_URL] [-d] [-e [ENGINE ...]] [-x] [--no-verify-ssl] 
-                [-j] [--http-method METHOD] [-l LANGUAGE] [--lucky] [--np] [--noua] [-n N]
-                [--safe-search FILTER] [-w SITE] [-t TIME_RANGE] [--unsafe] [--url_handler UTIL] [-v]
+usage: searxngr [-h] [--searxng-url SEARXNG_URL] [-c [CATEGORY ...]] [--config] [-d] [-e [ENGINE ...]] [-x] [-j] [--http-method METHOD] [--json] [-l LANGUAGE] [--lucky] [--no-verify-ssl] [--nocolor] [--np] [--noua] [-n N] [--safe-search FILTER] [-w SITE]
+                [-t TIME_RANGE] [--unsafe] [--url_handler UTIL] [-v] [-N] [-S] [-V]
                 [QUERY ...]
 
 Perform a search using SearXNG
@@ -65,17 +64,22 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --searxng-url SEARXNG_URL
-                        SearXNG instance URL (default: https://searxng.example.com)
+                        SearXNG instance URL (default: searxng.home.lan)
+  -c, --categories [CATEGORY ...]
+                        list of categories to search in: general, news, videos, images, music, map, science, it, files, social+media (default: ['general'])
+  --config              open the configuration file in a default system text editor
   -d, --debug           show debug output
   -e, --engines [ENGINE ...]
                         list of engines to use for the search (default: all available engines)
   -x, --expand          Show complete url in search results
-  --no-verify-ssl       do not verify SSL certificates when making requests (not recommended)
   -j, --first           open the first result in web browser and exit
   --http-method METHOD  HTTP method to use for search requests. GET or POST (default: GET)
+  --json                output the search results in JSON format and exit
   -l, --language LANGUAGE
                         search results in a specific language (e.g., 'en', 'de', 'fr')
   --lucky               opens a random result in web browser and exit
+  --no-verify-ssl       do not verify SSL certificates when making requests (not recommended)
+  --nocolor             disable colored output
   --np, --noprompt      just search and exit, do not prompt
   --noua                disable user agent
   -n, --num N           show N results per page (default: 10); N=0 uses the servers default per page
@@ -86,6 +90,9 @@ options:
   --unsafe              allow unsafe search results (same as --safe-search none)
   --url_handler UTIL    Command to open URLs in the browser (default: open)
   -v, --version         show program's version number and exit
+  -N, --news            show results from news section. (same as --categories news)
+  -S, --social          show results from videos section. (same as --categories social+media)
+  -V, --videos          show results from videos section. (same as --categories videos)
 ```
 
 ## Troubleshooting
