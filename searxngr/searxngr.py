@@ -180,7 +180,7 @@ def print_results(results, count, expand=False):
                 seed = result.get("seed")
                 leech = result.get("leech")
                 filesize = result.get("filesize")
-                console.print(f"     [dim]{magnet_link}[/dim]", highlight=Fals)
+                console.print(f"     [dim]{magnet_link}[/dim]", highlight=False)
                 console.print(
                     f"     [cyan dim]{filesize}[/cyan dim] ↑{seed} seeders, ↓{leech} leechers"
                 )
@@ -325,6 +325,7 @@ def create_config_file(config_path):
         # http_method = {HTTP_METHOD}
         # no_verify_ssl = false
         # no_user_agent = false
+        # no_color = false
     """
     ).split("\n", 1)[1:][0]
 
@@ -375,6 +376,9 @@ def main():
     )
     debug = get_config_bool(config, "debug", False)
     http_methed = get_config_str(config, "http_method", HTTP_METHOD)
+    no_user_agent = get_config_bool(config, "no_user_agent", False)
+    no_verify_ssl = get_config_bool(config, "no_verify_ssl", False)
+    no_color = get_config_bool(config, "no_color", False)
 
     # command line settings
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
@@ -422,11 +426,6 @@ def main():
         help="Show complete url in search results",
     )
     parser.add_argument(
-        "--no-verify-ssl",
-        action="store_true",
-        help="do not verify SSL certificates when making requests (not recommended)",
-    )
-    parser.add_argument(
         "-j",
         "--first",
         action="store_true",
@@ -459,6 +458,18 @@ def main():
         help="opens a random result in web browser and exit",
     )
     parser.add_argument(
+        "--no-verify-ssl",
+        action="store_true",
+        default=no_verify_ssl,
+        help="do not verify SSL certificates when making requests (not recommended)",
+    )
+    parser.add_argument(
+        "--nocolor",
+        action="store_true",
+        default=no_color,
+        help="disable colored output",
+    )
+    parser.add_argument(
         "--np",
         "--noprompt",
         action="store_true",
@@ -467,6 +478,7 @@ def main():
     parser.add_argument(
         "--noua",
         action="store_true",
+        default=no_user_agent,
         help="disable user agent",
     )
     parser.add_argument(
@@ -536,6 +548,10 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # if no color is requested, disable rich console color output
+    global console
+    console = Console(color_system=None, force_terminal=True) if args.nocolor else console
 
     global DEBUG
     DEBUG = args.debug
