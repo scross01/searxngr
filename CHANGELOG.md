@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## v0.3.0-dev
+
+- added support for `--categories` to get results from multiple sections
+- added `-N`, `--news` command line option to only get results from news section
+- added `-V`, `--videos` command line option to only get results from videos section
+- added `-S`, `--social` command line option to only get results from social section
+
 ## v0.2.3
 
 - updated packaging and build system resolve install issues

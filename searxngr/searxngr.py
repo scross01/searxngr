@@ -9,6 +9,9 @@ from xdg_base_dirs import xdg_config_home
 import configparser
 import platform
 import random
+from dateutil.parser import parse
+from babel.dates import format_date
+from html2text import html2text
 
 from .__version__ import __version__
 
@@ -22,6 +25,8 @@ EXPAND = False  # Default show expand url setting
 CONFIG_FILE = "config.ini"
 HTTP_METHOD = "GET"  # Default HTTP method for search requests
 USER_AGENT = f"searxngr/{__version__}"
+CATEGORIES = "general"  # Default categories to search in
+MAX_CONTENT_WORDS = 128  # Maximum number of words to show in content
 
 SAFE_SEARCH_OPTIONS = {
     "none": 0,  # Unsafe search
@@ -38,11 +43,27 @@ URL_HANDLER = {
 TIME_RANGE_OPTIONS = ["day", "week", "month", "year"]
 TIME_RANGE_SHORT_OPTIONS = ["d", "w", "m", "y"]  # Short options for time range
 
+SEARXNG_CATEGORIES = [
+    "general",
+    "news",
+    "videos",
+    "images",
+    "music",
+    "map",
+    "science",
+    "it",
+    "files",
+    "social+media",
+]
+
 
 # print search results to the terminal
 def print_results(results, count, expand=False):
     print()
     for i, result in enumerate(results[0:count], start=1):
+
+        # print(f"Result {json.dumps(result, indent=2)}") if DEBUG else None  # XXX
+
         title = result.get("title", "No title")
         # truncate the title to 70 characters if it's too long
         title = textwrap.shorten(title, width=70, placeholder="...")
@@ -52,18 +73,115 @@ def print_results(results, count, expand=False):
         domain = url.split("//")[1].split("/")[0]
 
         engine = result.get("engine", None)
+        template = result.get("template", None)
+        category = result.get("category", None)
 
         # wrap the content to the terminal width with indentation
-        content = result.get("content", "No content")
+        content_words = html2text(result.get("content", None).strip()).split(" ")
+        content = None
+        if len(content_words) > MAX_CONTENT_WORDS:
+            content = " ".join(content_words[:MAX_CONTENT_WORDS]) + " ..."
+        else:
+            content = " ".join(content_words)
         content = textwrap.wrap(content, width=os.get_terminal_size().columns - 5)
+
+        published_date = (
+            format_date(parse(result.get("publishedDate").strip()))
+            if result.get("publishedDate")
+            else None
+        )
 
         print(
             f" [cyan]{i:>2}.[/cyan] [bold green]{title}[/bold green] [yellow]\\[{domain}][/yellow]"
         )
         if expand:
             print(f"     [link={url}]{url}[/link]")
-        for line in content:
-            print(f"     {line}")
+        if content:
+            for line in content:
+                print(f"     {line}")
+
+        # if the result is a news article, output the published date
+        if category == "news" and published_date:
+            print(f"     [cyan dim]{published_date}[/cyan dim]")
+        # if the result is an image, output additioanl image detials
+        if category == "images":
+            source = result.get("source")
+            resolution = result.get("resolution")
+            img_src = result.get("img_src")
+            if source or resolution:
+                print(
+                    f"     [cyan dim]{resolution if resolution else ''}[/cyan dim] {source if source else ''}"
+                )
+            print(f"     [link={img_src}]{img_src}[/link]")
+        # if the result is a video, output the author and length
+        if category == "videos":
+            author = result.get("author")
+            length = result.get("length")
+            if isinstance(length, float):
+                # if length is not in HH:MM:SS format, convert it to that format
+                length = f"{int(length // 60):02}:{int(length % 6):02}"
+            if author or length:
+                print(
+                    f"     [cyan dim]{length if length else ''}[/cyan dim] {author if author else ''}"
+                )
+        # if the result is a music, output the published date
+        if category == "music" and result.get("publishedDate"):
+            author = result.get("author")
+            length = result.get("length")
+            if isinstance(length, float):
+                # if length is not in HH:MM:SS format, convert it to that format
+                length = f"{int(length // 60):02}:{int(length % 6):02}"
+            if author or length:
+                print(
+                    f"     [cyan dim]{length if length else ''}[/cyan dim] {author if author else ''}"
+                )
+            # published_date = format_date(parse(result.get("publishedDate")))
+            # print(f"     [cyan dim]{published_date}[/cyan dim]")
+        # if the result is a map, output the coordinates
+        if category == "map":
+            if result.get("address"):
+                address = result.get("address")
+                house_number = address.get("house_number")
+                road = address.get("road")
+                locality = address.get("locality")
+                postcode = address.get("postcode")
+                country = address.get("country")
+                print(
+                    f"     {house_number + ' ' if house_number else ''}{road if road else ''}\n",
+                    f"    {locality if locality else ''}, {postcode if postcode else ''}\n",
+                    f"    {country if country else ''}",
+                )
+            longitude = result.get("longitude")
+            latitude = result.get("latitude")
+            print(f"     [cyan dim]{latitude}, {longitude}[/cyan dim]")
+        if category == "it":
+            pass
+        if category == "science":
+            journal = result.get("journal")
+            publisher = result.get("publisher")
+            print(
+                f"     [cyan dim][bold]{published_date + ' ' if published_date else ''}[/bold]{journal + ' ' if journal else ''}{publisher + ' ' if publisher else ''}[/cyan dim]"
+            )
+        if category == "files":
+            if template == "torrent.html":
+                magnet_link = result.get("magnetlink")
+                seed = result.get("seed")
+                leech = result.get("leech")
+                filesize = result.get("filesize")
+                print(
+                    f"     [cyan dim][link={magnet_link}]{magnet_link}[/link][/cyan dim]"
+                )
+                print(
+                    f"     [cyan dim]{filesize}[/cyan dim]] ↑{seed} seeders, ↓{leech} leechers"
+                )
+            elif template == "files.html":
+                metadata = result.get("metadata")
+                size = result.get("size")
+                print(f"     [cyan dim]{size} {metadata}[/cyan dim]")
+        if category == "social media":
+            if published_date:
+                print(f"     [cyan dim]{published_date}[/cyan dim]")
+
         if engine:
             print(f"     [dim]\\[{engine}][/dim]")
         print()
@@ -74,6 +192,7 @@ def searxng_search(
     searxng_url,
     pageno=0,
     safe_search=None,
+    categories=None,
     engines=None,
     language=None,
     time_range=None,
@@ -93,6 +212,8 @@ def searxng_search(
             "q": query,
             "format": "json",
         }
+        if categories:
+            body["categories"] = categories.replace("social+media", "social media")
         if engines:
             body["engines"] = engines
         if language:
@@ -109,6 +230,7 @@ def searxng_search(
     elif http_method == "GET":
         # construct the query url
         url = f"{searxng_url}/?q={query}&format=json"
+        url += f"&categories={categories}" if categories else ""
         url += f"&engines={engines}" if engines else ""
         url += f"&language={language}" if language else ""
         url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
@@ -138,13 +260,17 @@ def searxng_search(
             headers = {
                 "Content-Type": "application/x-www-form-urlencoded",
             }.update(default_headers)
-            response = client.post(url, data=body, headers=headers, follow_redirects=True)
+            response = client.post(
+                url, data=body, headers=headers, follow_redirects=True
+            )
         else:
             headers = default_headers
             response = client.get(url, headers=headers, follow_redirects=True)
 
         response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         data = response.json()
+
+        # print(f"Response: {json.dumps(data)}") if DEBUG else None  # XXX
 
         if data and "results" in data:
             print(f"Returned {len(data['results'])} results") if DEBUG else None
@@ -156,7 +282,9 @@ def searxng_search(
         print(f"[red]Error:[/red]: {e}")
         exit(1)
     except httpx.ConnectError as ce:
-        print(f"[red]Error:[/red] Could not connect to SearXNG instance at {searxng_url}\n{ce}")
+        print(
+            f"[red]Error:[/red] Could not connect to SearXNG instance at {searxng_url}\n{ce}"
+        )
         exit(1)
     except json.JSONDecodeError:
         print("[red]Error:[/red] Could not decode JSON response.")
@@ -179,6 +307,7 @@ def create_config_file(config_path):
         [searxngr]
         searxng_url = {searxng_url}
         # result_count = {RESULT_COUNT}
+        # categories = {CATEGORIES}
         # safe_search = {SAFE_SEARCH}
         # engines = google duckduckgo brave
         # expand = false
@@ -227,6 +356,7 @@ def main():
     searxng_url = get_config_str(config, "searxng_url", None)
     result_count = get_config_int(config, "result_count", RESULT_COUNT)
     safe_search = get_config_str(config, "safe_search", SAFE_SEARCH)
+    categories = get_config_str(config, "categories", CATEGORIES).strip().split(" ")
     engines = get_config_str(config, "engines", ENGINES)
     expand = get_config_bool(config, "expand", EXPAND)
     language = get_config_str(config, "language", None)
@@ -247,6 +377,15 @@ def main():
         default=searxng_url,
         metavar="SEARXNG_URL",
         help=f"SearXNG instance URL (default: {searxng_url if searxng_url else 'NOT SET'})",
+    )
+    parser.add_argument(
+        "-c",
+        "--categories",
+        type=str,
+        nargs="*",
+        default=categories,
+        metavar="CATEGORY",
+        help=f"list of categories to search in: {', '.join(SEARXNG_CATEGORIES)} (default: {categories})",
     )
     parser.add_argument(
         "-d", "--debug", action="store_true", default=debug, help="show debug output"
@@ -357,6 +496,25 @@ def main():
         action="store_true",
         help="show program's version number and exit",
     )
+    parser.add_argument(
+        "-N",
+        "--news",
+        action="store_true",
+        help="show results from news section. (same as --categories news)",
+    )
+    parser.add_argument(
+        "-S",
+        "--social",
+        action="store_true",
+        help="show results from videos section. (same as --categories social+media)",
+    )
+    parser.add_argument(
+        "-V",
+        "--videos",
+        action="store_true",
+        help="show results from videos section. (same as --categories videos)",
+    )
+
     args = parser.parse_args()
 
     global DEBUG
@@ -365,26 +523,62 @@ def main():
 
     # validate that searxng url is set
     if not args.searxng_url:
-        print(f"Error: searxng_url is not set in {config_file}")
+        print(f"[red]Error:[/red] searxng_url is not set in {config_file}")
         return
     # validate safe search is a valid value
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
-        print("Error: Invalid safe search option. Use 'none', 'moderate', or 'strict'")
+        print(
+            "[red]Error:[/red] Invalid safe search option. Use 'none', 'moderate', or 'strict'"
+        )
         return
+    # validate only one of --news or --videos is set
+    if args.news and args.videos:
+        print("[red]Error:[/red] You can only use one of --news or --videos at a time.")
+        exit(1)
     # validate time range format
-    if args.time_range and args.time_range not in set(TIME_RANGE_OPTIONS).union(TIME_RANGE_SHORT_OPTIONS):
-        print("Error: Invalid time range format. Use 'd', 'day', 'w', 'week', 'm', 'month', or 'y', 'year'")
+    if args.time_range and args.time_range not in set(TIME_RANGE_OPTIONS).union(
+        TIME_RANGE_SHORT_OPTIONS
+    ):
+        print(
+            "[red]Error:[/red] Invalid time range format. Use 'd', 'day', 'w', 'week', 'm', 'month', or 'y', 'year'"
+        )
         return
     # update time range option to the full keyword
     if args.time_range in TIME_RANGE_SHORT_OPTIONS:
         args.time_range = (
-            args.time_range.replace("y", "year").replace("m", "month").replace("w", "week").replace("d", "day")
+            args.time_range.replace("y", "year")
+            .replace("m", "month")
+            .replace("w", "week")
+            .replace("d", "day")
         )
     # update engines to a comma-separated string if it's a list
     if isinstance(args.engines, list):
         args.engines = ",".join(args.engines).strip()
     else:
         args.engines = args.engines.strip().replace(" ", ",") if args.engines else None
+    # update categories to a comma-separated string if it's a list
+    if isinstance(args.categories, list):
+        args.categories = (
+            ",".join(args.categories)
+            if isinstance(args.categories, list)
+            else args.categories
+        )
+    # validate categories are supported
+    if args.categories:
+        categories = [c.strip() for c in args.categories.split(",")]
+        # check if categories are valid
+        for category in categories:
+            if category not in SEARXNG_CATEGORIES:
+                print(
+                    f"[red]Error:[/red] Invalid category '{category}'. Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
+                )
+                exit(1)
+    # if news is requested, set categories to just 'news'
+    if args.news:
+        args.categories = ["news"]
+    # if videos is requested, set categories to just 'videos'
+    if args.videos:
+        args.categories = ["videos"]
     # override results count if first option is requested
     if args.first:
         args.num = 1
@@ -409,23 +603,23 @@ def main():
         # searxng does not have a limit option, we will always get a varied number of
         # results per page.Interate until we have enough results.
         while len(results) <= args.num:
-            results.extend(
-                searxng_search(
-                    query,
-                    searxng_url=args.searxng_url,
-                    safe_search=args.safe_search,
-                    engines=args.engines,
-                    language=args.language,
-                    time_range=args.time_range,
-                    site=args.site,
-                    pageno=pageno,
-                    verify_ssl=not args.no_verify_ssl,
-                    http_method=args.http_method.upper(),
-                    no_user_agent=args.noua,
-                )
+            query_results = searxng_search(
+                query,
+                searxng_url=args.searxng_url,
+                safe_search=args.safe_search,
+                engines=args.engines,
+                language=args.language,
+                time_range=args.time_range,
+                site=args.site,
+                pageno=pageno,
+                verify_ssl=not args.no_verify_ssl,
+                http_method=args.http_method.upper(),
+                no_user_agent=args.noua,
+                categories=args.categories,
             )
-            # if number of results is not set just return all initial results
-            if args.num == 0:
+            results.extend(query_results)
+            # if no results found or number of results is not set just return all initial results
+            if args.num == 0 or len(query_results) == 0:
                 break
             pageno += 1
 
@@ -446,7 +640,7 @@ def main():
             print_results(results, count=args.num, expand=args.expand)
         else:
             # no results found or an error occurred
-            print("No results found or an error occurred during the search.")
+            print("\nNo results found or an error occurred during the search.\n")
 
         # if no prompt is requested, just exit after the search
         if args.np:
