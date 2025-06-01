@@ -3,6 +3,7 @@ Change Log
 
 ## v0.3.0-dev
 
+- added `n`, `p`, `f` prompt options to fetch the next, prev or first set of search results based on the result count size
 - added `x` prompt option to toggle url expansion
 - interactive console now maintains a history of commands and queries
 - added `c index` prompt option to copy url to clipboard

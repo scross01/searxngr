@@ -65,10 +65,13 @@ SEARXNG_CATEGORIES = [
     "social+media",
 ]
 
+
 # print search results to the terminal
-def print_results(results, count, expand=False):
+def print_results(results, count, start_at=0, expand=False):
     console.print()
-    for i, result in enumerate(results[0:count], start=1):
+    for i, result in enumerate(
+        results[start_at : start_at + count], start=start_at + 1
+    ):
 
         # console.print(f"Result {json.dumps(result, indent=2)}") if DEBUG else None  # XXX
 
@@ -644,12 +647,13 @@ def main():
         exit(0)
 
     # load results and loop for prompt
+    pageno = 1
+    start_at = 0
+    results = []
     while True:
-        results = []
-        pageno = 1
         # searxng does not have a limit option, we will always get a varied number of
         # results per page.Interate until we have enough results.
-        while len(results) <= args.num:
+        while len(results) <= (start_at + args.num):
             query_results = searxng_search(
                 query,
                 searxng_url=args.searxng_url,
@@ -689,7 +693,9 @@ def main():
                 exit(0)
 
             # print the results
-            print_results(results, count=args.num, expand=args.expand)
+            print_results(
+                results, count=args.num, start_at=start_at, expand=args.expand
+            )
         else:
             # no results found or an error occurred
             console.print(
@@ -703,7 +709,9 @@ def main():
         # process prompt commands
         while True:
             try:
-                new_query = Prompt.ask("[bold]searxngr[/bold] [dim](? for help)[/dim] ", console=console)
+                new_query = Prompt.ask(
+                    "[bold]searxngr[/bold] [dim](? for help)[/dim] ", console=console
+                )
             except KeyboardInterrupt:
                 exit(0)
 
@@ -714,9 +722,10 @@ def main():
                     textwrap.dedent(
                         """
                         - Enter a search query to perform a new search.
+                        - Type `n`, `p`, and `f` to navigate to the next, previos and first page of results.
                         - Type the index (1, 2, 3, etc) open the search index page in a browser.
                         - Type `c` plus the index (c 1, c 2) to copy the result URL to clipboard.
-                        - Type `x` to toggle showing to result URL
+                        - Type `x` to toggle showing to result URL.
                         - Type 'q', 'quit', or 'exit' to exit the program.
                         - Type '?' for this help message.
                         """
@@ -750,14 +759,46 @@ def main():
                 else:
                     console.print("[red]Error:[/red] Invalid index specified.")
                 continue
-            elif new_query == "x":
+            elif new_query.strip() == "n":
+                # get the next page of results
+                start_at += args.num
+                if len(results) >= (start_at + args.num):
+                    # we already have enough results for the next page
+                    print_results(
+                        results, count=args.num, start_at=start_at, expand=args.expand
+                    )
+                    continue
+                else:
+                    new_query = query
+                    pageno += 1
+                    break
+            elif new_query.strip() == "p":
+                # show the previous page of results
+                start_at -= args.num if start_at >= args.num else 0
+                print_results(
+                    results, count=args.num, start_at=start_at, expand=args.expand
+                )
+                continue
+            elif new_query.strip() == "f":
+                # show the first page of results
+                start_at = 0
+                print_results(
+                    results, count=args.num, start_at=start_at, expand=args.expand
+                )
+                continue
+            elif new_query.strip() == "x":
                 # toggle the expand URL setting
                 args.expand = not args.expand
-                print_results(results, count=args.num, expand=args.expand)
+                print_results(
+                    results, count=args.num, start_at=start_at, expand=args.expand
+                )
                 continue
             else:
                 # run the new query
                 query = new_query.strip()
+                start_at = 0
+                pageno = 1
+                results = []
                 break
 
 
