@@ -3,13 +3,15 @@ Change Log
 
 ## v0.4.0-dev
 
-- fixes issue where default cateogry selection was peventing engine selection
+- fixed category shortcut command line option issues and added `--files` and `--music`  options
+- fixed issue where default cateogry selection was peventing engine selection
 - output now shows all engines that provided the result, not just the primary response
 - added `s` prompt option to show the current settings
 - added `d` prompt to toggle debug mode
 - added `j index` prompt to output the full json of a specfic result
 - added `t time-range` prompt to change the search time range (e.g. `t week`)
 - added `site:` prompt to change the site filter
+- improved prompt handling
 
 ## v0.3.0
 

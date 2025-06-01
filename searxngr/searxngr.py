@@ -193,7 +193,7 @@ def print_results(results, count, start_at=0, expand=False):
                 metadata = result.get("metadata")
                 size = result.get("size")
                 console.print(f"     [cyan dim]{size} {metadata}[/cyan dim]")
-        # if the result is a social media post, output the published date 
+        # if the result is a social media post, output the published date
         if category == "social media":
             if published_date:
                 console.print(f"     [cyan dim]{published_date}[/cyan dim]")
@@ -202,7 +202,7 @@ def print_results(results, count, start_at=0, expand=False):
         engines = result.get("engines", None)
         engines.remove(engine) if engine in engines else None
         console.print(
-            f"     [dim]\\[[bold]{engine}[/bold]{(', ' + ", ".join(engines)) if len(engines) > 0 else ''}][/dim]"
+            f"     [dim]\\[[bold]{engine}[/bold]{(', ' + ', '.join(engines)) if len(engines) > 0 else ''}][/dim]"
         )
         console.print()
 
@@ -233,7 +233,11 @@ def searxng_search(
             "format": "json",
         }
         if categories:
-            body["categories"] = categories.replace("social+media", "social media")
+            body["categories"] = (
+                categories.replace("social+media", "social media")
+                if "social+media" in categories
+                else categories
+            )
         if engines:
             body["engines"] = engines
         if language:
@@ -306,7 +310,9 @@ def searxng_search(
         exit(1)
     except json.JSONDecodeError:
         console.print("[red]Error:[/red] Could not decode JSON response.")
-        console.print(f"[dim]{response.text if response else 'No response received.'}[/dim]")
+        console.print(
+            f"[dim]{response.text if response else 'No response received.'}[/dim]"
+        )
         exit(1)
 
 
@@ -376,7 +382,7 @@ def main():
     searxng_url = get_config_str(config, "searxng_url", None)
     result_count = get_config_int(config, "result_count", RESULT_COUNT)
     safe_search = get_config_str(config, "safe_search", SAFE_SEARCH)
-    categories = get_config_str(config, "categories", CATEGORIES).strip().split(" ") 
+    categories = get_config_str(config, "categories", CATEGORIES).strip().split(" ")
     engines = get_config_str(config, "engines", ENGINES)
     expand = get_config_bool(config, "expand", EXPAND)
     language = get_config_str(config, "language", None)
@@ -538,6 +544,18 @@ def main():
         help="show program's version number and exit",
     )
     parser.add_argument(
+        "-F",
+        "--files",
+        action="store_true",
+        help="show results from files section. (same as --categories files)",
+    )
+    parser.add_argument(
+        "-M",
+        "--music",
+        action="store_true",
+        help="show results from music section. (same as --categories music)",
+    )
+    parser.add_argument(
         "-N",
         "--news",
         action="store_true",
@@ -627,8 +645,17 @@ def main():
                 )
                 exit(1)
     # if news is requested, set categories to just 'news'
+    if args.files:
+        args.categories = ["files"]
+    # if music is requested, set categories to just 'music'
+    if args.music:
+        args.categories = ["music"]
+    # if news is requested, set categories to just 'news'
     if args.news:
         args.categories = ["news"]
+    # if social is requested, set categories to just 'social+media'
+    if args.social:
+        args.categories = ["social+media"]
     # if videos is requested, set categories to just 'videos'
     if args.videos:
         args.categories = ["videos"]
@@ -719,6 +746,10 @@ def main():
                     "[bold]searxngr[/bold] [dim](? for help)[/dim] ", console=console
                 )
             except KeyboardInterrupt:
+                # Handle Ctrl+C gracefully
+                exit(1)
+            except EOFError:
+                # Handle Ctrl+D gracefully
                 exit(0)
 
             if new_query.strip().lower() in ["q", "quit", "exit"]:
@@ -800,7 +831,10 @@ def main():
             elif new_query.strip().startswith("t "):
                 # change the time range filter
                 time_range = new_query[2:].strip()
-                if time_range not in TIME_RANGE_OPTIONS and time_range not in TIME_RANGE_SHORT_OPTIONS:
+                if (
+                    time_range not in TIME_RANGE_OPTIONS
+                    and time_range not in TIME_RANGE_SHORT_OPTIONS
+                ):
                     console.print(
                         f"[red]Error:[/red] Invalid time range '{time_range}'. "
                         f"Use one of: {', '.join(TIME_RANGE_OPTIONS)}"
@@ -847,13 +881,15 @@ def main():
                         Verify SSL:        {'enabled' if not args.no_verify_ssl else 'disabled'}
                         Result per page:   {args.num if args.num > 0 else '[dim]default[/dim]'}
                         Engines:           {args.engines if args.engines else '[dim]not set[/dim]'}
-                        Categories:        {args.categories}
+                        Categories:        {args.categories if args.categories else '[dim]not set[/dim]'}
                         Language:          {args.language if args.language else '[dim]not set[/dim]'}
                         Safe search:       {args.safe_search}
                         Site filter:       {args.site if args.site else '[dim]not set[/dim]'}
                         Time range filter: {args.time_range if args.time_range else '[dim]not set[/dim]'}
                         Expand URLs:       {'enabled' if args.expand else '[dim]disabled[/dim]'}
-                        """))
+                        """
+                    )
+                )
                 continue
             elif new_query.strip() == "d":
                 # toggle debug mode
@@ -869,7 +905,7 @@ def main():
                         json.dumps(results[index], indent=2, ensure_ascii=False)
                     )
                 continue
-            else:
+            elif new_query.strip() != "":
                 # run the new query
                 query = new_query.strip()
                 start_at = 0
