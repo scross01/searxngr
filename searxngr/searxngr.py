@@ -439,6 +439,11 @@ def main():
         help=f"HTTP method to use for search requests. GET or POST (default: {http_methed.upper()})",
     )
     parser.add_argument(
+        "--json",
+        action="store_true",
+        help="output the search results in JSON format and exit",
+    )
+    parser.add_argument(
         "-l",
         "--language",
         type=str,
@@ -643,6 +648,11 @@ def main():
             pageno += 1
 
         if results:
+            if args.json:
+                # output the results in JSON format and exit
+                print(json.dumps(results, indent=2))
+                exit(0)
+
             if args.first:
                 # if first or lucky search is requested, open the first result and exit
                 url = results[0].get("url")

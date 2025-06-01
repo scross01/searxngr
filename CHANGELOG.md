@@ -3,6 +3,7 @@ Change Log
 
 ## v0.3.0-dev
 
+- added `--json` command line option to output the query response json and exit
 - added `--config` command line option to open configuraiton file in system default editor
 - added support for `--categories` to get results from multiple sections
 - added `-N`, `--news` command line option to only get results from news section
