@@ -40,6 +40,12 @@ URL_HANDLER = {
     "Windows": "explorer",  # Command to open URLs in the default browser on Windows
 }
 
+DEFAULT_EDITOR = {
+    "Darwin": "open -t",
+    "Linux": "xdg-open",
+    "Windows": "notepad",
+}
+
 TIME_RANGE_OPTIONS = ["day", "week", "month", "year"]
 TIME_RANGE_SHORT_OPTIONS = ["d", "w", "m", "y"]  # Short options for time range
 
@@ -160,7 +166,9 @@ def print_results(results, count, expand=False):
             journal = result.get("journal")
             publisher = result.get("publisher")
             print(
-                f"     [cyan dim][bold]{published_date + ' ' if published_date else ''}[/bold]{journal + ' ' if journal else ''}{publisher + ' ' if publisher else ''}[/cyan dim]"
+                f"     [cyan dim][bold]{published_date + ' ' if published_date else ''}[/bold]" +
+                f"{journal + ' ' if journal else ''}" +
+                f"{publisher + ' ' if publisher else ''}[/cyan dim]"
             )
         if category == "files":
             if template == "torrent.html":
@@ -388,6 +396,11 @@ def main():
         help=f"list of categories to search in: {', '.join(SEARXNG_CATEGORIES)} (default: {categories})",
     )
     parser.add_argument(
+        "--config",
+        action="store_true",
+        help="open the configuration file in a default system text editor"
+    )
+    parser.add_argument(
         "-d", "--debug", action="store_true", default=debug, help="show debug output"
     )
     parser.add_argument(
@@ -570,7 +583,8 @@ def main():
         for category in categories:
             if category not in SEARXNG_CATEGORIES:
                 print(
-                    f"[red]Error:[/red] Invalid category '{category}'. Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
+                    f"[red]Error:[/red] Invalid category '{category}'. " + ""
+                    f"Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
                 )
                 exit(1)
     # if news is requested, set categories to just 'news'
@@ -585,6 +599,11 @@ def main():
     # set safe-search to 'none' if unsafe option is set
     if args.unsafe:
         args.safe_search = "none"
+    # open the configuration file and edit
+    if args.config:
+        editor = os.environ.get("EDITOR", DEFAULT_EDITOR[platform.system()])
+        os.system(f"{editor} {config_file}")
+        exit(0)
     # show version and exit
     if args.version:
         print(__version__)

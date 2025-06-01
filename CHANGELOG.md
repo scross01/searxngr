@@ -3,6 +3,7 @@ Change Log
 
 ## v0.3.0-dev
 
+- added `--config` command line option to open configuraiton file in system default editor
 - added support for `--categories` to get results from multiple sections
 - added `-N`, `--news` command line option to only get results from news section
 - added `-V`, `--videos` command line option to only get results from videos section
