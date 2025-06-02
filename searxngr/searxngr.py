@@ -27,6 +27,7 @@ ENGINES = None  # Default to all default engines
 EXPAND = False  # Default show expand url setting
 CONFIG_FILE = "config.ini"
 HTTP_METHOD = "GET"  # Default HTTP method for search requests
+HTTP_TIMEOUT = 30.0  # Default HTTP request timeout in seconds
 USER_AGENT = f"searxngr/{__version__}"
 CATEGORIES = ""  # Default categories to search in
 MAX_CONTENT_WORDS = 128  # Maximum number of words to show in content
@@ -77,15 +78,23 @@ def print_results(results, count, start_at=0, expand=False):
         title = textwrap.shorten(title, width=70, placeholder="...")
 
         # extract just the domain name from the URL
-        url = result.get("url", None)
-        domain = url.split("//")[1].split("/")[0]
+        url = result.get("url", "")
+        domain = ""
+        if url:
+            parsed = url.split("//")
+            if len(parsed) > 1:
+                domain = parsed[1].split("/")[0]
+            else:
+                domain = parsed[0].split("/")[0]
 
         engine = result.get("engine", None)
         template = result.get("template", None)
         category = result.get("category", None)
 
         # wrap the content to the terminal width with indentation
-        content_words = html2text(result.get("content", None).strip()).split(" ")
+        content = result.get("content", "")
+        content_text = html2text(content).strip() if content else ""
+        content_words = content_text.split(" ") if content_text else []
         content = None
         if len(content_words) > MAX_CONTENT_WORDS:
             content = " ".join(content_words[:MAX_CONTENT_WORDS]) + " ..."
@@ -94,11 +103,16 @@ def print_results(results, count, start_at=0, expand=False):
         content = textwrap.wrap(content, width=os.get_terminal_size().columns - 5)
 
         # parse the published date if available
-        published_date = (
-            format_date(parse(result.get("publishedDate").strip()))
-            if result.get("publishedDate")
-            else None
-        )
+        published_date = None
+        if result.get("publishedDate"):
+            try:
+                date_str = result["publishedDate"].strip()
+                if date_str:
+                    parsed_date = parse(date_str)
+                    published_date = format_date(parsed_date)
+            except Exception as e:
+                if DEBUG:
+                    console.print(f"[dim]Error parsing date: {e}[/dim]")
 
         # output the result in a formatted way
         console.print(
@@ -220,6 +234,7 @@ def searxng_search(
     verify_ssl=True,
     http_method="GET",
     no_user_agent=False,
+    timeout=30.0,
 ):
     query = f"site:{site} {query}" if site else query
     url = None
@@ -275,7 +290,7 @@ def searxng_search(
             "User-Agent": USER_AGENT,
         }
 
-        client = httpx.Client(verify=verify_ssl)
+        client = httpx.Client(verify=verify_ssl, timeout=httpx.Timeout(timeout))
         if no_user_agent:
             del client.headers["User-Agent"]
             del default_headers["User-Agent"]
@@ -308,6 +323,11 @@ def searxng_search(
             f"[red]Error:[/red] Could not connect to SearXNG instance at {searxng_url}\n{ce}"
         )
         exit(1)
+    except httpx.TimeoutException as te:
+        console.print(
+            f"[red]Error:[/red] Request to SearXNG instance at {searxng_url} timed out after {timeout} seconds.\n{te}"
+        )
+        exit(1)
     except json.JSONDecodeError:
         console.print("[red]Error:[/red] Could not decode JSON response.")
         console.print(
@@ -338,6 +358,7 @@ def create_config_file(config_path):
         # expand = false
         # language = en
         # http_method = {HTTP_METHOD}
+        # timeout = {HTTP_TIMEOUT}
         # no_verify_ssl = false
         # no_user_agent = false
         # no_color = false
@@ -356,6 +377,10 @@ def get_config_str(config, key, default):
 
 def get_config_int(config, key, default):
     return int(config["searxngr"][key]) if key in config["searxngr"] else default
+
+
+def get_config_float(config, key, default):
+    return float(config["searxngr"][key]) if key in config["searxngr"] else default
 
 
 def get_config_bool(config, key, default):
@@ -391,6 +416,7 @@ def main():
     )
     debug = get_config_bool(config, "debug", False)
     http_methed = get_config_str(config, "http_method", HTTP_METHOD)
+    http_timeout = get_config_float(config, "timeout", HTTP_TIMEOUT)
     no_user_agent = get_config_bool(config, "no_user_agent", False)
     no_verify_ssl = get_config_bool(config, "no_verify_ssl", False)
     no_color = get_config_bool(config, "no_color", False)
@@ -455,6 +481,13 @@ def main():
         help=f"HTTP method to use for search requests. GET or POST (default: {http_methed.upper()})",
     )
     parser.add_argument(
+        "--timeout",
+        type=float,
+        default=http_timeout,
+        metavar="SECONDS",
+        help=f"HTTP request timeout in seconds (default: {http_timeout})",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="output the search results in JSON format and exit",
@@ -476,7 +509,7 @@ def main():
         "--no-verify-ssl",
         action="store_true",
         default=no_verify_ssl,
-        help="do not verify SSL certificates when making requests (not recommended)",
+        help="do not verify SSL certificates of server  (not recommended)",
     )
     parser.add_argument(
         "--nocolor",
@@ -700,6 +733,7 @@ def main():
                 http_method=args.http_method.upper(),
                 no_user_agent=args.noua,
                 categories=args.categories,
+                timeout=args.timeout,
             )
             results.extend(query_results)
             # if no results found or number of results is not set just return all initial results
@@ -716,13 +750,30 @@ def main():
             if args.first:
                 # if first or lucky search is requested, open the first result and exit
                 url = results[0].get("url")
-                os.system(f"{args.url_handler} '{url}'")
+                if url:
+                    # Use subprocess to avoid command injection
+                    import subprocess
+                    try:
+                        subprocess.run([args.url_handler, url], check=True)
+                    except subprocess.CalledProcessError as e:
+                        console.print(f"[red]Error opening URL:[/red] {e}")
+                else:
+                    console.print("[red]Error:[/red] No URL found in result")
                 exit(0)
 
             if args.lucky:
                 # open a random result in the browser and exit
-                url = random.choice(results).get("url")
-                os.system(f"{args.url_handler} '{url}'")
+                result = random.choice(results)
+                url = result.get("url")
+                if url:
+                    # Use subprocess to avoid command injection
+                    import subprocess
+                    try:
+                        subprocess.run([args.url_handler, url], check=True)
+                    except subprocess.CalledProcessError as e:
+                        console.print(f"[red]Error opening URL:[/red] {e}")
+                else:
+                    console.print(f"[red]Error:[/red] No URL found in result {result}")
                 exit(0)
 
             # print the results
@@ -781,7 +832,12 @@ def main():
                 index = int(new_query.strip()) - 1
                 url = results[index].get("url")
                 if url:
-                    os.system(f"{args.url_handler} '{url}'")
+                    # Use subprocess to avoid command injection
+                    import subprocess
+                    try:
+                        subprocess.run([args.url_handler, url], check=True)
+                    except subprocess.CalledProcessError as e:
+                        console.print(f"[red]Error opening URL:[/red] {e}")
                 else:
                     console.print(
                         "[red]Error:[/red] No URL found for the selected result."
@@ -878,6 +934,7 @@ def main():
                         f"""
                         SearXNG URL:       {args.searxng_url}
                         HTTP method:       {args.http_method}
+                        Timeout:           {args.timeout}
                         Verify SSL:        {'enabled' if not args.no_verify_ssl else 'disabled'}
                         Result per page:   {args.num if args.num > 0 else '[dim]default[/dim]'}
                         Engines:           {args.engines if args.engines else '[dim]not set[/dim]'}
