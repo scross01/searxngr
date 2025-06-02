@@ -20,17 +20,17 @@ console = Console()
 
 # Default settings. Use config file or command line to modify.
 SAMPLE_SEARXNG_URL = "https://searxng.example.com"  # Example SearXNG instance URL
-SEARXNG_URL = ""
+SEARXNG_URL = ""  # Will be populated from config file or CLI
 RESULT_COUNT = 10  # Default number of results to show per page
 SAFE_SEARCH = "strict"  # Default safe search setting
-ENGINES = None  # Default to all default engines
-EXPAND = False  # Default show expand url setting
-CONFIG_FILE = "config.ini"
+ENGINES = None  # Default to all available engines
+EXPAND = False  # Default to not showing full URLs
+CONFIG_FILE = "config.ini"  # Configuration filename
 HTTP_METHOD = "GET"  # Default HTTP method for search requests
-HTTP_TIMEOUT = 30.0  # Default HTTP request timeout in seconds
-USER_AGENT = f"searxngr/{__version__}"
+HTTP_TIMEOUT = 30.0  # Default HTTP request timeout
+USER_AGENT = f"searxngr/{__version__}"  # User-Agent string
 CATEGORIES = ""  # Default categories to search in
-MAX_CONTENT_WORDS = 128  # Maximum number of words to show in content
+MAX_CONTENT_WORDS = 128  # Max words to show in content preview
 
 SAFE_SEARCH_OPTIONS = {
     "none": 0,  # Unsafe search
@@ -67,8 +67,16 @@ SEARXNG_CATEGORIES = [
 ]
 
 
-# print search results to the terminal
 def print_results(results, count, start_at=0, expand=False):
+    """
+    Format and display search results in the terminal
+
+    Args:
+        results: List of search result objects
+        count: Number of results to display per page
+        start_at: Starting index for pagination
+        expand: Whether to show full URLs
+    """
     console.print()
     for i, result in enumerate(
         results[start_at:(start_at + count)], start=start_at + 1
@@ -236,6 +244,27 @@ def searxng_search(
     no_user_agent=False,
     timeout=30.0,
 ):
+    """
+    Perform a search using a SearXNG instance
+
+    Args:
+        query: Search query string
+        searxng_url: Base URL of SearXNG instance
+        pageno: Page number (1-based)
+        safe_search: Safe search level
+        categories: Comma-separated categories
+        engines: Comma-separated search engines
+        language: Results language
+        time_range: Time filter for results
+        site: Site to restrict search to
+        verify_ssl: Verify SSL certificates
+        http_method: HTTP method (GET/POST)
+        no_user_agent: Omit User-Agent header
+        timeout: Request timeout in seconds
+
+    Returns:
+        List of search results or None on error
+    """
     query = f"site:{site} {query}" if site else query
     url = None
     body = None
@@ -371,23 +400,37 @@ def create_config_file(config_path):
     console.print(f"[dim]created {config_file}[/dim]")
 
 
+# Config helper functions with type-specific handling
 def get_config_str(config, key, default):
+    """Get string value from config with fallback"""
     return config["searxngr"][key] if key in config["searxngr"] else default
 
 
 def get_config_int(config, key, default):
+    """Get integer value from config with fallback"""
     return int(config["searxngr"][key]) if key in config["searxngr"] else default
 
 
 def get_config_float(config, key, default):
+    """Get float value from config with fallback"""
     return float(config["searxngr"][key]) if key in config["searxngr"] else default
 
 
 def get_config_bool(config, key, default):
+    """Get boolean value from config with fallback"""
     return config["searxngr"].getboolean(key) if key in config["searxngr"] else default
 
 
 def main():
+    """
+    Main entry point for searxngr CLI
+
+    Handles:
+    - Configuration loading
+    - Command-line argument parsing
+    - Search execution
+    - Interactive result navigation
+    """
     # Load configuration from a file if it exists
     config_path = os.path.join(xdg_config_home(), "searxngr")
     config_file = os.path.join(config_path, CONFIG_FILE)
@@ -421,7 +464,7 @@ def main():
     no_verify_ssl = get_config_bool(config, "no_verify_ssl", False)
     no_color = get_config_bool(config, "no_color", False)
 
-    # command line settings
+    # Command line argument definitions
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
     parser.add_argument(
         "query", type=str, nargs="*", metavar="QUERY", help="search query"
@@ -712,7 +755,10 @@ def main():
         parser.print_usage()
         exit(0)
 
-    # load results and loop for prompt
+    # Main processing loop handles:
+    # - Pagination
+    # - Result fetching
+    # - Output formatting
     pageno = 1
     start_at = 0
     results = []
@@ -790,7 +836,10 @@ def main():
         if args.np:
             exit(0)
 
-        # process prompt commands
+        # Interactive command prompt supports:
+        # n: Next page    p: Previous page    f: First page
+        # [num]: Open result   c [num]: Copy URL   t [range]: Time filter
+        # x: Toggle URLs   s: Show settings   d: Toggle debug   ?: Help
         while True:
             try:
                 new_query = Prompt.ask(
@@ -857,8 +906,9 @@ def main():
                 else:
                     console.print("[red]Error:[/red] Invalid index specified.")
                 continue
+            # n: Next page
             elif new_query.strip() == "n":
-                # get the next page of results
+                # get the next page of results, query if we don't have enough results
                 start_at += args.num
                 if len(results) >= (start_at + args.num):
                     # we already have enough results for the next page
@@ -870,6 +920,7 @@ def main():
                     new_query = query
                     pageno += 1
                     break
+            # p: Previous page
             elif new_query.strip() == "p":
                 # show the previous page of results
                 start_at -= args.num if start_at >= args.num else 0
@@ -877,13 +928,15 @@ def main():
                     results, count=args.num, start_at=start_at, expand=args.expand
                 )
                 continue
+            # f: First page
             elif new_query.strip() == "f":
-                # show the first page of results
+                # go back to the first page of results
                 start_at = 0
                 print_results(
                     results, count=args.num, start_at=start_at, expand=args.expand
                 )
                 continue
+            # t: Change time range filter
             elif new_query.strip().startswith("t "):
                 # change the time range filter
                 time_range = new_query[2:].strip()
@@ -911,8 +964,9 @@ def main():
                     pageno = 1
                     results = []
                     break
+            # site: Change site filter
             elif new_query.strip().startswith("site:"):
-                # change the site filter
+                # etranct the new site filter and re-query
                 site = new_query[5:].strip()
                 args.site = site
                 new_query = query
@@ -920,15 +974,17 @@ def main():
                 pageno = 1
                 results = []
                 break
+            # x: Toggle expand URLs
             elif new_query.strip() == "x":
-                # toggle the expand URL setting
+                # toggle the expand URL setting and re-show results
                 args.expand = not args.expand
                 print_results(
                     results, count=args.num, start_at=start_at, expand=args.expand
                 )
                 continue
+            # s: Show current configuration settings
             elif new_query.strip() == "s":
-                # show the current configuration settings
+                # format the current configuration settings
                 console.print(
                     textwrap.dedent(
                         f"""
@@ -948,13 +1004,15 @@ def main():
                     )
                 )
                 continue
+            # d: Toggle debug mode
             elif new_query.strip() == "d":
-                # toggle debug mode
+                # toggle debug mode on or off
                 DEBUG = not DEBUG
                 console.print(f"Debug mode {'enabled' if DEBUG else 'disabled'}")
                 continue
+            # j: Show JSON result for a specific index
             elif new_query.strip().startswith("j "):
-                # show the json result for the specified index
+                # pretty prin the raw json for the specified index
                 index = new_query[2:].strip()
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
                     index = int(index) - 1
@@ -962,6 +1020,7 @@ def main():
                         json.dumps(results[index], indent=2, ensure_ascii=False)
                     )
                 continue
+            # If the input is not recognized and not empty, treat it as a new query
             elif new_query.strip() != "":
                 # run the new query
                 query = new_query.strip()
