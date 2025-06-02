@@ -5,6 +5,20 @@ SearXNG from the command line, inspired by `ddgr` and `googler`.
 
 ![demo](demo/demo.gif)
 
+`searxngr` is a command-line interface (CLI) tool that allows you to perform web searches using [SearXNG](https://github.com/searxng/searxng) instances directly from your terminal. It provides rich-formatted search results with support for various search categories and advanced filtering options.
+
+Key Features
+------------
+
+- 💻 **Terminal-based interface** with colorized output
+- 🚂 **Search engines selection** (bing, duckduckgo, google, etc)
+- 📰 Support for **search categories** (general, news, images, videos, science, etc.)
+- 👷 **Safe search filtering** (none, moderate, strict)
+- 📅 **Time-range filtering** (day, week, month, year)
+- 👨‍💻 **JSON output** option for scripting
+- 🤖 **Automatic configuration** with first-time setup
+- 🐧 **Cross-platform** support (macOS, Linux, Windows)
+
 Installation
 ------------
 

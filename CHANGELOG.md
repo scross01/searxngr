@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-## v0.4.0-dev
+## v0.4.0
 
 - fixed category shortcut command line option issues and added `--files` and `--music`  options
 - fixed issue where default cateogry selection was peventing engine selection
