@@ -875,7 +875,7 @@ def main():
                 )
                 continue
             elif new_query.strip().isdigit() and int(new_query.strip()) in range(
-                1, (len(results) if args.num == 0 else args.num) + 1
+                1, (len(results)) + 1
             ):
                 # open the selected result in the browser
                 index = int(new_query.strip()) - 1
