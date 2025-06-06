@@ -277,11 +277,12 @@ def searxng_search(
             "format": "json",
         }
         if categories:
-            body["categories"] = (
-                categories.replace("social+media", "social media")
-                if "social+media" in categories
-                else categories
-            )
+            if "social+media" in categories:
+                # replace the list entry
+                for i in range(len(categories)):
+                    if categories[i] == "social+media":
+                        categories[i] = "social media"
+            body["categories"] = ",".join(categories)
         if engines:
             body["engines"] = engines
         if language:
@@ -298,7 +299,7 @@ def searxng_search(
     elif http_method == "GET":
         # construct the query url
         url = f"{searxng_url}/?q={query}&format=json"
-        url += f"&categories={categories}" if categories else ""
+        url += f"&categories={','.join(categories)}" if categories else ""
         url += f"&engines={engines}" if engines else ""
         url += f"&language={language}" if language else ""
         url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
@@ -419,6 +420,16 @@ def get_config_float(config, key, default):
 def get_config_bool(config, key, default):
     """Get boolean value from config with fallback"""
     return config["searxngr"].getboolean(key) if key in config["searxngr"] else default
+
+
+def validate_category(category):
+    if category not in SEARXNG_CATEGORIES:
+        console.print(
+                    f"[red]Error:[/red] Invalid category '{category}'. " + ""
+                    f"Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
+                )
+        return False
+    return True
 
 
 def main():
@@ -702,24 +713,17 @@ def main():
         args.engines = ",".join(args.engines).strip()
     else:
         args.engines = args.engines.strip().replace(" ", ",") if args.engines else None
-    # update categories to a comma-separated string if it's a list
+    # check categories and ensure result is a list
     if isinstance(args.categories, list):
-        args.categories = (
-            ",".join(args.categories)
-            if isinstance(args.categories, list)
-            else args.categories
-        )
-    # validate categories are supported
-    if args.categories:
-        categories = [c.strip() for c in args.categories.split(",")]
-        # check if categories are valid
+        # check if all categories are valid
         for category in categories:
-            if category not in SEARXNG_CATEGORIES:
-                console.print(
-                    f"[red]Error:[/red] Invalid category '{category}'. " + ""
-                    f"Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
-                )
+            if not validate_category(category):
                 exit(1)
+    elif isinstance(args.categories, str):
+        # validate teh single category is supported
+        if not validate_category(category):
+            exit(1)
+        args.categories = [args.categories]
     # if news is requested, set categories to just 'news'
     if args.files:
         args.categories = ["files"]

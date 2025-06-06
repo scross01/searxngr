@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+## v0.4.1
+
+- fixed issue when searching using multiple cateogies
+- fixed issue with the `--social` cateogory selection option
+
 ## v0.4.0
 
 - fixed category shortcut command line option issues and added `--files` and `--music`  options
