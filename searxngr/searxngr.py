@@ -29,7 +29,7 @@ CONFIG_FILE = "config.ini"  # Configuration filename
 HTTP_METHOD = "GET"  # Default HTTP method for search requests
 HTTP_TIMEOUT = 30.0  # Default HTTP request timeout
 USER_AGENT = f"searxngr/{__version__}"  # User-Agent string
-CATEGORIES = ""  # Default categories to search in
+CATEGORIES = None  # Default categories to search in
 MAX_CONTENT_WORDS = 128  # Max words to show in content preview
 
 SAFE_SEARCH_OPTIONS = {
@@ -284,7 +284,7 @@ def searxng_search(
                         categories[i] = "social media"
             body["categories"] = ",".join(categories)
         if engines:
-            body["engines"] = engines
+            body["engines"] = ",".join(engines)
         if language:
             body["language"] = language
         if pageno > 1:
@@ -300,7 +300,7 @@ def searxng_search(
         # construct the query url
         url = f"{searxng_url}/?q={query}&format=json"
         url += f"&categories={','.join(categories)}" if categories else ""
-        url += f"&engines={engines}" if engines else ""
+        url += f"&engines={','.join(engines)}" if engines else ""
         url += f"&language={language}" if language else ""
         url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
         url += f"&time_range={time_range}" if time_range else ""
@@ -382,7 +382,7 @@ def create_config_file(config_path):
         [searxngr]
         searxng_url = {searxng_url}
         # result_count = {RESULT_COUNT}
-        # categories = {CATEGORIES}
+        # categories = general news social+media
         # safe_search = {SAFE_SEARCH}
         # engines = google duckduckgo brave
         # expand = false
@@ -402,6 +402,16 @@ def create_config_file(config_path):
 
 
 # Config helper functions with type-specific handling
+def get_config_list(config, key, default):
+    """Get list of strings from config with fallback"""
+    entry = config["searxngr"][key] if key in config["searxngr"] else default
+    if entry:
+        entry = entry.strip().split(" ")
+    if entry == "":
+        entry = None
+    return entry
+
+
 def get_config_str(config, key, default):
     """Get string value from config with fallback"""
     return config["searxngr"][key] if key in config["searxngr"] else default
@@ -461,8 +471,8 @@ def main():
     searxng_url = get_config_str(config, "searxng_url", None)
     result_count = get_config_int(config, "result_count", RESULT_COUNT)
     safe_search = get_config_str(config, "safe_search", SAFE_SEARCH)
-    categories = get_config_str(config, "categories", CATEGORIES).strip().split(" ")
-    engines = get_config_str(config, "engines", ENGINES)
+    categories = get_config_list(config, "categories", CATEGORIES)
+    engines = get_config_list(config, "engines", ENGINES)
     expand = get_config_bool(config, "expand", EXPAND)
     language = get_config_str(config, "language", None)
     url_handler = get_config_str(
@@ -708,20 +718,15 @@ def main():
             .replace("w", "week")
             .replace("d", "day")
         )
-    # update engines to a comma-separated string if it's a list
-    if isinstance(args.engines, list):
-        args.engines = ",".join(args.engines).strip()
-    else:
-        args.engines = args.engines.strip().replace(" ", ",") if args.engines else None
     # check categories and ensure result is a list
     if isinstance(args.categories, list):
         # check if all categories are valid
-        for category in categories:
+        for category in args.categories:
             if not validate_category(category):
                 exit(1)
     elif isinstance(args.categories, str):
         # validate teh single category is supported
-        if not validate_category(category):
+        if not validate_category(args.categories):
             exit(1)
         args.categories = [args.categories]
     # if news is requested, set categories to just 'news'

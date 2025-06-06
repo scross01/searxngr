@@ -1,10 +1,15 @@
 Change Log
 ==========
 
+## v0.4.2
+
+- fixed issue when `categories` not set in the configuration file
+- fixed handling of empty `categories` and `engines` entries in configuration file
+
 ## v0.4.1
 
-- fixed issue when searching using multiple cateogies
-- fixed issue with the `--social` cateogory selection option
+- fixed issue when searching using multiple categories
+- fixed issue with the `--social` category selection option
 
 ## v0.4.0
 
