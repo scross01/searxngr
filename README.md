@@ -102,7 +102,7 @@ options:
   -t, --time-range TIME_RANGE
                         search results within a specific time range (day, week, month, year)
   --unsafe              allow unsafe search results (same as --safe-search none)
-  --url_handler UTIL    Command to open URLs in the browser (default: open)
+  --url-handler UTIL    Command to open URLs in the browser (default: open)
   -v, --version         show program's version number and exit
   -N, --news            show results from news section. (same as --categories news)
   -S, --social          show results from videos section. (same as --categories social+media)

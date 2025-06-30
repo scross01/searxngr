@@ -628,7 +628,7 @@ def main():
         help="allow unsafe search results (same as --safe-search none)",
     )
     parser.add_argument(
-        "--url_handler",
+        "--url-handler",
         type=str,
         default=url_handler,
         metavar="UTIL",
@@ -809,7 +809,9 @@ def main():
                     # Use subprocess to avoid command injection
                     import subprocess
                     try:
-                        subprocess.run([args.url_handler, url], check=True)
+                        command = args.url_handler.split(" ")
+                        command.append(url)
+                        subprocess.run(command, check=True)
                     except subprocess.CalledProcessError as e:
                         console.print(f"[red]Error opening URL:[/red] {e}")
                 else:

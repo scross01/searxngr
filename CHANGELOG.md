@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+## v0.4.3
+
+- fixed `--url-handler` option
+
 ## v0.4.2
 
 - fixed issue when `categories` not set in the configuration file
