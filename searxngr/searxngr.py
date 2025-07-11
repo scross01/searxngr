@@ -414,30 +414,56 @@ def get_config_list(config, key, default):
 
 def get_config_str(config, key, default):
     """Get string value from config with fallback"""
-    return config["searxngr"][key] if key in config["searxngr"] else default
+    try:
+        return config["searxngr"][key] if key in config["searxngr"] else default
+    except ValueError as ve:
+        print(
+            f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
+        )
+        return default
 
 
 def get_config_int(config, key, default):
     """Get integer value from config with fallback"""
-    return int(config["searxngr"][key]) if key in config["searxngr"] else default
+    try:
+        return int(config["searxngr"][key]) if key in config["searxngr"] else default
+    except ValueError as ve:
+        console.print(
+            f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
+        )
+        return default
 
 
 def get_config_float(config, key, default):
     """Get float value from config with fallback"""
-    return float(config["searxngr"][key]) if key in config["searxngr"] else default
+    try:
+        return float(config["searxngr"][key]) if key in config["searxngr"] else default
+    except ValueError as ve:
+        console.print(
+            f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
+        )
+        return default
 
 
 def get_config_bool(config, key, default):
     """Get boolean value from config with fallback"""
-    return config["searxngr"].getboolean(key) if key in config["searxngr"] else default
+    try:
+        return (
+            config["searxngr"].getboolean(key) if key in config["searxngr"] else default
+        )
+    except ValueError as ve:
+        console.print(
+            f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
+        )
+        return default
 
 
 def validate_category(category):
     if category not in SEARXNG_CATEGORIES:
         console.print(
-                    f"[red]Error:[/red] Invalid category '{category}'. " + ""
-                    f"Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
-                )
+            f"[red]Error:[/red] Invalid category '{category}'. " + ""
+            f"Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
+        )
         return False
     return True
 
@@ -752,6 +778,7 @@ def main():
         args.safe_search = "none"
     # open the configuration file and edit
     if args.config:
+        console.print(f"opening {config_file}")
         editor = os.environ.get("EDITOR", DEFAULT_EDITOR[platform.system()])
         os.system(f"{editor} {config_file}")
         exit(0)

@@ -1,6 +1,8 @@
 Change Log
 ==========
 
+- improved error handling for config file issues
+
 ## v0.4.3
 
 - fixed `--url-handler` option
