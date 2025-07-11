@@ -54,6 +54,23 @@ expand = false
 engines = duckduckgo google brave
 ```
 
+### Configuration options
+
+- `searxng_url` - set the URL of your SearXNG instance.
+- `searxng_user` - username for basic auth. Optional
+- `searxng_password` - password for basic auth. Optional
+- `results_per_page` - the number results to output per page on the terminal. Default is `10`.
+- `categories` - the categories to use for the search. Options include `news`, `videos`, `images`, `music`, `map`, `science`, `it`, `files`, `social+media`. Uses `general` search if not set.
+- `safe_search` - set the safe search level to `none`, `moderate`, or `strict`. Uses server default if not set.
+- `engines` - use the specified engines for the search. Uses server default if not set.
+- `expand` - show the result URL in the results list. Default is `false`.
+- `language` - set the search language, e.g. `en`, `en-CA`, `fr`, `es`, `de`, etc.
+- `http_method` - use either `GET` or `POST` requests to the SearXNG API. Default is `GET`
+- `timeout` - Timeout in seconds. Default is `30`.
+- `no_verify_ssl` - disable SSL verification if you are hosting SearXNG with self-signed certificated. Default is `false`.
+- `no_user_agent` - Clear the user agent. Default is `false`.
+- `no_color` - disable color terminal output. Default is `false`.
+
 Usage
 -----
 

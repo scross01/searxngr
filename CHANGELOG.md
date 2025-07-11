@@ -1,6 +1,7 @@
 Change Log
 ==========
 
+- added configuration options for authenticating to searxng sites using basic auth
 - improved error handling for config file issues
 
 ## v0.4.3

@@ -232,6 +232,8 @@ def print_results(results, count, start_at=0, expand=False):
 def searxng_search(
     query,
     searxng_url,
+    searxng_username=None,
+    searxng_password=None,
     pageno=0,
     safe_search=None,
     categories=None,
@@ -250,6 +252,8 @@ def searxng_search(
     Args:
         query: Search query string
         searxng_url: Base URL of SearXNG instance
+        searxng_username: Username for SearXNG instance (optional)
+        searxng_password: Password for SearXNG instance (optional)
         pageno: Page number (1-based)
         safe_search: Safe search level
         categories: Comma-separated categories
@@ -320,7 +324,19 @@ def searxng_search(
             "User-Agent": USER_AGENT,
         }
 
-        client = httpx.Client(verify=verify_ssl, timeout=httpx.Timeout(timeout))
+        if searxng_username and searxng_password:
+            # Basic authentication using username and password
+            console.print(
+                f"[dim]Using basic auth with username: {searxng_username}[/dim]"
+            ) if DEBUG else None
+            client = httpx.Client(
+                verify=verify_ssl,
+                timeout=httpx.Timeout(timeout),
+                auth=(searxng_username, searxng_password),
+            )
+        else:
+            client = httpx.Client(verify=verify_ssl, timeout=httpx.Timeout(timeout))
+
         if no_user_agent:
             del client.headers["User-Agent"]
             del default_headers["User-Agent"]
@@ -495,6 +511,8 @@ def main():
         config.read(config_file)
 
     searxng_url = get_config_str(config, "searxng_url", None)
+    searxng_username = get_config_str(config, "searxng_username", None)
+    searxng_password = get_config_str(config, "searxng_password", None)
     result_count = get_config_int(config, "result_count", RESULT_COUNT)
     safe_search = get_config_str(config, "safe_search", SAFE_SEARCH)
     categories = get_config_list(config, "categories", CATEGORIES)
@@ -805,6 +823,8 @@ def main():
             query_results = searxng_search(
                 query,
                 searxng_url=args.searxng_url,
+                searxng_username=searxng_username,
+                searxng_password=searxng_password,
                 safe_search=args.safe_search,
                 engines=args.engines,
                 language=args.language,
@@ -835,6 +855,7 @@ def main():
                 if url:
                     # Use subprocess to avoid command injection
                     import subprocess
+
                     try:
                         command = args.url_handler.split(" ")
                         command.append(url)
@@ -852,6 +873,7 @@ def main():
                 if url:
                     # Use subprocess to avoid command injection
                     import subprocess
+
                     try:
                         subprocess.run([args.url_handler, url], check=True)
                     except subprocess.CalledProcessError as e:
@@ -921,6 +943,7 @@ def main():
                 if url:
                     # Use subprocess to avoid command injection
                     import subprocess
+
                     try:
                         subprocess.run([args.url_handler, url], check=True)
                     except subprocess.CalledProcessError as e:
