@@ -302,7 +302,7 @@ def searxng_search(
     # if http_method is GET, construct the query url with parameters
     elif http_method == "GET":
         # construct the query url
-        url = f"{searxng_url}/?q={query}&format=json"
+        url = f"{searxng_url}/search?q={query}&format=json"
         url += f"&categories={','.join(categories)}" if categories else ""
         url += f"&engines={','.join(engines)}" if engines else ""
         url += f"&language={language}" if language else ""
@@ -326,13 +326,18 @@ def searxng_search(
 
         if searxng_username and searxng_password:
             # Basic authentication using username and password
-            console.print(
-                f"[dim]Using basic auth with username: {searxng_username}[/dim]"
-            ) if DEBUG else None
+            (
+                console.print(
+                    f"[dim]Using basic auth with username: {searxng_username}[/dim]"
+                )
+                if DEBUG
+                else None
+            )
+            auth = httpx.BasicAuth(searxng_username, searxng_password)
             client = httpx.Client(
                 verify=verify_ssl,
                 timeout=httpx.Timeout(timeout),
-                auth=(searxng_username, searxng_password),
+                auth=auth,
             )
         else:
             client = httpx.Client(verify=verify_ssl, timeout=httpx.Timeout(timeout))
@@ -344,7 +349,8 @@ def searxng_search(
         if http_method == "POST":
             headers = {
                 "Content-Type": "application/x-www-form-urlencoded",
-            }.update(default_headers)
+            }
+            headers.update(default_headers)
             response = client.post(
                 url, data=body, headers=headers, follow_redirects=True
             )

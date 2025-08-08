@@ -28,3 +28,9 @@ searxngr = "searxngr:main"
 
 [tool.hatch.version]
 path = "searxngr/__version__.py"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "flake8>=7.3.0",
+]
