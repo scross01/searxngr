@@ -8,6 +8,8 @@ from xdg_base_dirs import xdg_config_home
 import configparser
 import platform
 import random
+import shlex
+import subprocess
 from dateutil.parser import parse
 from babel.dates import format_date
 from html2text import html2text
@@ -804,7 +806,10 @@ def main():
     if args.config:
         console.print(f"opening {config_file}")
         editor = os.environ.get("EDITOR", DEFAULT_EDITOR[platform.system()])
-        os.system(f"{editor} {config_file}")
+        try:
+            subprocess.run(shlex.split(editor) + [config_file], check=True)
+        except subprocess.CalledProcessError as e:
+            console.print(f"[red]Error opening editor:[/red] {e}")
         exit(0)
     # show version and exit
     if args.version:
@@ -859,11 +864,8 @@ def main():
                 # if first or lucky search is requested, open the first result and exit
                 url = results[0].get("url")
                 if url:
-                    # Use subprocess to avoid command injection
-                    import subprocess
-
                     try:
-                        command = args.url_handler.split(" ")
+                        command = shlex.split(args.url_handler)
                         command.append(url)
                         subprocess.run(command, check=True)
                     except subprocess.CalledProcessError as e:
@@ -877,11 +879,8 @@ def main():
                 result = random.choice(results)
                 url = result.get("url")
                 if url:
-                    # Use subprocess to avoid command injection
-                    import subprocess
-
                     try:
-                        subprocess.run([args.url_handler, url], check=True)
+                        subprocess.run(shlex.split(args.url_handler) + [url], check=True)
                     except subprocess.CalledProcessError as e:
                         console.print(f"[red]Error opening URL:[/red] {e}")
                 else:
@@ -947,11 +946,8 @@ def main():
                 index = int(new_query.strip()) - 1
                 url = results[index].get("url")
                 if url:
-                    # Use subprocess to avoid command injection
-                    import subprocess
-
                     try:
-                        subprocess.run([args.url_handler, url], check=True)
+                        subprocess.run(shlex.split(args.url_handler) + [url], check=True)
                     except subprocess.CalledProcessError as e:
                         console.print(f"[red]Error opening URL:[/red] {e}")
                 else:

@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.5.1
+
+- fixes command injection vulnerability
+
 ## v0.5.0
 
 - added configuration options for authenticating to searxng sites using basic
