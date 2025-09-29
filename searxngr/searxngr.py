@@ -367,7 +367,7 @@ def searxng_search(
             console.print(f"Returned {len(data['results'])} results") if DEBUG else None
             return data["results"]
         else:
-            return None
+            return []
 
     except httpx.HTTPStatusError as e:
         console.print(f"[red]Error:[/red]: {e}")
@@ -854,12 +854,11 @@ def main():
                 break
             pageno += 1
 
-        if results:
-            if args.json:
-                # output the results in JSON format and exit
-                print(json.dumps(results, indent=2))
-                exit(0)
+        if args.json:
+            print(json.dumps(results, indent=2))
+            exit(0)
 
+        if results:
             if args.first:
                 # if first or lucky search is requested, open the first result and exit
                 url = results[0].get("url")

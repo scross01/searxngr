@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.5.2
+
+- fixes issue where `--json` option would enter interactive console on no results.
+
+
 ## v0.5.1
 
 - fixes command injection vulnerability
