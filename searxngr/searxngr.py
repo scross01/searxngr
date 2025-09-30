@@ -363,8 +363,15 @@ def searxng_search(
         response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         data = response.json()
 
-        if data and "unresponsive_engines" in data and len(data['unresponsive_engines']) > 0:
-            unique_list = [list(item) for item in {tuple(sublist) for sublist in data['unresponsive_engines']}]
+        if (
+            data
+            and "unresponsive_engines" in data
+            and len(data["unresponsive_engines"]) > 0
+        ):
+            unique_list = [
+                list(item)
+                for item in {tuple(sublist) for sublist in data["unresponsive_engines"]}
+            ]
             for engine, error in unique_list:
                 console.print(f"Engine: {engine} [red]{error}[/red]")
 
@@ -884,7 +891,9 @@ def main():
                 url = result.get("url")
                 if url:
                     try:
-                        subprocess.run(shlex.split(args.url_handler) + [url], check=True)
+                        subprocess.run(
+                            shlex.split(args.url_handler) + [url], check=True
+                        )
                     except subprocess.CalledProcessError as e:
                         console.print(f"[red]Error opening URL:[/red] {e}")
                 else:
@@ -951,7 +960,9 @@ def main():
                 url = results[index].get("url")
                 if url:
                     try:
-                        subprocess.run(shlex.split(args.url_handler) + [url], check=True)
+                        subprocess.run(
+                            shlex.split(args.url_handler) + [url], check=True
+                        )
                     except subprocess.CalledProcessError as e:
                         console.print(f"[red]Error opening URL:[/red] {e}")
                 else:
