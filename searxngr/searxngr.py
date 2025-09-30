@@ -363,6 +363,11 @@ def searxng_search(
         response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         data = response.json()
 
+        if data and "unresponsive_engines" in data and len(data['unresponsive_engines']) > 0:
+            unique_list = [list(item) for item in {tuple(sublist) for sublist in data['unresponsive_engines']}]
+            for engine, error in unique_list:
+                console.print(f"Engine: {engine} [red]{error}[/red]")
+
         if data and "results" in data:
             console.print(f"Returned {len(data['results'])} results") if DEBUG else None
             return data["results"]

@@ -3,7 +3,7 @@
 ## v0.5.2
 
 - fixes issue where `--json` option would enter interactive console on no results.
-
+- output details for unresponsive engines
 
 ## v0.5.1
 
