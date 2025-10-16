@@ -362,9 +362,9 @@ class SearXNGClient:
         for engine in data:
             for category in engine["categories"]:
                 if category not in unique_categories.keys():
-                    unique_categories[category] = []
+                    unique_categories[category] = set()
                 if engine["name"] not in unique_categories[category]:
-                    unique_categories[category].append(engine["name"])
+                    unique_categories[category].add(engine["name"])
 
         sorted_categories = dict(sorted(unique_categories.items()))
         return sorted_categories
@@ -978,7 +978,9 @@ def main():
         table.add_column("Category", style="cyan", no_wrap=True)
         table.add_column("Engines")
         for category in categories.keys():
-            table.add_row(category, ",".join(categories[category]))
+            c = list(categories[category])
+            c.sort()
+            table.add_row(category, ",".join(c))
         console.print(table)
         exit(0)
 
