@@ -97,9 +97,9 @@ configuraiton defaults.
 
 ```txt
 usage: searxngr [-h] [--searxng-url SEARXNG_URL] [-c [CATEGORY ...]] [--config] [-d] [-e [ENGINE ...]] [-x] [-j]
-                [--http-method METHOD] [--timeout SECONDS] [--json] [-l LANGUAGE] [--lucky] [--no-verify-ssl]
-                [--nocolor] [--np] [--noua] [-n N] [--safe-search FILTER] [-w SITE] [-t TIME_RANGE] [--unsafe]
-                [--url-handler UTIL] [-v] [-F] [-M] [-N] [-S] [-V]
+                [--http-method METHOD] [--timeout SECONDS] [--json] [-l LANGUAGE] [--lucky] [--list-engines]
+                [--list-categories] [--no-verify-ssl] [--nocolor] [--np] [--noua] [-n N] [--safe-search FILTER]
+                [-w SITE] [-t TIME_RANGE] [--unsafe] [--url-handler UTIL] [-v] [-F] [-M] [-N] [-S] [-V]
                 [QUERY ...]
 
 Perform a search using SearXNG
@@ -126,6 +126,8 @@ options:
   -l LANGUAGE, --language LANGUAGE
                         search results in a specific language (e.g., 'en', 'de', 'fr') (default: en-CA)
   --lucky               opens a random result in web browser and exit
+  --list-engines        list available search engines and exit
+  --list-categories     list available search categories and exit
   --no-verify-ssl       do not verify SSL certificates of server (not recommended)
   --nocolor             disable colored output
   --np, --noprompt      just search and exit, do not prompt
@@ -144,6 +146,20 @@ options:
   -S, --social          show results from videos section. (same as --categories social+media)
   -V, --videos          show results from videos section. (same as --categories videos)
 ```
+
+### Listing Available Engines and Categories
+
+You can view the available search engines and categories supported by your SearXNG instance using the following options:
+
+```shell
+# List all available search engines
+searxngr --list-engines
+
+# List all available search categories
+searxngr --list-categories
+```
+
+These options fetch the current list of engines and categories directly from your configured SearXNG instance and display them in a formatted table. The engine listing includes the engine name, URL, supported bang commands, categories, and reliability score. The category listing shows each category along with the engines that support it.
 
 ## Troubleshooting
 
