@@ -492,106 +492,148 @@ class SearXNGClient:
             exit(1)
 
 
-def create_config_file(config_path):
+class SearxngrConfig:
 
-    if not os.path.isdir(config_path):
-        os.makedirs(config_path)
+    def __init__(self, config_path=None, config_file=None):
+        # Load default configuration from a file if it exists
+        if config_path:
+            self.config_path = config_path
+        else:
+            self.config_path = os.path.join(xdg_config_home(), "searxngr")
 
-    config_file = os.path.join(config_path, CONFIG_FILE)
+        if config_file:
+            self.config_file = config_file
+        else:
+            self.config_file = os.path.join(self.config_path, CONFIG_FILE)
 
-    # request user to input the searxng instance url
-    searxng_url = input(f"Enter your SearXNG instance URL [{SAMPLE_SEARXNG_URL}]: ")
+        if not os.path.exists(self.config_file):
+            # first time setup, create new configuration file
+            self.create_config_file()
 
-    # construct the initial config file
-    default_config = textwrap.dedent(
-        f"""
-        [searxngr]
-        searxng_url = {searxng_url}
-        # result_count = {RESULT_COUNT}
-        # categories = general news social+media
-        # safe_search = {SAFE_SEARCH}
-        # engines = google duckduckgo brave
-        # expand = false
-        # language = en
-        # http_method = {HTTP_METHOD}
-        # timeout = {HTTP_TIMEOUT}
-        # no_verify_ssl = false
-        # no_user_agent = false
-        # no_color = false
-    """
-    ).split("\n", 1)[1:][0]
+        self.load_config()
 
-    with open(config_file, "w") as f:
-        f.write(default_config)
+    def create_config_file(self):
 
-    console.print(f"[dim]created {config_file}[/dim]")
+        if not os.path.isdir(self.config_path):
+            os.makedirs(self.config_path)
 
+        file = os.path.join(self.config_path, self.config_file)
 
-# Config helper functions with type-specific handling
-def get_config_list(config, key, default):
-    """Get list of strings from config with fallback"""
-    entry = config["searxngr"][key] if key in config["searxngr"] else default
-    if entry:
-        entry = entry.strip().split(" ")
-    if entry == "":
-        entry = None
-    return entry
+        # request user to input the searxng instance url
+        searxng_url = input(f"Enter your SearXNG instance URL [{SAMPLE_SEARXNG_URL}]: ")
 
+        # construct the initial config file
+        default_config = textwrap.dedent(
+            f"""
+            [searxngr]
+            searxng_url = {searxng_url}
+            # result_count = {RESULT_COUNT}
+            # categories = general news social+media
+            # safe_search = {SAFE_SEARCH}
+            # engines = google duckduckgo brave
+            # expand = false
+            # language = en
+            # http_method = {HTTP_METHOD}
+            # timeout = {HTTP_TIMEOUT}
+            # no_verify_ssl = false
+            # no_user_agent = false
+            # no_color = false
+        """
+        ).split("\n", 1)[1:][0]
 
-def get_config_str(config, key, default):
-    """Get string value from config with fallback"""
-    try:
-        return config["searxngr"][key] if key in config["searxngr"] else default
-    except ValueError as ve:
-        print(
-            f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
+        with open(file, "w") as f:
+            f.write(default_config)
+
+        console.print(f"[dim]created {file}[/dim]")
+
+    # Config helper functions with type-specific handling
+    def get_config_list(self, parser, key, default):
+        """Get list of strings from config with fallback"""
+        entry = parser["searxngr"][key] if key in parser["searxngr"] else default
+        if entry:
+            entry = entry.strip().split(" ")
+        if entry == "":
+            entry = None
+        return entry
+
+    def get_config_str(self, parser, key, default):
+        """Get string value from config with fallback"""
+        try:
+            return parser["searxngr"][key] if key in parser["searxngr"] else default
+        except ValueError as ve:
+            print(
+                f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
+            )
+            return default
+
+    def get_config_int(self, parser, key, default):
+        """Get integer value from config with fallback"""
+        try:
+            return int(parser["searxngr"][key]) if key in parser["searxngr"] else default
+        except ValueError as ve:
+            console.print(
+                f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
+            )
+            return default
+
+    def get_config_float(self, parser, key, default):
+        """Get float value from config with fallback"""
+        try:
+            return float(parser["searxngr"][key]) if key in parser["searxngr"] else default
+        except ValueError as ve:
+            console.print(
+                f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
+            )
+            return default
+
+    def get_config_bool(self, parser, key, default):
+        """Get boolean value from config with fallback"""
+        try:
+            return (
+                parser["searxngr"].getboolean(key) if key in parser["searxngr"] else default
+            )
+        except ValueError as ve:
+            console.print(
+                f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
+            )
+            return default
+
+    def validate_category(self, category):
+        if category not in SEARXNG_CATEGORIES:
+            console.print(
+                f"[red]Error:[/red] Invalid category '{category}'. " + ""
+                f"Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
+            )
+            return False
+        return True
+
+    def load_config(self):
+        # read the settings from the config file
+        parser = configparser.ConfigParser()
+        parser.read(self.config_file)
+        if "searxngr" not in parser:
+            # config file content is missing, create new configuration file
+            self.create_config_file()
+            parser.read(self.config_file)
+
+        self.searxng_url = self.get_config_str(parser, "searxng_url", None)
+        self.searxng_username = self.get_config_str(parser, "searxng_username", None)
+        self.searxng_password = self.get_config_str(parser, "searxng_password", None)
+        self.result_count = self.get_config_int(parser, "result_count", RESULT_COUNT)
+        self.safe_search = self.get_config_str(parser, "safe_search", SAFE_SEARCH)
+        self.categories = self.get_config_list(parser, "categories", CATEGORIES)
+        self.engines = self.get_config_list(parser, "engines", ENGINES)
+        self.expand = self.get_config_bool(parser, "expand", EXPAND)
+        self.language = self.get_config_str(parser, "language", None)
+        self.url_handler = self.get_config_str(
+            parser, "url_handler", URL_HANDLER.get(platform.system())
         )
-        return default
-
-
-def get_config_int(config, key, default):
-    """Get integer value from config with fallback"""
-    try:
-        return int(config["searxngr"][key]) if key in config["searxngr"] else default
-    except ValueError as ve:
-        console.print(
-            f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
-        )
-        return default
-
-
-def get_config_float(config, key, default):
-    """Get float value from config with fallback"""
-    try:
-        return float(config["searxngr"][key]) if key in config["searxngr"] else default
-    except ValueError as ve:
-        console.print(
-            f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
-        )
-        return default
-
-
-def get_config_bool(config, key, default):
-    """Get boolean value from config with fallback"""
-    try:
-        return (
-            config["searxngr"].getboolean(key) if key in config["searxngr"] else default
-        )
-    except ValueError as ve:
-        console.print(
-            f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
-        )
-        return default
-
-
-def validate_category(category):
-    if category not in SEARXNG_CATEGORIES:
-        console.print(
-            f"[red]Error:[/red] Invalid category '{category}'. " + ""
-            f"Supported categories are: {', '.join(SEARXNG_CATEGORIES)}"
-        )
-        return False
-    return True
+        self.debug = self.get_config_bool(parser, "debug", False)
+        self.http_methed = self.get_config_str(parser, "http_method", HTTP_METHOD)
+        self.http_timeout = self.get_config_float(parser, "timeout", HTTP_TIMEOUT)
+        self.no_user_agent = self.get_config_bool(parser, "no_user_agent", False)
+        self.no_verify_ssl = self.get_config_bool(parser, "no_verify_ssl", False)
+        self.no_color = self.get_config_bool(parser, "no_color", False)
 
 
 def main():
@@ -604,40 +646,7 @@ def main():
     - Search execution
     - Interactive result navigation
     """
-    # Load configuration from a file if it exists
-    config_path = os.path.join(xdg_config_home(), "searxngr")
-    config_file = os.path.join(config_path, CONFIG_FILE)
-
-    if not os.path.exists(config_file):
-        # first time setup, create new configuration file
-        create_config_file(config_path)
-
-    # read the settings frm the config file
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    if "searxngr" not in config:
-        # config file content is missing, create new configuration file
-        create_config_file(config_path)
-        config.read(config_file)
-
-    searxng_url = get_config_str(config, "searxng_url", None)
-    searxng_username = get_config_str(config, "searxng_username", None)
-    searxng_password = get_config_str(config, "searxng_password", None)
-    result_count = get_config_int(config, "result_count", RESULT_COUNT)
-    safe_search = get_config_str(config, "safe_search", SAFE_SEARCH)
-    categories = get_config_list(config, "categories", CATEGORIES)
-    engines = get_config_list(config, "engines", ENGINES)
-    expand = get_config_bool(config, "expand", EXPAND)
-    language = get_config_str(config, "language", None)
-    url_handler = get_config_str(
-        config, "url_handler", URL_HANDLER.get(platform.system())
-    )
-    debug = get_config_bool(config, "debug", False)
-    http_methed = get_config_str(config, "http_method", HTTP_METHOD)
-    http_timeout = get_config_float(config, "timeout", HTTP_TIMEOUT)
-    no_user_agent = get_config_bool(config, "no_user_agent", False)
-    no_verify_ssl = get_config_bool(config, "no_verify_ssl", False)
-    no_color = get_config_bool(config, "no_color", False)
+    cfg = SearxngrConfig()
 
     # Command line argument definitions
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
@@ -647,41 +656,41 @@ def main():
     parser.add_argument(
         "--searxng-url",
         type=str,
-        default=searxng_url,
+        default=cfg.searxng_url,
         metavar="SEARXNG_URL",
-        help=f"SearXNG instance URL (default: {searxng_url if searxng_url else 'NOT SET'})",
+        help=f"SearXNG instance URL (default: {cfg.searxng_url if cfg.searxng_url else 'NOT SET'})",
     )
     parser.add_argument(
         "-c",
         "--categories",
         type=str,
         nargs="*",
-        default=categories,
+        default=cfg.categories,
         metavar="CATEGORY",
-        help=f"list of categories to search in: {', '.join(SEARXNG_CATEGORIES)} (default: {categories})",
+        help=f"list of categories to search in: {', '.join(SEARXNG_CATEGORIES)} (default: {cfg.categories})",
     )
     parser.add_argument(
         "--config",
         action="store_true",
-        help="open the configuration file in a default system text editor",
+        help="open the default configuration file using system text editor",
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", default=debug, help="show debug output"
+        "-d", "--debug", action="store_true", default=cfg.debug, help="show debug output"
     )
     parser.add_argument(
         "-e",
         "--engines",
         type=str,
         nargs="*",
-        default=engines,
+        default=cfg.engines,
         metavar="ENGINE",
-        help=f"list of engines to use for the search (default: {engines if engines else 'all available engines'})",
+        help=f"list of engines to use for the search (default: {"".join(cfg.engines) if cfg.engines else 'all available engines'})",
     )
     parser.add_argument(
         "-x",
         "--expand",
         action="store_true",
-        default=expand,
+        default=cfg.expand,
         help="Show complete url in search results",
     )
     parser.add_argument(
@@ -693,17 +702,17 @@ def main():
     parser.add_argument(
         "--http-method",
         type=str,
-        default=http_methed,
+        default=cfg.http_methed,
         choices=["GET", "POST"],
         metavar="METHOD",
-        help=f"HTTP method to use for search requests. GET or POST (default: {http_methed.upper()})",
+        help=f"HTTP method to use for search requests. GET or POST (default: {cfg.http_methed.upper()})",
     )
     parser.add_argument(
         "--timeout",
         type=float,
-        default=http_timeout,
+        default=cfg.http_timeout,
         metavar="SECONDS",
-        help=f"HTTP request timeout in seconds (default: {http_timeout})",
+        help=f"HTTP request timeout in seconds (default: {cfg.http_timeout})",
     )
     parser.add_argument(
         "--json",
@@ -716,7 +725,7 @@ def main():
         type=str,
         metavar="LANGUAGE",
         help="search results in a specific language (e.g., 'en', 'de', 'fr')"
-        + (f" (default: {language})" if language else ""),
+        + (f" (default: {cfg.language})" if cfg.language else ""),
     )
     parser.add_argument(
         "--list-categories",
@@ -736,13 +745,13 @@ def main():
     parser.add_argument(
         "--no-verify-ssl",
         action="store_true",
-        default=no_verify_ssl,
+        default=cfg.no_verify_ssl,
         help="do not verify SSL certificates of server  (not recommended)",
     )
     parser.add_argument(
         "--nocolor",
         action="store_true",
-        default=no_color,
+        default=cfg.no_color,
         help="disable colored output",
     )
     parser.add_argument(
@@ -754,23 +763,23 @@ def main():
     parser.add_argument(
         "--noua",
         action="store_true",
-        default=no_user_agent,
+        default=cfg.no_user_agent,
         help="disable user agent",
     )
     parser.add_argument(
         "-n",
         "--num",
         type=int,
-        default=result_count,
+        default=cfg.result_count,
         metavar="N",
-        help=f"show N results per page (default: {result_count}); N=0 uses the servers default per page",
+        help=f"show N results per page (default: {cfg.result_count}); N=0 uses the servers default per page",
     )
     parser.add_argument(
         "--safe-search",
         type=str,
-        default=safe_search,
+        default=cfg.safe_search,
         metavar="FILTER",
-        help=f"Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: {safe_search})",
+        help=f"Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: {cfg.safe_search})",
     )
     parser.add_argument(
         "-w",
@@ -794,9 +803,9 @@ def main():
     parser.add_argument(
         "--url-handler",
         type=str,
-        default=url_handler,
+        default=cfg.url_handler,
         metavar="UTIL",
-        help=f"Command to open URLs in the browser (default: {url_handler})",
+        help=f"Command to open URLs in the browser (default: {cfg.url_handler})",
     )
     parser.add_argument(
         "-v",
@@ -852,7 +861,7 @@ def main():
 
     # validate that searxng url is set
     if not args.searxng_url:
-        console.print(f"[red]Error:[/red] searxng_url is not set in {config_file}")
+        console.print(f"[red]Error:[/red] searxng_url is not set in {cfg.config_file}")
         return
     # validate safe search is a valid value
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
@@ -886,11 +895,11 @@ def main():
     if isinstance(args.categories, list):
         # check if all categories are valid
         for category in args.categories:
-            if not validate_category(category):
+            if not cfg.validate_category(category):
                 exit(1)
     elif isinstance(args.categories, str):
         # validate teh single category is supported
-        if not validate_category(args.categories):
+        if not cfg.validate_category(args.categories):
             exit(1)
         args.categories = [args.categories]
     # if news is requested, set categories to just 'news'
@@ -914,12 +923,13 @@ def main():
     # set safe-search to 'none' if unsafe option is set
     if args.unsafe:
         args.safe_search = "none"
+
     # open the configuration file and edit
     if args.config:
-        console.print(f"opening {config_file}")
+        console.print(f"opening {cfg.config_file}")
         editor = os.environ.get("EDITOR", DEFAULT_EDITOR[platform.system()])
         try:
-            subprocess.run(shlex.split(editor) + [config_file], check=True)
+            subprocess.run(shlex.split(editor) + [cfg.config_file], check=True)
         except subprocess.CalledProcessError as e:
             console.print(f"[red]Error opening editor:[/red] {e}")
         exit(0)
@@ -930,8 +940,8 @@ def main():
 
     searxng = SearXNGClient(
         url=args.searxng_url,
-        username=searxng_username,
-        password=searxng_password,
+        username=cfg.searxng_username,
+        password=cfg.searxng_password,
         verify_ssl=not args.no_verify_ssl,
         no_user_agent=args.noua,
         timeout=args.timeout,
