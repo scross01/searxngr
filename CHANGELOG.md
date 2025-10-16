@@ -1,6 +1,6 @@
 # Change Log
 
-- added `--list-engines` option to list all the searnxng engines and !bangs shortcuts
+- added `--list-engines` option to list all the searnxng engines with !bangs shortcuts and reliability details
 - added `--list-categories` option to list all the searxng categories
 
 ## v0.5.2

@@ -944,14 +944,30 @@ def main():
         table = Table()
         table.add_column("Engine", style="cyan", no_wrap=True)
         table.add_column("URL")
-        table.add_column("!bang", style="green")
+        table.add_column("!bang", style="green", no_wrap=True)
         table.add_column("Categories")
+        table.add_column("Reliability", justify="right")
+        # table.add_column("Errors", style="red")
+
         for engine in engines:
+
+            reliability = None
+            if engine["reliability"]:
+                r = int(engine["reliability"])
+                if r == 0:
+                    reliability = f"[red]{r}[/red]"
+                elif r < 100:
+                    reliability = f"[yellow]{r}[/yellow]"
+                else:
+                    reliability = f"[green]{r}[/green]"
+
             table.add_row(
-                engine["name"],
+                engine["name"] + (f' [red]({engine["errors"]})[red]' if engine["errors"] else ""),
                 engine["url"],
                 " ".join(engine["bangs"]),
                 " ".join(engine["categories"]),
+                reliability,
+                # engine["errors"],
             )
         console.print(table)
         exit(0)

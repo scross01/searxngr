@@ -91,12 +91,30 @@ def extract_engines_from_preferences(html_content: str):
                                 set(category_matches)
                             )  # Remove duplicates
 
+                    # Extract reliability from the last table cell
+                    reliability = None
+                    reliability_cell = engine_row.find_all("td")[-1]
+                    if reliability_cell:
+                        reliability_span = reliability_cell.find("span")
+                        reliability = (
+                            reliability_span.text.strip() if reliability_span else None
+                        )
+
+                    # Extract errors from the tooltip
+                    errors = None
+                    if reliability_cell:
+                        errors_div = reliability_cell.find("div", class_="engine-tooltip")
+                        if errors_div:
+                            errors = errors_div.find_all("p")[1].text.strip()
+
                     # Create engine entry
                     engine_entry = {
                         "name": engine_name,
                         "url": engine_url,
                         "bangs": bangs,
                         "categories": categories,
+                        "reliability": reliability,
+                        "errors": errors,
                     }
 
                     engines.append(engine_entry)
