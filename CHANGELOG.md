@@ -1,5 +1,8 @@
 # Change Log
 
+- added `--list-engines` option to list all the searnxng engines and !bangs shortcuts
+- added `--list-categories` option to list all the searxng categories
+
 ## v0.5.2
 
 - fixes issue where `--json` option would enter interactive console on no

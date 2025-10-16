@@ -1,6 +1,7 @@
 import json
 import httpx
 from rich.prompt import Prompt
+from rich.table import Table
 import textwrap
 import os
 import argparse
@@ -15,6 +16,7 @@ from babel.dates import format_date
 from html2text import html2text
 import pyperclip
 
+from .engines import extract_engines_from_preferences
 from .console import InteractiveConsole as Console
 from .__version__ import __version__
 
@@ -32,7 +34,9 @@ HTTP_METHOD = "GET"  # Default HTTP method for search requests
 HTTP_TIMEOUT = 30.0  # Default HTTP request timeout
 USER_AGENT = f"searxngr/{__version__}"  # User-Agent string
 CATEGORIES = None  # Default categories to search in
+
 MAX_CONTENT_WORDS = 128  # Max words to show in content preview
+PREFERENCES_URL_PATH = "/preferences"
 
 SAFE_SEARCH_OPTIONS = {
     "none": 0,  # Unsafe search
@@ -231,175 +235,261 @@ def print_results(results, count, start_at=0, expand=False):
         console.print()
 
 
-def searxng_search(
-    query,
-    searxng_url,
-    searxng_username=None,
-    searxng_password=None,
-    pageno=0,
-    safe_search=None,
-    categories=None,
-    engines=None,
-    language=None,
-    time_range=None,
-    site=None,
-    verify_ssl=True,
-    http_method="GET",
-    no_user_agent=False,
-    timeout=30.0,
-):
-    """
-    Perform a search using a SearXNG instance
+class SearXNGClient:
 
-    Args:
-        query: Search query string
-        searxng_url: Base URL of SearXNG instance
-        searxng_username: Username for SearXNG instance (optional)
-        searxng_password: Password for SearXNG instance (optional)
-        pageno: Page number (1-based)
-        safe_search: Safe search level
-        categories: Comma-separated categories
-        engines: Comma-separated search engines
-        language: Results language
-        time_range: Time filter for results
-        site: Site to restrict search to
-        verify_ssl: Verify SSL certificates
-        http_method: HTTP method (GET/POST)
-        no_user_agent: Omit User-Agent header
-        timeout: Request timeout in seconds
+    def __init__(
+        self,
+        url: str,
+        username=None,
+        password=None,
+        verify_ssl=True,
+        no_user_agent=None,
+        timeout=30,
+    ):
+        """
+        SearXNG client
 
-    Returns:
-        List of search results or None on error
-    """
-    query = f"site:{site} {query}" if site else query
-    url = None
-    body = None
-
-    # if http_method is POST, construct the body for the request
-    if http_method == "POST":
-        url = f"{searxng_url}/search"
-        body = {
-            "q": query,
-            "format": "json",
-        }
-        if categories:
-            if "social+media" in categories:
-                # replace the list entry
-                for i in range(len(categories)):
-                    if categories[i] == "social+media":
-                        categories[i] = "social media"
-            body["categories"] = ",".join(categories)
-        if engines:
-            body["engines"] = ",".join(engines)
-        if language:
-            body["language"] = language
-        if pageno > 1:
-            body["pageno"] = pageno
-        if safe_search:
-            body["safesearch"] = SAFE_SEARCH_OPTIONS[safe_search]
-        if time_range:
-            body["time_range"] = time_range
-
-        console.print(f"Searching: {url} with body: {body}") if DEBUG else None
-    # if http_method is GET, construct the query url with parameters
-    elif http_method == "GET":
-        # construct the query url
-        url = f"{searxng_url}/search?q={query}&format=json"
-        url += f"&categories={','.join(categories)}" if categories else ""
-        url += f"&engines={','.join(engines)}" if engines else ""
-        url += f"&language={language}" if language else ""
-        url += f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
-        url += f"&time_range={time_range}" if time_range else ""
-        url += f"&pageno={pageno}" if pageno > 1 else ""
-        console.print(f"Searching: {url}") if DEBUG else None
-    else:
-        raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
-
-    # remove non printable characters from the URL
-    url = "".join(c for c in url if c.isprintable())
-
-    try:
-        response = None
-        default_headers = {
+        Args:
+            url: Base URL of SearXNG instance
+            username: Username for SearXNG instance (optional)
+            password: Password for SearXNG instance (optional)
+            verify_ssl: Verify SSL certificates
+            no_user_agent: Omit User-Agent header
+            timeout: Request timeout in seconds
+        """
+        self.url = url
+        self.username = username
+        self.password = password
+        self.verify_ssl = verify_ssl
+        self.no_user_agent = no_user_agent
+        self.timeout = timeout
+        self.default_headers = {
             "Accept": "application/json",
             "Accept-Encoding": "gzip, deflate",
             "User-Agent": USER_AGENT,
         }
 
-        if searxng_username and searxng_password:
-            # Basic authentication using username and password
-            (
-                console.print(
-                    f"[dim]Using basic auth with username: {searxng_username}[/dim]"
-                )
-                if DEBUG
-                else None
-            )
-            auth = httpx.BasicAuth(searxng_username, searxng_password)
-            client = httpx.Client(
+        if username and password:
+            auth = httpx.BasicAuth(username, password)
+            self.client = httpx.Client(
                 verify=verify_ssl,
                 timeout=httpx.Timeout(timeout),
                 auth=auth,
             )
         else:
-            client = httpx.Client(verify=verify_ssl, timeout=httpx.Timeout(timeout))
+            self.client = httpx.Client(
+                verify=verify_ssl, timeout=httpx.Timeout(timeout)
+            )
 
         if no_user_agent:
-            del client.headers["User-Agent"]
-            del default_headers["User-Agent"]
+            del self.client.headers["User-Agent"]
+            del self.default_headers["User-Agent"]
 
-        if http_method == "POST":
-            headers = {
-                "Content-Type": "application/x-www-form-urlencoded",
-            }
-            headers.update(default_headers)
-            response = client.post(
-                url, data=body, headers=headers, follow_redirects=True
+    def get(self, path: str, headers={}):
+        try:
+            headers.update(self.default_headers)
+            response = self.client.get(
+                f"{self.url}{path}", headers=headers, follow_redirects=True
             )
+            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+            return response
+
+        except httpx.HTTPStatusError as e:
+            console.print(f"[red]Error:[/red]: {e}")
+            exit(1)
+        except httpx.ConnectError as ce:
+            console.print(
+                f"[red]Error:[/red] Could not connect to SearXNG instance at {self.url}{path}\n{ce}"
+            )
+            exit(1)
+        except httpx.TimeoutException as te:
+            console.print(
+                f"[red]Error:[/red] Request to SearXNG instance at {self.url}{path} timed out after {self.timeout} seconds.\n{te}"
+            )
+            exit(1)
+
+    def post(self, path: str, data=None, headers={}):
+        try:
+            headers.update(self.default_headers)
+            response = self.client.post(
+                f"{self.url}{path}", data=data, headers=headers, follow_redirects=True
+            )
+            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+            return response
+
+        except httpx.HTTPStatusError as e:
+            console.print(f"[red]Error:[/red]: {e}")
+            exit(1)
+        except httpx.ConnectError as ce:
+            console.print(
+                f"[red]Error:[/red] Could not connect to SearXNG instance at {self.url}{path}\n{ce}"
+            )
+            exit(1)
+        except httpx.TimeoutException as te:
+            console.print(
+                f"[red]Error:[/red] Request to SearXNG instance at {self.url}{path} timed out after {self.timeout} seconds.\n{te}"
+            )
+            exit(1)
+
+    def _fetch_preferences(self):
+        """
+        Get the content of the searxng instance preferences page
+
+        Returns:
+            HTML content for the preferneces page
+        """
+
+        headers = {"Accept": "application/html"}
+        response = self.get(PREFERENCES_URL_PATH, headers)
+        data = response.text
+        return data
+
+    def engines(self):
+        """
+        Get the list of supported engines and !bang keywords
+        """
+        html = self._fetch_preferences()
+        data = extract_engines_from_preferences(html)
+        return data
+
+    def categories(self):
+        """
+        Get the list of supported categories and the !bang keywords
+        """
+        html = self._fetch_preferences()
+        data = extract_engines_from_preferences(html)
+        unique_categories = dict()
+        for engine in data:
+            for category in engine["categories"]:
+                if category not in unique_categories.keys():
+                    unique_categories[category] = []
+                if engine["name"] not in unique_categories[category]:
+                    unique_categories[category].append(engine["name"])
+
+        sorted_categories = dict(sorted(unique_categories.items()))
+        return sorted_categories
+
+    def search(
+        self,
+        query,
+        pageno=0,
+        safe_search=None,
+        categories=None,
+        engines=None,
+        language=None,
+        time_range=None,
+        site=None,
+        http_method="GET",
+    ):
+        """
+        Perform a search using a SearXNG instance
+
+        Args:
+            query: Search query string
+            pageno: Page number (1-based)
+            safe_search: Safe search level
+            categories: Comma-separated categories
+            engines: Comma-separated search engines
+            language: Results language
+            time_range: Time filter for results
+            site: Site to restrict search to
+            http_method: HTTP method (GET/POST)
+
+        Returns:
+            List of search results or None on error
+        """
+        query = f"site:{site} {query}" if site else query
+        url = None
+        body = None
+
+        # if http_method is POST, construct the body for the request
+        if http_method == "POST":
+            path = "/search"
+            body = {
+                "q": query,
+                "format": "json",
+            }
+            if categories:
+                if "social+media" in categories:
+                    # replace the list entry
+                    for i in range(len(categories)):
+                        if categories[i] == "social+media":
+                            categories[i] = "social media"
+                body["categories"] = ",".join(categories)
+            if engines:
+                body["engines"] = ",".join(engines)
+            if language:
+                body["language"] = language
+            if pageno > 1:
+                body["pageno"] = pageno
+            if safe_search:
+                body["safesearch"] = SAFE_SEARCH_OPTIONS[safe_search]
+            if time_range:
+                body["time_range"] = time_range
+
+            console.print(f"Searching: {path} with body: {body}") if DEBUG else None
+        # if http_method is GET, construct the query url with parameters
+        elif http_method == "GET":
+            # construct the query url
+            path = f"/search?q={query}&format=json"
+            path += f"&categories={','.join(categories)}" if categories else ""
+            path += f"&engines={','.join(engines)}" if engines else ""
+            path += f"&language={language}" if language else ""
+            path += (
+                f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
+            )
+            path += f"&time_range={time_range}" if time_range else ""
+            path += f"&pageno={pageno}" if pageno > 1 else ""
+            console.print(f"Searching: {url}") if DEBUG else None
         else:
-            headers = default_headers
-            response = client.get(url, headers=headers, follow_redirects=True)
+            raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
 
-        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
-        data = response.json()
+        # remove non printable characters from the URL
+        path = "".join(c for c in path if c.isprintable())
 
-        if (
-            data
-            and "unresponsive_engines" in data
-            and len(data["unresponsive_engines"]) > 0
-        ):
-            unique_list = [
-                list(item)
-                for item in {tuple(sublist) for sublist in data["unresponsive_engines"]}
-            ]
-            for engine, error in unique_list:
-                console.print(f"Engine: {engine} [red]{error}[/red]")
+        try:
+            response = None
 
-        if data and "results" in data:
-            console.print(f"Returned {len(data['results'])} results") if DEBUG else None
-            return data["results"]
-        else:
-            return []
+            if http_method == "POST":
+                headers = {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                }
+                response = self.post(path, data=body, headers=headers)
+            else:
+                response = self.get(path)
 
-    except httpx.HTTPStatusError as e:
-        console.print(f"[red]Error:[/red]: {e}")
-        exit(1)
-    except httpx.ConnectError as ce:
-        console.print(
-            f"[red]Error:[/red] Could not connect to SearXNG instance at {searxng_url}\n{ce}"
-        )
-        exit(1)
-    except httpx.TimeoutException as te:
-        console.print(
-            f"[red]Error:[/red] Request to SearXNG instance at {searxng_url} timed out after {timeout} seconds.\n{te}"
-        )
-        exit(1)
-    except json.JSONDecodeError:
-        console.print("[red]Error:[/red] Could not decode JSON response.")
-        console.print(
-            f"[dim]{response.text if response else 'No response received.'}[/dim]"
-        )
-        exit(1)
+            data = response.json()
+
+            if (
+                data
+                and "unresponsive_engines" in data
+                and len(data["unresponsive_engines"]) > 0
+            ):
+                unique_list = [
+                    list(item)
+                    for item in {
+                        tuple(sublist) for sublist in data["unresponsive_engines"]
+                    }
+                ]
+                for engine, error in unique_list:
+                    console.print(f"Engine: {engine} [red]{error}[/red]")
+
+            if data and "results" in data:
+                (
+                    console.print(f"Returned {len(data['results'])} results")
+                    if DEBUG
+                    else None
+                )
+                return data["results"]
+            else:
+                return []
+
+        except json.JSONDecodeError:
+            console.print("[red]Error:[/red] Could not decode JSON response.")
+            console.print(
+                f"[dim]{response.text if response else 'No response received.'}[/dim]"
+            )
+            exit(1)
 
 
 def create_config_file(config_path):
@@ -629,6 +719,16 @@ def main():
         + (f" (default: {language})" if language else ""),
     )
     parser.add_argument(
+        "--list-categories",
+        action="store_true",
+        help="list available categories",
+    )
+    parser.add_argument(
+        "--list-engines",
+        action="store_true",
+        help="list available engines",
+    )
+    parser.add_argument(
         "--lucky",
         action="store_true",
         help="opens a random result in web browser and exit",
@@ -827,6 +927,45 @@ def main():
     if args.version:
         console.print(__version__)
         exit(0)
+
+    searxng = SearXNGClient(
+        url=args.searxng_url,
+        username=searxng_username,
+        password=searxng_password,
+        verify_ssl=not args.no_verify_ssl,
+        no_user_agent=args.noua,
+        timeout=args.timeout,
+    )
+
+    # list the available engines and exit
+    if args.list_engines:
+        engines = searxng.engines()
+
+        table = Table()
+        table.add_column("Engine", style="cyan", no_wrap=True)
+        table.add_column("URL")
+        table.add_column("!bang", style="green")
+        table.add_column("Categories")
+        for engine in engines:
+            table.add_row(
+                engine["name"],
+                engine["url"],
+                " ".join(engine["bangs"]),
+                " ".join(engine["categories"]),
+            )
+        console.print(table)
+        exit(0)
+    # list the available engines and exit
+    if args.list_categories:
+        categories = searxng.categories()
+        table = Table(leading=True)
+        table.add_column("Category", style="cyan", no_wrap=True)
+        table.add_column("Engines")
+        for category in categories.keys():
+            table.add_row(category, ",".join(categories[category]))
+        console.print(table)
+        exit(0)
+
     # if no query is provided, show usage and exit
     if not args.query:
         parser.print_usage()
@@ -839,26 +978,21 @@ def main():
     pageno = 1
     start_at = 0
     results = []
+
     while True:
         # searxng does not have a limit option, we will always get a varied number of
         # results per page.Interate until we have enough results.
         while len(results) <= (start_at + args.num):
-            query_results = searxng_search(
+            query_results = searxng.search(
                 query,
-                searxng_url=args.searxng_url,
-                searxng_username=searxng_username,
-                searxng_password=searxng_password,
                 safe_search=args.safe_search,
                 engines=args.engines,
                 language=args.language,
                 time_range=args.time_range,
                 site=args.site,
                 pageno=pageno,
-                verify_ssl=not args.no_verify_ssl,
                 http_method=args.http_method.upper(),
-                no_user_agent=args.noua,
                 categories=args.categories,
-                timeout=args.timeout,
             )
             results.extend(query_results)
             # if no results found or number of results is not set just return all initial results
