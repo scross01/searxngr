@@ -1,5 +1,6 @@
 import json
 import httpx
+from typing import List, Dict, Optional, Any, Union, Tuple
 from rich.prompt import Prompt
 from rich.table import Table
 import textwrap
@@ -76,7 +77,12 @@ SEARXNG_CATEGORIES = [
 ]
 
 
-def print_results(results, count, start_at=0, expand=False):
+def print_results(
+    results: List[Dict[str, Any]],
+    count: int,
+    start_at: int = 0,
+    expand: bool = False
+) -> None:
     """
     Format and display search results in the terminal
 
@@ -243,12 +249,12 @@ class SearXNGClient:
     def __init__(
         self,
         url: str,
-        username=None,
-        password=None,
-        verify_ssl=True,
-        no_user_agent=None,
-        timeout=30,
-    ):
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        verify_ssl: bool = True,
+        no_user_agent: Optional[bool] = None,
+        timeout: Union[int, float] = 30,
+    ) -> None:
         """
         SearXNG client
 
@@ -288,8 +294,10 @@ class SearXNGClient:
             del self.client.headers["User-Agent"]
             del self.default_headers["User-Agent"]
 
-    def get(self, path: str, headers={}):
+    def get(self, path: str, headers: Optional[Dict[str, str]] = None) -> httpx.Response:
         try:
+            if headers is None:
+                headers = {}
             headers.update(self.default_headers)
             response = self.client.get(
                 f"{self.url}{path}", headers=headers, follow_redirects=True
@@ -311,8 +319,10 @@ class SearXNGClient:
             )
             exit(1)
 
-    def post(self, path: str, data=None, headers={}):
+    def post(self, path: str, data: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, str]] = None) -> httpx.Response:
         try:
+            if headers is None:
+                headers = {}
             headers.update(self.default_headers)
             response = self.client.post(
                 f"{self.url}{path}", data=data, headers=headers, follow_redirects=True
@@ -334,7 +344,7 @@ class SearXNGClient:
             )
             exit(1)
 
-    def _fetch_preferences(self):
+    def _fetch_preferences(self) -> str:
         """
         Get the content of the searxng instance preferences page
 
@@ -347,7 +357,7 @@ class SearXNGClient:
         data = response.text
         return data
 
-    def engines(self):
+    def engines(self) -> List[Dict[str, Any]]:
         """
         Get the list of supported engines and !bang keywords
         """
@@ -355,7 +365,7 @@ class SearXNGClient:
         data = extract_engines_from_preferences(html)
         return data
 
-    def categories(self):
+    def categories(self) -> Dict[str, set]:
         """
         Get the list of supported categories and the !bang keywords
         """
@@ -374,16 +384,16 @@ class SearXNGClient:
 
     def search(
         self,
-        query,
-        pageno=0,
-        safe_search=None,
-        categories=None,
-        engines=None,
-        language=None,
-        time_range=None,
-        site=None,
-        http_method="GET",
-    ):
+        query: str,
+        pageno: int = 0,
+        safe_search: Optional[str] = None,
+        categories: Optional[List[str]] = None,
+        engines: Optional[List[str]] = None,
+        language: Optional[str] = None,
+        time_range: Optional[str] = None,
+        site: Optional[str] = None,
+        http_method: str = "GET",
+    ) -> List[Dict[str, Any]]:
         """
         Perform a search using a SearXNG instance
 
@@ -497,7 +507,11 @@ class SearXNGClient:
 
 class SearxngrConfig:
 
-    def __init__(self, config_path=None, config_file=None):
+    def __init__(
+        self,
+        config_path: Optional[str] = None,
+        config_file: Optional[str] = None
+    ) -> None:
         # Load default configuration from a file if it exists
         if config_path:
             self.config_path = config_path
@@ -550,7 +564,7 @@ class SearxngrConfig:
         console.print(f"[dim]created {file}[/dim]")
 
     # Config helper functions with type-specific handling
-    def get_config_list(self, parser, key, default):
+    def get_config_list(self, parser: configparser.ConfigParser, key: str, default: Optional[List[str]]) -> Optional[List[str]]:
         """Get list of strings from config with fallback"""
         entry = parser["searxngr"][key] if key in parser["searxngr"] else default
         if entry:
@@ -559,7 +573,7 @@ class SearxngrConfig:
             entry = None
         return entry
 
-    def get_config_str(self, parser, key, default):
+    def get_config_str(self, parser: configparser.ConfigParser, key: str, default: Optional[str]) -> Optional[str]:
         """Get string value from config with fallback"""
         try:
             return parser["searxngr"][key] if key in parser["searxngr"] else default
@@ -569,7 +583,7 @@ class SearxngrConfig:
             )
             return default
 
-    def get_config_int(self, parser, key, default):
+    def get_config_int(self, parser: configparser.ConfigParser, key: str, default: int) -> int:
         """Get integer value from config with fallback"""
         try:
             return int(parser["searxngr"][key]) if key in parser["searxngr"] else default
@@ -579,7 +593,7 @@ class SearxngrConfig:
             )
             return default
 
-    def get_config_float(self, parser, key, default):
+    def get_config_float(self, parser: configparser.ConfigParser, key: str, default: float) -> float:
         """Get float value from config with fallback"""
         try:
             return float(parser["searxngr"][key]) if key in parser["searxngr"] else default
@@ -589,7 +603,7 @@ class SearxngrConfig:
             )
             return default
 
-    def get_config_bool(self, parser, key, default):
+    def get_config_bool(self, parser: configparser.ConfigParser, key: str, default: bool) -> bool:
         """Get boolean value from config with fallback"""
         try:
             return (
@@ -601,7 +615,7 @@ class SearxngrConfig:
             )
             return default
 
-    def validate_category(self, category):
+    def validate_category(self, category: str) -> bool:
         if category not in SEARXNG_CATEGORIES:
             console.print(
                 f"[red]Error:[/red] Invalid category '{category}'. " + ""
@@ -610,7 +624,7 @@ class SearxngrConfig:
             return False
         return True
 
-    def load_config(self):
+    def load_config(self) -> None:
         # read the settings from the config file
         parser = configparser.ConfigParser()
         parser.read(self.config_file)
@@ -639,7 +653,7 @@ class SearxngrConfig:
         self.no_color = self.get_config_bool(parser, "no_color", False)
 
 
-def main():
+def main() -> None:
     """
     Main entry point for searxngr CLI
 

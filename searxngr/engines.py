@@ -1,9 +1,10 @@
 import re
+from typing import List, Dict, Optional, Any
 
 from bs4 import BeautifulSoup
 
 
-def extract_engines_from_preferences(html_content: str):
+def extract_engines_from_preferences(html_content: str) -> List[Dict[str, Any]]:
     """
     Extracts engine information from SearXNG preferences HTML.
 
