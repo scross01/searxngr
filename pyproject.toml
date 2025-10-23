@@ -34,4 +34,5 @@ path = "searxngr/__version__.py"
 dev = [
     "black>=25.1.0",
     "flake8>=7.3.0",
+    "pytest>=8.0.0",
 ]

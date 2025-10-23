@@ -20,6 +20,9 @@ from .engines import extract_engines_from_preferences
 from .console import InteractiveConsole as Console
 from .__version__ import __version__
 
+# Global debug flag
+DEBUG = False
+
 console = Console()
 
 # Default settings. Use config file or command line to modify.
@@ -855,7 +858,6 @@ def main():
     else:
         console = Console(history=[query])
 
-    global DEBUG
     DEBUG = args.debug
     console.print(f"Config: {args}") if DEBUG else None
 
