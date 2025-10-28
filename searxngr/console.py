@@ -9,10 +9,7 @@ from getpass import getpass
 # based on https://github.com/Textualize/rich/issues/262#issuecomment-2546430217
 class InteractiveConsole(Console):
     def __init__(
-        self,
-        history: Optional[Union[str, List[str]]] = None,
-        *args: Any,
-        **kwargs: Any
+        self, history: Optional[Union[str, List[str]]] = None, *args: Any, **kwargs: Any
     ) -> None:
         self.history = InMemoryHistory(history)
         self.session = PromptSession(history=self.history)
@@ -24,7 +21,7 @@ class InteractiveConsole(Console):
         markup: bool = True,
         emoji: bool = True,
         password: bool = False,
-        stream: Optional[Any] = None
+        stream: Optional[Any] = None,
     ) -> str:
         if prompt:
             self.print(prompt, markup=markup, emoji=emoji, end="")

@@ -149,7 +149,8 @@ options:
 
 ### Listing Available Engines and Categories
 
-You can view the available search engines and categories supported by your SearXNG instance using the following options:
+You can view the available search engines and categories supported by your
+SearXNG instance using the following options:
 
 ```shell
 # List all available search engines
@@ -159,7 +160,11 @@ searxngr --list-engines
 searxngr --list-categories
 ```
 
-These options fetch the current list of engines and categories directly from your configured SearXNG instance and display them in a formatted table. The engine listing includes the engine name, URL, supported bang commands, categories, and reliability score. The category listing shows each category along with the engines that support it.
+These options fetch the current list of engines and categories directly from
+your configured SearXNG instance and display them in a formatted table. The
+engine listing includes the engine name, URL, supported bang commands,
+categories, and reliability score. The category listing shows each category
+along with the engines that support it.
 
 ## Troubleshooting
 

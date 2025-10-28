@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from searxngr.searxngr import print_results
 
 
@@ -17,7 +17,7 @@ class TestSearchResults:
                 "template": None,
                 "category": "general",
                 "engines": ["testengine", "otherengine"],
-                "publishedDate": None
+                "publishedDate": None,
             },
             {
                 "title": "News Result",
@@ -27,7 +27,7 @@ class TestSearchResults:
                 "template": None,
                 "category": "news",
                 "engines": ["testengine"],
-                "publishedDate": "2023-01-15T10:30:00Z"
+                "publishedDate": "2023-01-15T10:30:00Z",
             },
             {
                 "title": "Image Result",
@@ -40,7 +40,7 @@ class TestSearchResults:
                 "publishedDate": None,
                 "source": "Image Source",
                 "resolution": "1920x1080",
-                "img_src": "https://example.com/image.jpg"
+                "img_src": "https://example.com/image.jpg",
             },
             {
                 "title": "Video Result",
@@ -52,73 +52,75 @@ class TestSearchResults:
                 "engines": ["testengine"],
                 "publishedDate": None,
                 "author": "Video Author",
-                "length": 122.0
-            }
+                "length": 122.0,
+            },
         ]
 
-    @patch('searxngr.searxngr.console')
-    @patch('searxngr.searxngr.os.get_terminal_size')
+    @patch("searxngr.searxngr.console")
+    @patch("searxngr.searxngr.os.get_terminal_size")
     def test_print_results_basic(self, mock_terminal_size, mock_console):
         """Test basic result printing functionality"""
         # Mock terminal size
         mock_terminal_size.return_value = os.terminal_size((80, 24))
-        
+
         print_results(self.sample_results[:1], count=1)
-        
+
         # Verify that console.print was called
         mock_console.print.assert_called()
-        
+
         # Check that basic result elements were printed
         call_args = mock_console.print.call_args_list
         assert any("Test Result 1" in str(call) for call in call_args)
         assert any("example.com" in str(call) for call in call_args)
         assert any("testengine" in str(call) for call in call_args)
 
-    @patch('searxngr.searxngr.console')
-    @patch('searxngr.searxngr.os.get_terminal_size')
+    @patch("searxngr.searxngr.console")
+    @patch("searxngr.searxngr.os.get_terminal_size")
     def test_print_results_with_long_content(self, mock_terminal_size, mock_console):
         """Test result printing with content that needs truncation"""
         # Mock terminal size
         mock_terminal_size.return_value = os.terminal_size((80, 24))
-        
+
         print_results(self.sample_results[:1], count=1)
-        
+
         # Verify that console.print was called
         mock_console.print.assert_called()
-        
+
         # Check that content was truncated
         call_args = mock_console.print.call_args_list
-        content_calls = [call for call in call_args if "This is a test result" in str(call)]
+        content_calls = [
+            call for call in call_args if "This is a test result" in str(call)
+        ]
         assert len(content_calls) > 0
 
-    @patch('searxngr.searxngr.console')
-    @patch('searxngr.searxngr.os.get_terminal_size')
+    @patch("searxngr.searxngr.console")
+    @patch("searxngr.searxngr.os.get_terminal_size")
     def test_print_results_with_expand(self, mock_terminal_size, mock_console):
         """Test result printing with expand option"""
         # Mock terminal size
         mock_terminal_size.return_value = os.terminal_size((80, 24))
-        
+
         print_results(self.sample_results[:1], count=1, expand=True)
-        
+
         # Verify that console.print was called
         mock_console.print.assert_called()
-        
+
         # Check that full URL was printed
         call_args = mock_console.print.call_args_list
         assert any("https://example.com/result1" in str(call) for call in call_args)
 
-    @patch('searxngr.searxngr.console')
-    @patch('searxngr.searxngr.os.get_terminal_size')
+    @patch("searxngr.searxngr.console")
+    @patch("searxngr.searxngr.os.get_terminal_size")
     def test_print_results_news_category(self, mock_terminal_size, mock_console):
         """Test result printing for news category with date"""
         # Mock terminal size
         mock_terminal_size.return_value = os.terminal_size((80, 24))
-        
+
         print_results(self.sample_results[1:2], count=1)
-        
+
         # Verify that console.print was called
         mock_console.print.assert_called()
-        
+
         # Check that news details were printed
         call_args = mock_console.print.call_args_list
         assert any("News Result" in str(call) for call in call_args)
@@ -126,18 +128,18 @@ class TestSearchResults:
         # Check that published date was formatted (could be different format)
         assert any("2023" in str(call) for call in call_args)
 
-    @patch('searxngr.searxngr.console')
-    @patch('searxngr.searxngr.os.get_terminal_size')
+    @patch("searxngr.searxngr.console")
+    @patch("searxngr.searxngr.os.get_terminal_size")
     def test_print_results_images_category(self, mock_terminal_size, mock_console):
         """Test result printing for images category"""
         # Mock terminal size
         mock_terminal_size.return_value = os.terminal_size((80, 24))
-        
+
         print_results(self.sample_results[2:3], count=1)
-        
+
         # Verify that console.print was called
         mock_console.print.assert_called()
-        
+
         # Check that image details were printed
         call_args = mock_console.print.call_args_list
         assert any("Image Result" in str(call) for call in call_args)
@@ -145,18 +147,18 @@ class TestSearchResults:
         assert any("Image Source" in str(call) for call in call_args)
         assert any("https://example.com/image.jpg" in str(call) for call in call_args)
 
-    @patch('searxngr.searxngr.console')
-    @patch('searxngr.searxngr.os.get_terminal_size')
+    @patch("searxngr.searxngr.console")
+    @patch("searxngr.searxngr.os.get_terminal_size")
     def test_print_results_videos_category(self, mock_terminal_size, mock_console):
         """Test result printing for videos category"""
         # Mock terminal size
         mock_terminal_size.return_value = os.terminal_size((80, 24))
-        
+
         print_results(self.sample_results[3:4], count=1)
-        
+
         # Verify that console.print was called
         mock_console.print.assert_called()
-        
+
         # Check that video details were printed
         call_args = mock_console.print.call_args_list
         assert any("Video Result" in str(call) for call in call_args)

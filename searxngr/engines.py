@@ -1,5 +1,5 @@
 import re
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Any
 
 from bs4 import BeautifulSoup
 
@@ -104,7 +104,9 @@ def extract_engines_from_preferences(html_content: str) -> List[Dict[str, Any]]:
                     # Extract errors from the tooltip
                     errors = None
                     if reliability_cell:
-                        errors_div = reliability_cell.find("div", class_="engine-tooltip")
+                        errors_div = reliability_cell.find(
+                            "div", class_="engine-tooltip"
+                        )
                         if errors_div:
                             errors = errors_div.find_all("p")[1].text.strip()
 

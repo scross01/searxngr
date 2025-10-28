@@ -1,6 +1,6 @@
 import json
 import httpx
-from typing import List, Dict, Optional, Any, Union, Tuple
+from typing import List, Dict, Optional, Any, Union
 from rich.prompt import Prompt
 from rich.table import Table
 import textwrap
@@ -43,9 +43,9 @@ MAX_CONTENT_WORDS = 128  # Max words to show in content preview
 PREFERENCES_URL_PATH = "/preferences"
 
 SAFE_SEARCH_OPTIONS = {
-    "none": 0,  # Unsafe search
-    "moderate": 1,  # Moderate safe search
-    "strict": 2,  # Strict safe search
+    "none": "0",  # Unsafe search
+    "moderate": "1",  # Moderate safe search
+    "strict": "2",  # Strict safe search
 }
 
 URL_HANDLER = {
@@ -78,10 +78,7 @@ SEARXNG_CATEGORIES = [
 
 
 def print_results(
-    results: List[Dict[str, Any]],
-    count: int,
-    start_at: int = 0,
-    expand: bool = False
+    results: List[Dict[str, Any]], count: int, start_at: int = 0, expand: bool = False
 ) -> None:
     """
     Format and display search results in the terminal
@@ -94,7 +91,7 @@ def print_results(
     """
     console.print()
     for i, result in enumerate(
-        results[start_at:(start_at + count)], start=start_at + 1
+        results[start_at : (start_at + count)], start=start_at + 1
     ):
         title = result.get("title", "No title")
         # truncate the title to 70 characters if it's too long
@@ -187,8 +184,8 @@ def print_results(
             # console.print(f"     [cyan dim]{published_date}[/cyan dim]")
         # if the result is a map, output the coordinates
         if category == "map":
-            if result.get("address"):
-                address = result.get("address")
+            address = result.get("address")
+            if address:
                 house_number = address.get("house_number")
                 road = address.get("road")
                 locality = address.get("locality")
@@ -236,7 +233,7 @@ def print_results(
                 console.print(f"     [cyan dim]{published_date}[/cyan dim]")
 
         # print the engines that generated the result
-        engines = result.get("engines", None)
+        engines = result.get("engines", [])
         engines.remove(engine) if engine in engines else None
         console.print(
             f"     [dim]\\[[bold]{engine}[/bold]{(', ' + ', '.join(engines)) if len(engines) > 0 else ''}][/dim]"
@@ -294,7 +291,9 @@ class SearXNGClient:
             del self.client.headers["User-Agent"]
             del self.default_headers["User-Agent"]
 
-    def get(self, path: str, headers: Optional[Dict[str, str]] = None) -> httpx.Response:
+    def get(
+        self, path: str, headers: Optional[Dict[str, str]] = None
+    ) -> httpx.Response:
         try:
             if headers is None:
                 headers = {}
@@ -319,7 +318,12 @@ class SearXNGClient:
             )
             exit(1)
 
-    def post(self, path: str, data: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, str]] = None) -> httpx.Response:
+    def post(
+        self,
+        path: str,
+        data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> httpx.Response:
         try:
             if headers is None:
                 headers = {}
@@ -434,9 +438,9 @@ class SearXNGClient:
             if language:
                 body["language"] = language
             if pageno > 1:
-                body["pageno"] = pageno
+                body["pageno"] = str(pageno)
             if safe_search:
-                body["safesearch"] = SAFE_SEARCH_OPTIONS[safe_search]
+                body["safesearch"] = str(SAFE_SEARCH_OPTIONS[safe_search])
             if time_range:
                 body["time_range"] = time_range
 
@@ -508,9 +512,7 @@ class SearXNGClient:
 class SearxngrConfig:
 
     def __init__(
-        self,
-        config_path: Optional[str] = None,
-        config_file: Optional[str] = None
+        self, config_path: Optional[str] = None, config_file: Optional[str] = None
     ) -> None:
         # Load default configuration from a file if it exists
         if config_path:
@@ -564,7 +566,9 @@ class SearxngrConfig:
         console.print(f"[dim]created {file}[/dim]")
 
     # Config helper functions with type-specific handling
-    def get_config_list(self, parser: configparser.ConfigParser, key: str, default: Optional[List[str]]) -> Optional[List[str]]:
+    def get_config_list(
+        self, parser: configparser.ConfigParser, key: str, default: Optional[List[str]]
+    ) -> Optional[List[str]]:
         """Get list of strings from config with fallback"""
         entry = parser["searxngr"][key] if key in parser["searxngr"] else default
         if entry:
@@ -573,7 +577,9 @@ class SearxngrConfig:
             entry = None
         return entry
 
-    def get_config_str(self, parser: configparser.ConfigParser, key: str, default: Optional[str]) -> Optional[str]:
+    def get_config_str(
+        self, parser: configparser.ConfigParser, key: str, default: Optional[str]
+    ) -> Optional[str]:
         """Get string value from config with fallback"""
         try:
             return parser["searxngr"][key] if key in parser["searxngr"] else default
@@ -583,31 +589,43 @@ class SearxngrConfig:
             )
             return default
 
-    def get_config_int(self, parser: configparser.ConfigParser, key: str, default: int) -> int:
+    def get_config_int(
+        self, parser: configparser.ConfigParser, key: str, default: int
+    ) -> int:
         """Get integer value from config with fallback"""
         try:
-            return int(parser["searxngr"][key]) if key in parser["searxngr"] else default
+            return (
+                int(parser["searxngr"][key]) if key in parser["searxngr"] else default
+            )
         except ValueError as ve:
             console.print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
             return default
 
-    def get_config_float(self, parser: configparser.ConfigParser, key: str, default: float) -> float:
+    def get_config_float(
+        self, parser: configparser.ConfigParser, key: str, default: float
+    ) -> float:
         """Get float value from config with fallback"""
         try:
-            return float(parser["searxngr"][key]) if key in parser["searxngr"] else default
+            return (
+                float(parser["searxngr"][key]) if key in parser["searxngr"] else default
+            )
         except ValueError as ve:
             console.print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
             return default
 
-    def get_config_bool(self, parser: configparser.ConfigParser, key: str, default: bool) -> bool:
+    def get_config_bool(
+        self, parser: configparser.ConfigParser, key: str, default: bool
+    ) -> bool:
         """Get boolean value from config with fallback"""
         try:
             return (
-                parser["searxngr"].getboolean(key) if key in parser["searxngr"] else default
+                parser["searxngr"].getboolean(key)
+                if key in parser["searxngr"]
+                else default
             )
         except ValueError as ve:
             console.print(
@@ -692,7 +710,11 @@ def main() -> None:
         help="open the default configuration file using system text editor",
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", default=cfg.debug, help="show debug output"
+        "-d",
+        "--debug",
+        action="store_true",
+        default=cfg.debug,
+        help="show debug output",
     )
     parser.add_argument(
         "-e",
@@ -988,7 +1010,8 @@ def main() -> None:
                     reliability = f"[green]{r}[/green]"
 
             table.add_row(
-                engine["name"] + (f' [red]({engine["errors"]})[red]' if engine["errors"] else ""),
+                engine["name"]
+                + (f' [red]({engine["errors"]})[red]' if engine["errors"] else ""),
                 engine["url"],
                 " ".join(engine["bangs"]),
                 " ".join(engine["categories"]),
