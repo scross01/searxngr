@@ -91,7 +91,7 @@ def print_results(
     """
     console.print()
     for i, result in enumerate(
-        results[start_at : (start_at + count)], start=start_at + 1
+        results[start_at:(start_at + count)], start=start_at + 1
     ):
         title = result.get("title", "No title")
         # truncate the title to 70 characters if it's too long
@@ -314,7 +314,8 @@ class SearXNGClient:
             exit(1)
         except httpx.TimeoutException as te:
             console.print(
-                f"[red]Error:[/red] Request to SearXNG instance at {self.url}{path} timed out after {self.timeout} seconds.\n{te}"
+                f"[red]Error:[/red] Request to SearXNG instance at {self.url}{path} "
+                f"timed out after {self.timeout} seconds.\n{te}"
             )
             exit(1)
 
@@ -344,7 +345,8 @@ class SearXNGClient:
             exit(1)
         except httpx.TimeoutException as te:
             console.print(
-                f"[red]Error:[/red] Request to SearXNG instance at {self.url}{path} timed out after {self.timeout} seconds.\n{te}"
+                f"[red]Error:[/red] Request to SearXNG instance at {self.url}{path} "
+                f"timed out after {self.timeout} seconds.\n{te}"
             )
             exit(1)
 
@@ -627,18 +629,20 @@ class SearxngrConfig:
     ) -> bool:
         """Get boolean value from config with fallback"""
         try:
-            return (
+            result = (
                 parser["searxngr"].getboolean(key)
                 if key in parser["searxngr"]
                 else default
             )
+            return result if result else default
         except ValueError as ve:
             console.print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
             return default
 
-    def validate_category(self, category: str) -> bool:
+    @classmethod
+    def validate_category(cls, category: str) -> bool:
         if category not in SEARXNG_CATEGORIES:
             console.print(
                 f"[red]Error:[/red] Invalid category '{category}'. " + ""
@@ -728,7 +732,8 @@ def main() -> None:
         nargs="*",
         default=cfg.engines,
         metavar="ENGINE",
-        help=f"list of engines to use for the search (default: {"".join(cfg.engines) if cfg.engines else 'all available engines'})",
+        help="list of engines to use for the search "
+        f"(default: {"".join(cfg.engines) if cfg.engines else 'all available engines'})",
     )
     parser.add_argument(
         "-x",
@@ -749,7 +754,8 @@ def main() -> None:
         default=cfg.http_methed,
         choices=["GET", "POST"],
         metavar="METHOD",
-        help=f"HTTP method to use for search requests. GET or POST (default: {cfg.http_methed.upper()})",
+        help="HTTP method to use for search requests. GET or POST "
+        f"(default: {cfg.http_methed.upper() if cfg.http_methed else HTTP_METHOD})",
     )
     parser.add_argument(
         "--timeout",
@@ -895,9 +901,9 @@ def main() -> None:
     # if no color is requested, disable rich console color output
     global console
     if args.nocolor:
-        console = Console(history=[query], color_system=None, force_terminal=True)
+        console = Console(history=[str(query)], color_system=None, force_terminal=True)
     else:
-        console = Console(history=[query])
+        console = Console(history=[str(query)])
 
     DEBUG = args.debug
     console.print(f"Config: {args}") if DEBUG else None
@@ -1056,7 +1062,7 @@ def main() -> None:
         # results per page.Interate until we have enough results.
         while len(results) <= (start_at + args.num):
             query_results = searxng.search(
-                query,
+                str(query),
                 safe_search=args.safe_search,
                 engines=args.engines,
                 language=args.language,

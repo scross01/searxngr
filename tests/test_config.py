@@ -1,7 +1,6 @@
 import configparser
-import os
 import tempfile
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 
 from searxngr.searxngr import SearxngrConfig
 
@@ -73,19 +72,26 @@ categories = news general
             "social+media",
         ]
         for category in valid_categories:
-            assert SearxngrConfig.validate_category(None, category) is True
+            assert SearxngrConfig.validate_category(category) is True
 
         # Test invalid category
-        assert SearxngrConfig.validate_category(None, "invalid_category") is False
+        assert SearxngrConfig.validate_category("invalid_category") is False
 
     def test_config_helper_methods(self):
         """Test configuration helper methods"""
         parser = configparser.ConfigParser()
         parser["searxngr"] = {
             "test_string": "value",
+            "test_string_empty": "",
             "test_int": "42",
+            "test_int_empty": "",
             "test_float": "3.14",
-            "test_bool": "true",
+            "test_float_empty": "",
+            "test_bool_true": "true",
+            "test_bool_true2": "True",
+            "test_bool_false": "false",
+            "test_bool_false2": "False",
+            "test_bool_empty": "",
             "test_list": "item1 item2 item3",
             "test_list2": "item1  item2   item3",
             "test_list_csv": "item1, item2, item3",
@@ -100,17 +106,38 @@ categories = news general
         result = config.get_config_str(parser, "test_string", "default")
         assert result == "value"
 
+        result = config.get_config_str(parser, "test_string_empty", "default")
+        assert result == ""
+
         # Test int helper
         result = config.get_config_int(parser, "test_int", 10)
         assert result == 42
+
+        result = config.get_config_int(parser, "test_int_empty", 10)
+        assert result == 10
 
         # Test float helper
         result = config.get_config_float(parser, "test_float", 1.0)
         assert result == 3.14
 
+        result = config.get_config_float(parser, "test_float_empty", 1.0)
+        assert result == 1.0
+
         # Test bool helper
-        result = config.get_config_bool(parser, "test_bool", False)
+        result = config.get_config_bool(parser, "test_bool_true", False)
         assert result is True
+
+        result = config.get_config_bool(parser, "test_bool_false", False)
+        assert result is False
+
+        result = config.get_config_bool(parser, "test_bool_true2", False)
+        assert result is True
+
+        result = config.get_config_bool(parser, "test_bool_false2", False)
+        assert result is False
+
+        result = config.get_config_bool(parser, "test_bool_empty", False)
+        assert result is False
 
         # Test list helper
         result = config.get_config_list(parser, "test_list", None)
