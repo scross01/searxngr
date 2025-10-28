@@ -779,6 +779,7 @@ def main() -> None:
         "-l",
         "--language",
         type=str,
+        default=cfg.language,
         metavar="LANGUAGE",
         help="search results in a specific language (e.g., 'en', 'de', 'fr')"
         + (f" (default: {cfg.language})" if cfg.language else ""),
