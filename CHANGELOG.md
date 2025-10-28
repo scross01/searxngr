@@ -3,6 +3,7 @@
 - added `--list-engines` option to list all the searnxng engines with !bangs
   shortcuts and reliability details
 - added `--list-categories` option to list all the searxng categories
+- added `C index` prompt option to copy content to clipboard
 - fixed lists of items in config to be more resilient to spacing and allow for
   csv style entry
 - fixed language setting not applied from config file

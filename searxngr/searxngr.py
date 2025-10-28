@@ -1159,6 +1159,7 @@ def main() -> None:
                         - Type 'n', 'p', and 'f' to navigate to the next, previos and first page of results.
                         - Type the index (1, 2, 3, etc) open the search index page in a browser.
                         - Type 'c' plus the index ('c 1', 'c 2') to copy the result URL to clipboard.
+                        - Type 'C' plus the index ('C 1', 'C 2') to copy the result content to clipboard.
                         - Type 't timerange' to change the search time range (e.g. `t week`).
                         - Type 'site:example.com' to filter results by a specific site.
                         - Type 'x' to toggle showing to result URL.
@@ -1189,17 +1190,45 @@ def main() -> None:
                         "[red]Error:[/red] No URL found for the selected result."
                     )
                 continue
+            # c: copy url
             elif new_query.strip().startswith("c "):
                 # copy the result URL to clipboard
                 index = new_query[2:].strip()
+                result = results[int(index) - 1]
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
-                    url = results[int(index) - 1].get("url")
+                    url = result.get("url")
                     if url:
                         pyperclip.copy(url)
                     else:
                         console.print(
                             "[red]Error:[/red] No URL found for the selected result."
                         )
+                else:
+                    console.print("[red]Error:[/red] Invalid index specified.")
+                continue
+            # C: copy content
+            elif new_query.strip().startswith("C "):
+                # copy the result content to clipboard
+                index = new_query[2:].strip()
+                result = results[int(index) - 1]
+                if index.isdigit() and int(index) in range(1, len(results) + 1):
+                    category = result.get("category", None)
+                    template = result.get("template", None)
+
+                    # for images and torrents get the direct content link
+                    # for all other results get the content text
+                    if category == "images":
+                        content = result.get("img_src")
+                    elif category == "files" and template == "torrent.html":
+                        content = result.get("magnetlink")
+                    else:
+                        content_raw = result.get("content", "")
+                        content = html2text(content_raw).strip() if content_raw else ""
+
+                    if content:
+                        pyperclip.copy(content)
+                    else:
+                        console.print("No content found for the selected result.")
                 else:
                     console.print("[red]Error:[/red] Invalid index specified.")
                 continue
