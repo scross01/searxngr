@@ -1,5 +1,7 @@
 # Change Log
 
+## v0.6.0
+
 - added `--list-engines` option to list all the searnxng engines with !bangs
   shortcuts and reliability details
 - added `--list-categories` option to list all the searxng categories
@@ -7,6 +9,7 @@
 - fixed lists of items in config to be more resilient to spacing and allow for
   csv style entry
 - fixed language setting not applied from config file
+- code cleanup, improved type checking, added unit tests
 
 ## v0.5.2
 

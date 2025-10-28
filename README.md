@@ -97,9 +97,9 @@ configuraiton defaults.
 
 ```txt
 usage: searxngr [-h] [--searxng-url SEARXNG_URL] [-c [CATEGORY ...]] [--config] [-d] [-e [ENGINE ...]] [-x] [-j]
-                [--http-method METHOD] [--timeout SECONDS] [--json] [-l LANGUAGE] [--lucky] [--list-engines]
-                [--list-categories] [--no-verify-ssl] [--nocolor] [--np] [--noua] [-n N] [--safe-search FILTER]
-                [-w SITE] [-t TIME_RANGE] [--unsafe] [--url-handler UTIL] [-v] [-F] [-M] [-N] [-S] [-V]
+                [--http-method METHOD] [--timeout SECONDS] [--json] [-l LANGUAGE] [--list-categories] [--list-engines]
+                [--lucky] [--no-verify-ssl] [--nocolor] [--np] [--noua] [-n N] [--safe-search FILTER] [-w SITE]
+                [-t TIME_RANGE] [--unsafe] [--url-handler UTIL] [-v] [-F] [-M] [-N] [-S] [-V]
                 [QUERY ...]
 
 Perform a search using SearXNG
@@ -110,32 +110,32 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --searxng-url SEARXNG_URL
-                        SearXNG instance URL (default: https://searxng.home.lan)
-  -c [CATEGORY ...], --categories [CATEGORY ...]
+                        SearXNG instance URL (default: NOT SET)
+  -c, --categories [CATEGORY ...]
                         list of categories to search in: general, news, videos, images, music, map, science, it,
                         files, social+media (default: None)
-  --config              open the configuration file in a default system text editor
+  --config              open the default configuration file using system text editor
   -d, --debug           show debug output
-  -e [ENGINE ...], --engines [ENGINE ...]
-                        list of engines to use for the search (default: all available engines)
+  -e, --engines [ENGINE ...]
+                        list of engines to use for the search (default: NOT SET)
   -x, --expand          Show complete url in search results
   -j, --first           open the first result in web browser and exit
-  --http-method METHOD  HTTP method to use for search requests. GET or POST (default: POST)
+  --http-method METHOD  HTTP method to use for search requests. GET or POST (default: GET)
   --timeout SECONDS     HTTP request timeout in seconds (default: 30.0)
   --json                output the search results in JSON format and exit
-  -l LANGUAGE, --language LANGUAGE
-                        search results in a specific language (e.g., 'en', 'de', 'fr') (default: en-CA)
+  -l, --language LANGUAGE
+                        search results in a specific language (e.g., 'en', 'de', 'fr')
+  --list-categories     list available categories
+  --list-engines        list available engines
   --lucky               opens a random result in web browser and exit
-  --list-engines        list available search engines and exit
-  --list-categories     list available search categories and exit
   --no-verify-ssl       do not verify SSL certificates of server (not recommended)
   --nocolor             disable colored output
   --np, --noprompt      just search and exit, do not prompt
   --noua                disable user agent
-  -n N, --num N         show N results per page (default: 5); N=0 uses the servers default per page
-  --safe-search FILTER  Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: none)
-  -w SITE, --site SITE  search sites using site: operator
-  -t TIME_RANGE, --time-range TIME_RANGE
+  -n, --num N           show N results per page (default: 10); N=0 uses the servers default per page
+  --safe-search FILTER  Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: strict)
+  -w, --site SITE       search sites using site: operator
+  -t, --time-range TIME_RANGE
                         search results within a specific time range (day, week, month, year)
   --unsafe              allow unsafe search results (same as --safe-search none)
   --url-handler UTIL    Command to open URLs in the browser (default: open)
