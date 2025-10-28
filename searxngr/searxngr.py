@@ -407,8 +407,8 @@ class SearXNGClient:
             query: Search query string
             pageno: Page number (1-based)
             safe_search: Safe search level
-            categories: Comma-separated categories
-            engines: Comma-separated search engines
+            categories: List of categories
+            engines: List of search engines
             language: Results language
             time_range: Time filter for results
             site: Site to restrict search to
@@ -418,8 +418,11 @@ class SearXNGClient:
             List of search results or None on error
         """
         query = f"site:{site} {query}" if site else query
-        url = None
+        path = None
         body = None
+
+        if engines and categories:
+            console.print("Engines setting ignored when using categories")
 
         # if http_method is POST, construct the body for the request
         if http_method == "POST":
@@ -435,7 +438,8 @@ class SearXNGClient:
                         if categories[i] == "social+media":
                             categories[i] = "social media"
                 body["categories"] = ",".join(categories)
-            if engines:
+            if engines and not categories:
+                # only use engines setting if categories if not set
                 body["engines"] = ",".join(engines)
             if language:
                 body["language"] = language
@@ -452,14 +456,16 @@ class SearXNGClient:
             # construct the query url
             path = f"/search?q={query}&format=json"
             path += f"&categories={','.join(categories)}" if categories else ""
-            path += f"&engines={','.join(engines)}" if engines else ""
+            path += (
+                f"&engines={','.join(engines)}" if engines and not categories else ""
+            )
             path += f"&language={language}" if language else ""
             path += (
                 f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
             )
             path += f"&time_range={time_range}" if time_range else ""
             path += f"&pageno={pageno}" if pageno > 1 else ""
-            console.print(f"Searching: {url}") if DEBUG else None
+            console.print(f"Searching: {path}") if DEBUG else None
         else:
             raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
 
@@ -733,7 +739,7 @@ def main() -> None:
         default=cfg.engines,
         metavar="ENGINE",
         help="list of engines to use for the search "
-        f"(default: {"".join(cfg.engines) if cfg.engines else 'all available engines'})",
+        f"(default: {" ".join(cfg.engines) if cfg.engines else 'NOT SET'})",
     )
     parser.add_argument(
         "-x",
@@ -896,14 +902,14 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    query = " ".join(args.query) if args.query else None
+    query = " ".join(args.query) if args.query else ""
 
     # if no color is requested, disable rich console color output
     global console
     if args.nocolor:
-        console = Console(history=[str(query)], color_system=None, force_terminal=True)
+        console = Console(history=[query], color_system=None, force_terminal=True)
     else:
-        console = Console(history=[str(query)])
+        console = Console(history=[query])
 
     DEBUG = args.debug
     console.print(f"Config: {args}") if DEBUG else None
@@ -951,7 +957,7 @@ def main() -> None:
         if not cfg.validate_category(args.categories):
             exit(1)
         args.categories = [args.categories]
-    # if news is requested, set categories to just 'news'
+    # if files is requested, set categories to just 'files'
     if args.files:
         args.categories = ["files"]
     # if music is requested, set categories to just 'music'
@@ -1062,7 +1068,7 @@ def main() -> None:
         # results per page.Interate until we have enough results.
         while len(results) <= (start_at + args.num):
             query_results = searxng.search(
-                str(query),
+                query,
                 safe_search=args.safe_search,
                 engines=args.engines,
                 language=args.language,

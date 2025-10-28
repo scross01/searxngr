@@ -104,7 +104,7 @@ class TestSearXNGClient:
         call_args = mock_httpx_client.return_value.get.call_args
         assert "test query" in call_args[0][0]
         assert "general" in call_args[0][0]
-        assert "testengine" in call_args[0][0]
+        assert "testengine" not in call_args[0][0]  # engines not used when category is set
         assert str(SAFE_SEARCH_OPTIONS["moderate"]) in call_args[0][0]
 
     @patch("searxngr.searxngr.httpx.Client")
@@ -143,7 +143,7 @@ class TestSearXNGClient:
         body = call_args[1]["data"]
         assert body["q"] == "test query"
         assert body["categories"] == "general"
-        assert body["engines"] == "testengine"
+        assert "engines" not in body  # engines not used when category is set
         assert body["safesearch"] == SAFE_SEARCH_OPTIONS["strict"]
 
     @patch("searxngr.searxngr.httpx.Client")
