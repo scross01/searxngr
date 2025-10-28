@@ -571,9 +571,14 @@ class SearxngrConfig:
     ) -> Optional[List[str]]:
         """Get list of strings from config with fallback"""
         entry = parser["searxngr"][key] if key in parser["searxngr"] else default
-        if entry:
-            entry = entry.strip().split(" ")
-        if entry == "":
+        if isinstance(entry, str):
+            if "," in entry:
+                entry = entry.strip().split(",")
+                entry = [e.strip() for e in entry]
+            else:
+                entry = entry.strip().split()
+                entry = [e.strip() for e in entry]
+        if entry == "" or entry == [] or entry == [""]:
             entry = None
         return entry
 
