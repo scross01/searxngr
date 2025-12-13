@@ -16,6 +16,7 @@ from dateutil.parser import parse
 from babel.dates import format_date
 from html2text import html2text
 import pyperclip
+import shutil
 
 from .engines import extract_engines_from_preferences
 from .console import InteractiveConsole as Console
@@ -297,6 +298,31 @@ def validate_engines(engines: List[str], searxng_client: "SearXNGClient") -> tup
             invalid_engines.append(engine)
 
     return valid_engines, invalid_engines
+
+
+def validate_url_handler(url_handler: str) -> bool:
+    """
+    Validate that the url_handler command exists and is executable.
+
+    Args:
+        url_handler: The command string to validate
+
+    Returns:
+        bool: True if the command exists and is executable, False otherwise
+    """
+    try:
+        # Extract the command from the string (handle cases with arguments)
+        command_parts = shlex.split(url_handler)
+        if not command_parts:
+            return False
+
+        command = command_parts[0]
+
+        # Check if the command exists in PATH
+        return shutil.which(command) is not None
+    except (ValueError, IndexError):
+        # Handle cases where shlex.split fails or returns empty list
+        return False
 
 
 class SearXNGClient:
@@ -1050,6 +1076,12 @@ def main() -> None:
     # set safe-search to 'none' if unsafe option is set
     if args.unsafe:
         args.safe_search = "none"
+    # validate url_handler command
+    if args.url_handler and not validate_url_handler(args.url_handler):
+        console.print(f"[red]Error:[/red] The url-handler command '{args.url_handler}' is not found or not executable.")
+        console.print("Make sure the command exists in your PATH or provide a full path to the executable.")
+        console.print(f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]")
+        exit(1)
 
     # open the configuration file and edit
     if args.config:
@@ -1207,7 +1239,7 @@ def main() -> None:
         # Interactive command prompt supports:
         # n: Next page    p: Previous page    f: First page
         # [num]: Open result   c [num]: Copy URL   t [range]: Time filter
-        # e [engine]: Update engines   F [filter]: Safe search   x: Toggle URLs   
+        # e [engine]: Update engines   F [filter]: Safe search   x: Toggle URLs
         # s: Show settings   d: Toggle debug   ?: Help
         while True:
             try:
