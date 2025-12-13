@@ -1194,7 +1194,8 @@ def main() -> None:
         # Interactive command prompt supports:
         # n: Next page    p: Previous page    f: First page
         # [num]: Open result   c [num]: Copy URL   t [range]: Time filter
-        # x: Toggle URLs   s: Show settings   d: Toggle debug   ?: Help
+        # e [engine]: Update engines   F [filter]: Safe search   x: Toggle URLs   
+        # s: Show settings   d: Toggle debug   ?: Help
         while True:
             try:
                 new_query = Prompt.ask(
@@ -1219,6 +1220,7 @@ def main() -> None:
                         - Type 'c' plus the index ('c 1', 'c 2') to copy the result URL to clipboard.
                         - Type 'C' plus the index ('C 1', 'C 2') to copy the result content to clipboard.
                         - Type 't timerange' to change the search time range (e.g. `t week`).
+                        - Type 'F filter' to change safe search filter (e.g `F moderate`).
                         - Type 'site:example.com' to filter results by a specific site.
                         - Type 'e' plus engine names to change search engines (e.g., 'e duckduckgo brave', 'e +google -bing').
                         - Type 'x' to toggle showing to result URL.
@@ -1344,6 +1346,26 @@ def main() -> None:
                         )
                     else:
                         args.time_range = time_range
+                    new_query = query
+                    start_at = 0
+                    pageno = 1
+                    results = []
+                    break
+            # f: Change safe search filter
+            elif new_query.strip().startswith("f "):
+                # change the safe search filter
+                safe_search_filter = new_query[2:].strip()
+                if safe_search_filter not in SAFE_SEARCH_OPTIONS:
+                    console.print(
+                        f"[red]Error:[/red] Invalid safe search filter '{safe_search_filter}'. "
+                        f"Use one of: {', '.join(SAFE_SEARCH_OPTIONS.keys())}"
+                    )
+                    continue
+                else:
+                    args.safe_search = safe_search_filter
+                    console.print(
+                        f"[green]Safe search filter set to:[/green] {safe_search_filter}"
+                    )
                     new_query = query
                     start_at = 0
                     pageno = 1

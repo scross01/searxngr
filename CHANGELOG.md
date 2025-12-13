@@ -1,5 +1,6 @@
 # Change Log
 
+- added `F mode` prompt option to change the safe search filter (e.g. `F moderate`)
 - added `e engine` prompt option to add or remove engines from the interactive console
 
 ## v0.6.0
