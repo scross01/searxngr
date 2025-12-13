@@ -83,11 +83,11 @@ engines = duckduckgo google brave
   self-signed certificated. Default is `false`.
 - `no_user_agent` - Clear the user agent. Default is `false`.
 - `no_color` - disable color terminal output. Default is `false`.
-- `url_handler` - command to open URLs in the browser. Default varies by platform
-  (`open` on macOS, `xdg-open` on Linux, `explorer` on Windows).
-- `secondary_url_handler` - alternative command to open URLs using secondary handler.
-  Falls back to `url_handler` if not set. Useful for different browsers or
-  command-line tools.
+- `url_handler` - command to open URLs in the browser. Default varies by
+  platform (`open` on macOS, `xdg-open` on Linux, `explorer` on Windows).
+- `secondary_url_handler` - alternative command to open URLs using secondary
+  handler. Falls back to `url_handler` if not set. Useful for different browsers
+  or command-line tools.
 
 ## Usage
 
@@ -207,19 +207,20 @@ The `-q/--query` option is particularly useful in the following scenarios:
    ```shell
    # Problem: -e might consume "my query" as its value
    searxngr -e brave "my query"
-   
+
    # Solution: Use -q to explicitly specify the query
    searxngr -e brave -q "my query"
    ```
 
-2. **Scripting and automation** where explicit argument handling is preferred:
+1. **Scripting and automation** where explicit argument handling is preferred:
 
    ```shell
    # Script-friendly approach
    searxngr -q "$SEARCH_QUERY" -e "$ENGINES"
    ```
 
-3. **Complex queries with special characters** that might be misinterpreted by the shell:
+1. **Complex queries with special characters** that might be misinterpreted by
+   the shell:
 
    ```shell
    searxngr -q "search with 'quotes' and $variables"
@@ -227,7 +228,8 @@ The `-q/--query` option is particularly useful in the following scenarios:
 
 ### Query Priority
 
-When both positional arguments and `-q/--query` are provided, the `-q/--query` option takes precedence:
+When both positional arguments and `-q/--query` are provided, the `-q/--query`
+option takes precedence:
 
 ```shell
 # "explicit query" will be used, not "positional query"
@@ -259,7 +261,10 @@ e -bing -yahoo
 
 ## Secondary URL Handler
 
-The `--secondary-url-handler` option allows you to configure an alternative method for opening URLs alongside the default handler. This can be useful for having the option to open a link in an alternative browser, or using a command-line tool to fetch content and formate output to the console.
+The `--secondary-url-handler` option allows you to configure an alternative
+method for opening URLs alongside the default handler. This can be useful for
+having the option to open a link in an alternative browser, or using a
+command-line tool to fetch content and formate output to the console.
 
 ```ini
 [searxngr]
@@ -275,8 +280,10 @@ Usage:
 
 ### Example for formated text output in the console
 
-The follow example shows how to use command line tools to fetch and format the url content for console output.
-This uses [github.com/scross01/fetch](https://github.com/scross01/fetch) and glow [github.com/charmbracelet/glow](glow)
+The follow example shows how to use command line tools to fetch and format the
+url content for console output. This uses
+[github.com/scross01/fetch](https://github.com/scross01/fetch) and glow
+[github.com/charmbracelet/glow](glow)
 
 ```shell
 brew install grow
@@ -302,7 +309,8 @@ Run `searxngr` with the following
 searxngr "my search query" --secondary-url-handler /path/to/fetch-glow.sh
 ```
 
-use `o 1`, `o 2`, `o 3...` to open the result in the console using fetch and glow
+use `o 1`, `o 2`, `o 3...` to open the result in the console using fetch and
+glow
 
 ## Troubleshooting
 

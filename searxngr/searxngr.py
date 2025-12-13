@@ -55,7 +55,9 @@ URL_HANDLER = {
     "Windows": "explorer",  # Command to open URLs in the default browser on Windows
 }
 
-SECONDARY_URL_HANDLER = None  # Default secondary URL handler, can be overridden in config
+SECONDARY_URL_HANDLER = (
+    None  # Default secondary URL handler, can be overridden in config
+)
 
 DEFAULT_EDITOR = {
     "Darwin": "open -t",
@@ -792,7 +794,11 @@ def main() -> None:
     # Command line argument definitions
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
     parser.add_argument(
-        "query", type=str, nargs="*", metavar="QUERY", help="search query (optional if -q/--query is used)"
+        "query",
+        type=str,
+        nargs="*",
+        metavar="QUERY",
+        help="search query (optional if -q/--query is used)",
     )
     parser.add_argument(
         "-q",
@@ -1016,7 +1022,7 @@ def main() -> None:
     query = ""
     if args.query:  # positional query
         query = " ".join(args.query)
-    if hasattr(args, 'query_opt') and args.query_opt:  # -q/--query option
+    if hasattr(args, "query_opt") and args.query_opt:  # -q/--query option
         query = args.query_opt
 
     # if no color is requested, disable rich console color output
@@ -1095,18 +1101,30 @@ def main() -> None:
         args.safe_search = "none"
     # validate url_handler command
     if args.url_handler and not validate_url_handler(args.url_handler):
-        console.print(f"[red]Error:[/red] The url-handler command '{args.url_handler}' is not found or not executable.")
-        console.print("Make sure the command exists in your PATH or provide a full path to the executable.")
-        console.print(f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]")
+        console.print(
+            f"[red]Error:[/red] The url-handler command '{args.url_handler}' is not found or not executable."
+        )
+        console.print(
+            "Make sure the command exists in your PATH or provide a full path to the executable."
+        )
+        console.print(
+            f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
+        )
         exit(1)
     # validate secondary_url_handler command
-    if args.secondary_url_handler and not validate_url_handler(args.secondary_url_handler):
+    if args.secondary_url_handler and not validate_url_handler(
+        args.secondary_url_handler
+    ):
         console.print(
             f"[red]Error:[/red] The secondary-url-handler command "
             f"'{args.secondary_url_handler}' is not found or not executable."
         )
-        console.print("Make sure the command exists in your PATH or provide a full path to the executable.")
-        console.print(f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]")
+        console.print(
+            "Make sure the command exists in your PATH or provide a full path to the executable."
+        )
+        console.print(
+            f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
+        )
         exit(1)
 
     # open the configuration file and edit
@@ -1329,14 +1347,20 @@ def main() -> None:
                 # open the selected result using the secondary URL handler
                 index = new_query[2:].strip()
                 if not index:
-                    console.print("[red]Error:[/red] No index specified. Usage: o <number>")
+                    console.print(
+                        "[red]Error:[/red] No index specified. Usage: o <number>"
+                    )
                     continue
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
                     index = int(index) - 1
                     url = results[index].get("url")
                     if url:
                         # Use secondary handler if configured, otherwise fall back to default
-                        handler = args.secondary_url_handler if args.secondary_url_handler else args.url_handler
+                        handler = (
+                            args.secondary_url_handler
+                            if args.secondary_url_handler
+                            else args.url_handler
+                        )
                         try:
                             subprocess.run(shlex.split(handler) + [url], check=True)
                         except subprocess.CalledProcessError as e:
@@ -1353,7 +1377,9 @@ def main() -> None:
                 # copy the result URL to clipboard
                 index = new_query[2:].strip()
                 if not index:
-                    console.print("[red]Error:[/red] No index specified. Usage: c <number>")
+                    console.print(
+                        "[red]Error:[/red] No index specified. Usage: c <number>"
+                    )
                     continue
                 result = results[int(index) - 1]
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
@@ -1372,7 +1398,9 @@ def main() -> None:
                 # copy the result content to clipboard
                 index = new_query[2:].strip()
                 if not index:
-                    console.print("[red]Error:[/red] No index specified. Usage: C <number>")
+                    console.print(
+                        "[red]Error:[/red] No index specified. Usage: C <number>"
+                    )
                     continue
                 result = results[int(index) - 1]
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
@@ -1625,7 +1653,9 @@ def main() -> None:
                 # pretty prin the raw json for the specified index
                 index = new_query[2:].strip()
                 if not index:
-                    console.print("[red]Error:[/red] No index specified. Usage: j <number>")
+                    console.print(
+                        "[red]Error:[/red] No index specified. Usage: j <number>"
+                    )
                     continue
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
                     index = int(index) - 1
