@@ -55,6 +55,8 @@ URL_HANDLER = {
     "Windows": "explorer",  # Command to open URLs in the default browser on Windows
 }
 
+SECONDARY_URL_HANDLER = None  # Default secondary URL handler, can be overridden in config
+
 DEFAULT_EDITOR = {
     "Darwin": "open -t",
     "Linux": "xdg-open",
@@ -649,6 +651,8 @@ class SearxngrConfig:
             # no_verify_ssl = false
             # no_user_agent = false
             # no_color = false
+            # url_handler = {URL_HANDLER.get(platform.system(), 'open')}
+            # secondary_url_handler =
         """
         ).split("\n", 1)[1:][0]
 
@@ -761,6 +765,9 @@ class SearxngrConfig:
         self.language = self.get_config_str(parser, "language", None)
         self.url_handler = self.get_config_str(
             parser, "url_handler", URL_HANDLER.get(platform.system())
+        )
+        self.secondary_url_handler = self.get_config_str(
+            parser, "secondary_url_handler", SECONDARY_URL_HANDLER
         )
         self.debug = self.get_config_bool(parser, "debug", False)
         self.http_methed = self.get_config_str(parser, "http_method", HTTP_METHOD)
@@ -957,6 +964,16 @@ def main() -> None:
         help=f"Command to open URLs in the browser (default: {cfg.url_handler})",
     )
     parser.add_argument(
+        "--secondary-url-handler",
+        type=str,
+        default=cfg.secondary_url_handler,
+        metavar="UTIL",
+        help=(
+            "Command to open URLs using secondary handler "
+            f"(default: {cfg.secondary_url_handler if cfg.secondary_url_handler else 'not set'})"
+        ),
+    )
+    parser.add_argument(
         "-v",
         "--version",
         action="store_true",
@@ -1079,6 +1096,15 @@ def main() -> None:
     # validate url_handler command
     if args.url_handler and not validate_url_handler(args.url_handler):
         console.print(f"[red]Error:[/red] The url-handler command '{args.url_handler}' is not found or not executable.")
+        console.print("Make sure the command exists in your PATH or provide a full path to the executable.")
+        console.print(f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]")
+        exit(1)
+    # validate secondary_url_handler command
+    if args.secondary_url_handler and not validate_url_handler(args.secondary_url_handler):
+        console.print(
+            f"[red]Error:[/red] The secondary-url-handler command "
+            f"'{args.secondary_url_handler}' is not found or not executable."
+        )
         console.print("Make sure the command exists in your PATH or provide a full path to the executable.")
         console.print(f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]")
         exit(1)
@@ -1259,22 +1285,24 @@ def main() -> None:
                 console.print(
                     textwrap.dedent(
                         """
-                        - Enter a search query to perform a new search.
-                        - Type 'n', 'p', and 'f' to navigate to the next, previos and first page of results.
-                        - Type the index (1, 2, 3, etc) open the search index page in a browser.
-                        - Type 'c' plus the index ('c 1', 'c 2') to copy the result URL to clipboard.
-                        - Type 'C' plus the index ('C 1', 'C 2') to copy the result content to clipboard.
-                        - Type 't timerange' to change the search time range (e.g. `t week`).
-                        - Type 'F filter' to change safe search filter (e.g `F moderate`).
-                        - Type 'site:example.com' to filter results by a specific site.
-                        - Type 'e' plus engine names to change search engines (e.g., 'e duckduckgo brave', 'e +google -bing').
-                        - Type 'x' to toggle showing to result URL.
-                        - Type 's' to show the current configuration settings.
-                        - Type 'd' to toggle debug output.
-                        - Type 'j' plus the index ('j 1', 'j 2') to show the JSON result for the specified index.
-                        - Type 'q', 'quit', or 'exit' to exit the program.
-                        - Type '?' for this help message.
-                        """
+                    - Enter a search query to perform a new search.
+                    - Type 'n', 'p', and 'f' to navigate to the next, previos and first page of results.
+                    - Type the index (1, 2, 3, etc) open the search index page in a browser.
+                    - Type 'o' plus the index ('o 1', 'o 2') to open the result using the secondary URL handler.
+                    - Type 'c' plus the index ('c 1', 'c 2') to copy the result URL to clipboard.
+                    - Type 'C' plus the index ('C 1', 'C 2') to copy the result content to clipboard.
+                    - Type 't timerange' to change the search time range (e.g. `t week`).
+                    - Type 'F filter' to change safe search filter (e.g `F moderate`).
+                    - Type 'site:example.com' to filter results by a specific site.
+                    - Type 'e' plus engine names to change search engines
+                      (e.g., 'e duckduckgo brave', 'e +google -bing').
+                    - Type 'x' to toggle showing to result URL.
+                    - Type 's' to show the current configuration settings.
+                    - Type 'd' to toggle debug output.
+                    - Type 'j' plus the index ('j 1', 'j 2') to show the JSON result for the specified index.
+                    - Type 'q', 'quit', or 'exit' to exit the program.
+                    - Type '?' for this help message.
+                    """
                     )
                 )
                 continue
@@ -1295,6 +1323,30 @@ def main() -> None:
                     console.print(
                         "[red]Error:[/red] No URL found for the selected result."
                     )
+                continue
+            # o: Open using secondary URL handler
+            elif new_query.strip() == "o" or new_query.strip().startswith("o "):
+                # open the selected result using the secondary URL handler
+                index = new_query[2:].strip()
+                if not index:
+                    console.print("[red]Error:[/red] No index specified. Usage: o <number>")
+                    continue
+                if index.isdigit() and int(index) in range(1, len(results) + 1):
+                    index = int(index) - 1
+                    url = results[index].get("url")
+                    if url:
+                        # Use secondary handler if configured, otherwise fall back to default
+                        handler = args.secondary_url_handler if args.secondary_url_handler else args.url_handler
+                        try:
+                            subprocess.run(shlex.split(handler) + [url], check=True)
+                        except subprocess.CalledProcessError as e:
+                            console.print(f"[red]Error opening URL:[/red] {e}")
+                    else:
+                        console.print(
+                            "[red]Error:[/red] No URL found for the selected result."
+                        )
+                else:
+                    console.print("[red]Error:[/red] Invalid index specified.")
                 continue
             # c: copy url
             elif new_query.strip() == "c" or new_query.strip().startswith("c "):
@@ -1554,6 +1606,10 @@ def main() -> None:
                         Site filter:       {args.site if args.site else '[dim]not set[/dim]'}
                         Time range filter: {args.time_range if args.time_range else '[dim]not set[/dim]'}
                         Expand URLs:       {'enabled' if args.expand else '[dim]disabled[/dim]'}
+                        URL Handler:       {args.url_handler}
+                        Secondary Handler: {args.secondary_url_handler
+                                            if args.secondary_url_handler
+                                            else '[dim]not set[/dim]'}
                         """
                     )
                 )

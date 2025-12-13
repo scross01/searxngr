@@ -83,6 +83,11 @@ engines = duckduckgo google brave
   self-signed certificated. Default is `false`.
 - `no_user_agent` - Clear the user agent. Default is `false`.
 - `no_color` - disable color terminal output. Default is `false`.
+- `url_handler` - command to open URLs in the browser. Default varies by platform
+  (`open` on macOS, `xdg-open` on Linux, `explorer` on Windows).
+- `secondary_url_handler` - alternative command to open URLs using secondary handler.
+  Falls back to `url_handler` if not set. Useful for different browsers or
+  command-line tools.
 
 ## Usage
 
@@ -90,30 +95,6 @@ engines = duckduckgo google brave
 
 ```shell
 searxngr why is the sky blue
-```
-
-### Query Input Options
-
-`searxngr` supports two ways to specify your search query:
-
-1. **Positional arguments** (traditional approach):
-   ```shell
-   searxngr "my search query"
-   ```
-
-2. **Explicit `-q/--query` option** (useful with multiple options):
-   ```shell
-   searxngr -q "my search query"
-   ```
-
-The `-q/--query` option is particularly helpful when using multiple options that might otherwise consume the query string as a parameter. For example:
-
-```shell
-# This works with -q/--query:
-searxngr -e brave -q "my search query"
-
-# This might not work as expected without -q/--query:
-searxngr -e brave "my search query"
 ```
 
 ### Options
@@ -210,7 +191,7 @@ searxngr search query here
 
 ### Explicit Query Option (-q/--query)
 
-The new `-q/--query` option provides an explicit way to specify your search query:
+The `-q/--query` option provides an explicit way to specify your search query:
 
 ```shell
 searxngr -q "search query here"
@@ -222,6 +203,7 @@ searxngr --query "search query here"
 The `-q/--query` option is particularly useful in the following scenarios:
 
 1. **Multiple options that might consume arguments**:
+
    ```shell
    # Problem: -e might consume "my query" as its value
    searxngr -e brave "my query"
@@ -231,12 +213,14 @@ The `-q/--query` option is particularly useful in the following scenarios:
    ```
 
 2. **Scripting and automation** where explicit argument handling is preferred:
+
    ```shell
    # Script-friendly approach
    searxngr -q "$SEARCH_QUERY" -e "$ENGINES"
    ```
 
 3. **Complex queries with special characters** that might be misinterpreted by the shell:
+
    ```shell
    searxngr -q "search with 'quotes' and $variables"
    ```
@@ -272,6 +256,53 @@ e +bing +yahoo
 # Remove engines from current selection
 e -bing -yahoo
 ```
+
+## Secondary URL Handler
+
+The `--secondary-url-handler` option allows you to configure an alternative method for opening URLs alongside the default handler. This can be useful for having the option to open a link in an alternative browser, or using a command-line tool to fetch content and formate output to the console.
+
+```ini
+[searxngr]
+searxng_url = https://searxng.example.com
+url_handler = open                    # System default browser
+secondary_url_handler = firefox       # Firefox browser
+```
+
+Usage:
+
+- Regular number input (1, 2, 3...) opens in default browser
+- `o 1`, `o 2`, `o 3...` opens in secondary browser (Firefox)
+
+### Example for formated text output in the console
+
+The follow example shows how to use command line tools to fetch and format the url content for console output.
+This uses [github.com/scross01/fetch](https://github.com/scross01/fetch) and glow [github.com/charmbracelet/glow](glow)
+
+```shell
+brew install grow
+uv tool install github.com/scross01/fetch
+```
+
+create `fetch-glow.sh` script
+
+```bash
+#!/bin/bash
+fetch "$1" | glow
+```
+
+Make it executable
+
+```shell
+chmod +x fetch-glow.sh
+```
+
+Run `searxngr` with the following
+
+```shell
+searxngr "my search query" --secondary-url-handler /path/to/fetch-glow.sh
+```
+
+use `o 1`, `o 2`, `o 3...` to open the result in the console using fetch and glow
 
 ## Troubleshooting
 

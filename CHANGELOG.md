@@ -1,5 +1,6 @@
 # Change Log
 
+- added `--secondary-url-handler` option to specify an alternative url handler executable to open urls
 - fixes error when url handler executable is not found
 - added `-q/--query` option as explicit alternative to the default positional query
 - added `F mode` prompt option to change the safe search filter in the interactive console (e.g. `F moderate`)
