@@ -241,6 +241,64 @@ def print_results(
         console.print()
 
 
+def parse_engine_command(engine_input: str) -> tuple:
+    """
+    Parse engine command with + and - prefixes.
+    Returns: (to_add, to_remove, replacement_list, has_modifiers)
+    """
+    to_add = []
+    to_remove = []
+    replacement_list = []
+    has_modifiers = False
+
+    # Split by comma or whitespace
+    engines = []
+    for part in engine_input.replace(",", " ").split():
+        engines.append(part.strip())
+
+    for engine in engines:
+        if engine.startswith("+"):
+            to_add.append(engine[1:])
+            has_modifiers = True
+        elif engine.startswith("-"):
+            to_remove.append(engine[1:])
+            has_modifiers = True
+        else:
+            replacement_list.append(engine)
+
+    return to_add, to_remove, replacement_list, has_modifiers
+
+
+def validate_engines(engines: List[str], searxng_client: "SearXNGClient") -> tuple:
+    """
+    Validate engine names against available engines.
+    Returns: (valid_engines, invalid_engines)
+    """
+    try:
+        available_engines = searxng_client.engines()
+        available_engine_names = {engine["name"] for engine in available_engines}
+    except Exception as e:
+        console.print(
+            f"[red]Error:[/red] Could not fetch available engines from SearXNG instance. "
+            f"Please check your SearXNG instance URL and network connection. Error: {e}"
+        )
+        console.print(
+            "[yellow]Note:[/yellow] Engine validation skipped, using provided engines as-is."
+        )
+        return engines, []
+
+    valid_engines = []
+    invalid_engines = []
+
+    for engine in engines:
+        if engine in available_engine_names:
+            valid_engines.append(engine)
+        else:
+            invalid_engines.append(engine)
+
+    return valid_engines, invalid_engines
+
+
 class SearXNGClient:
 
     def __init__(
@@ -1162,6 +1220,7 @@ def main() -> None:
                         - Type 'C' plus the index ('C 1', 'C 2') to copy the result content to clipboard.
                         - Type 't timerange' to change the search time range (e.g. `t week`).
                         - Type 'site:example.com' to filter results by a specific site.
+                        - Type 'e' plus engine names to change search engines (e.g., 'e duckduckgo brave', 'e +google -bing').
                         - Type 'x' to toggle showing to result URL.
                         - Type 's' to show the current configuration settings.
                         - Type 'd' to toggle debug output.
@@ -1290,6 +1349,102 @@ def main() -> None:
                     pageno = 1
                     results = []
                     break
+            # e: Change search engines
+            elif new_query.strip().startswith("e "):
+                # parse and validate engine command
+                engine_input = new_query[2:].strip()
+                if not engine_input:
+                    console.print(
+                        "[red]Error:[/red] No engine names specified. Usage: 'e +engine1 -engine2 engine3'"
+                    )
+                    continue
+
+                to_add, to_remove, replacement_list, has_modifiers = (
+                    parse_engine_command(engine_input)
+                )
+
+                # If we have modifiers (+/-) but also plain engines, warn about ignoring plain engines
+                if has_modifiers and replacement_list:
+                    console.print(
+                        "[yellow]Warning:[/yellow] Plain engine names ignored when using + or - prefixes"
+                    )
+                    replacement_list = []
+
+                # Get current engines
+                current_engines = args.engines.copy() if args.engines else []
+
+                if has_modifiers:
+                    # Handle add/remove operations
+                    engines_to_add = []
+                    engines_to_remove = []
+
+                    # Validate add engines
+                    if to_add:
+                        valid_add, invalid_add = validate_engines(to_add, searxng)
+                        engines_to_add.extend(valid_add)
+                        if invalid_add:
+                            console.print(
+                                f"[yellow]Warning:[/yellow] Invalid engines to add: {', '.join(invalid_add)}"
+                            )
+
+                    # Validate remove engines
+                    if to_remove:
+                        valid_remove, invalid_remove = validate_engines(
+                            to_remove, searxng
+                        )
+                        engines_to_remove.extend(valid_remove)
+                        if invalid_remove:
+                            console.print(
+                                f"[yellow]Warning:[/yellow] Invalid engines to remove: "
+                                f"{', '.join(invalid_remove)}"
+                            )
+
+                    # Apply changes
+                    if engines_to_add or engines_to_remove:
+                        # Remove engines first
+                        for engine in engines_to_remove:
+                            if engine in current_engines:
+                                current_engines.remove(engine)
+
+                        # Add engines (avoid duplicates)
+                        for engine in engines_to_add:
+                            if engine not in current_engines:
+                                current_engines.append(engine)
+
+                        args.engines = current_engines
+                        console.print(
+                            f"[green]Engines updated:[/green] {', '.join(current_engines)}"
+                        )
+                    else:
+                        console.print(
+                            "[yellow]Warning:[/yellow] No valid engines to add or remove"
+                        )
+                else:
+                    # Handle replacement operation
+                    if replacement_list:
+                        valid_engines, invalid_engines = validate_engines(
+                            replacement_list, searxng
+                        )
+
+                        if valid_engines:
+                            args.engines = valid_engines
+                            console.print(
+                                f"[green]Engines set to:[/green] {', '.join(valid_engines)}"
+                            )
+                            if invalid_engines:
+                                console.print(
+                                    f"[yellow]Warning:[/yellow] Invalid engines ignored: "
+                                    f"{', '.join(invalid_engines)}"
+                                )
+                        else:
+                            console.print(
+                                "[yellow]Warning:[/yellow] No valid engines provided, "
+                                "keeping current selection"
+                            )
+                    else:
+                        console.print("[yellow]Warning:[/yellow] No engines specified")
+
+                continue
             # site: Change site filter
             elif new_query.strip().startswith("site:"):
                 # etranct the new site filter and re-query

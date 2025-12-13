@@ -166,6 +166,29 @@ engine listing includes the engine name, URL, supported bang commands,
 categories, and reliability score. The category listing shows each category
 along with the engines that support it.
 
+## Interactive Console Engine Management
+
+When you run `searxngr` without the `--noprompt` flag, you enter an interactive
+console where you can dynamically change search engines during your session.
+
+### Engine Management Commands
+
+Use the `e` command followed by engine names to modify your search engine
+selection:
+
+#### Basic Engine Replacement
+
+```shell
+# Replace current engines with specific ones
+e duckduckgo google brave
+
+# Add engines to current selection
+e +bing +yahoo
+
+# Remove engines from current selection
+e -bing -yahoo
+```
+
 ## Troubleshooting
 
 **Error:: Client error '429 Too Many Requests' for url

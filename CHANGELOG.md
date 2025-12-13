@@ -1,5 +1,7 @@
 # Change Log
 
+- added `e engine` prompt option to add or remove engines from the interactive console
+
 ## v0.6.0
 
 - added `--list-engines` option to list all the searnxng engines with !bangs
