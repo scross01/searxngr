@@ -759,7 +759,15 @@ def main() -> None:
     # Command line argument definitions
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
     parser.add_argument(
-        "query", type=str, nargs="*", metavar="QUERY", help="search query"
+        "query", type=str, nargs="*", metavar="QUERY", help="search query (optional if -q/--query is used)"
+    )
+    parser.add_argument(
+        "-q",
+        "--query",
+        type=str,
+        dest="query_opt",
+        metavar="QUERY",
+        help="explicit search query (alternative to positional query)",
     )
     parser.add_argument(
         "--searxng-url",
@@ -961,7 +969,12 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    query = " ".join(args.query) if args.query else ""
+    # Handle query from either positional args or -q/--query option
+    query = ""
+    if args.query:  # positional query
+        query = " ".join(args.query)
+    if hasattr(args, 'query_opt') and args.query_opt:  # -q/--query option
+        query = args.query_opt
 
     # if no color is requested, disable rich console color output
     global console
@@ -1110,7 +1123,7 @@ def main() -> None:
         exit(0)
 
     # if no query is provided, show usage and exit
-    if not args.query:
+    if query == "":
         parser.print_usage()
         exit(0)
 

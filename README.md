@@ -86,8 +86,34 @@ engines = duckduckgo google brave
 
 ## Usage
 
+### Basic Usage
+
 ```shell
 searxngr why is the sky blue
+```
+
+### Query Input Options
+
+`searxngr` supports two ways to specify your search query:
+
+1. **Positional arguments** (traditional approach):
+   ```shell
+   searxngr "my search query"
+   ```
+
+2. **Explicit `-q/--query` option** (useful with multiple options):
+   ```shell
+   searxngr -q "my search query"
+   ```
+
+The `-q/--query` option is particularly helpful when using multiple options that might otherwise consume the query string as a parameter. For example:
+
+```shell
+# This works with -q/--query:
+searxngr -e brave -q "my search query"
+
+# This might not work as expected without -q/--query:
+searxngr -e brave "my search query"
 ```
 
 ### Options
@@ -105,10 +131,12 @@ usage: searxngr [-h] [--searxng-url SEARXNG_URL] [-c [CATEGORY ...]] [--config] 
 Perform a search using SearXNG
 
 positional arguments:
-  QUERY                 search query
+  QUERY                 search query (optional if -q/--query is used)
 
 options:
   -h, --help            show this help message and exit
+  -q, --query QUERY_OPT
+                        explicit search query (alternative to positional query)
   --searxng-url SEARXNG_URL
                         SearXNG instance URL (default: NOT SET)
   -c, --categories [CATEGORY ...]
@@ -165,6 +193,62 @@ your configured SearXNG instance and display them in a formatted table. The
 engine listing includes the engine name, URL, supported bang commands,
 categories, and reliability score. The category listing shows each category
 along with the engines that support it.
+
+## Query Input Options
+
+`searxngr` provides flexible ways to specify your search query to handle various
+use cases and avoid argument parsing conflicts.
+
+### Positional Query (Traditional)
+
+The traditional approach uses positional arguments:
+
+```shell
+searxngr "search query here"
+searxngr search query here
+```
+
+### Explicit Query Option (-q/--query)
+
+The new `-q/--query` option provides an explicit way to specify your search query:
+
+```shell
+searxngr -q "search query here"
+searxngr --query "search query here"
+```
+
+### When to Use -q/--query
+
+The `-q/--query` option is particularly useful in the following scenarios:
+
+1. **Multiple options that might consume arguments**:
+   ```shell
+   # Problem: -e might consume "my query" as its value
+   searxngr -e brave "my query"
+   
+   # Solution: Use -q to explicitly specify the query
+   searxngr -e brave -q "my query"
+   ```
+
+2. **Scripting and automation** where explicit argument handling is preferred:
+   ```shell
+   # Script-friendly approach
+   searxngr -q "$SEARCH_QUERY" -e "$ENGINES"
+   ```
+
+3. **Complex queries with special characters** that might be misinterpreted by the shell:
+   ```shell
+   searxngr -q "search with 'quotes' and $variables"
+   ```
+
+### Query Priority
+
+When both positional arguments and `-q/--query` are provided, the `-q/--query` option takes precedence:
+
+```shell
+# "explicit query" will be used, not "positional query"
+searxngr "positional query" -q "explicit query"
+```
 
 ## Interactive Console Engine Management
 
