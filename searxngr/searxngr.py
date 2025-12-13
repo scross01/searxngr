@@ -1252,9 +1252,12 @@ def main() -> None:
                     )
                 continue
             # c: copy url
-            elif new_query.strip().startswith("c "):
+            elif new_query.strip() == "c" or new_query.strip().startswith("c "):
                 # copy the result URL to clipboard
                 index = new_query[2:].strip()
+                if not index:
+                    console.print("[red]Error:[/red] No index specified. Usage: c <number>")
+                    continue
                 result = results[int(index) - 1]
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
                     url = result.get("url")
@@ -1268,9 +1271,12 @@ def main() -> None:
                     console.print("[red]Error:[/red] Invalid index specified.")
                 continue
             # C: copy content
-            elif new_query.strip().startswith("C "):
+            elif new_query.strip() == "C" or new_query.strip().startswith("C "):
                 # copy the result content to clipboard
                 index = new_query[2:].strip()
+                if not index:
+                    console.print("[red]Error:[/red] No index specified. Usage: C <number>")
+                    continue
                 result = results[int(index) - 1]
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
                     category = result.get("category", None)
@@ -1324,7 +1330,7 @@ def main() -> None:
                 )
                 continue
             # t: Change time range filter
-            elif new_query.strip().startswith("t "):
+            elif new_query.strip() == "t" or new_query.strip().startswith("t "):
                 # change the time range filter
                 time_range = new_query[2:].strip()
                 if (
@@ -1352,7 +1358,7 @@ def main() -> None:
                     results = []
                     break
             # f: Change safe search filter
-            elif new_query.strip().startswith("f "):
+            elif new_query.strip() == "F" or new_query.strip().startswith("F "):
                 # change the safe search filter
                 safe_search_filter = new_query[2:].strip()
                 if safe_search_filter not in SAFE_SEARCH_OPTIONS:
@@ -1372,7 +1378,7 @@ def main() -> None:
                     results = []
                     break
             # e: Change search engines
-            elif new_query.strip().startswith("e "):
+            elif new_query.strip() == "e" or new_query.strip().startswith("e "):
                 # parse and validate engine command
                 engine_input = new_query[2:].strip()
                 if not engine_input:
@@ -1514,9 +1520,12 @@ def main() -> None:
                 console.print(f"Debug mode {'enabled' if DEBUG else 'disabled'}")
                 continue
             # j: Show JSON result for a specific index
-            elif new_query.strip().startswith("j "):
+            elif new_query.strip() == "j" or new_query.strip().startswith("j "):
                 # pretty prin the raw json for the specified index
                 index = new_query[2:].strip()
+                if not index:
+                    console.print("[red]Error:[/red] No index specified. Usage: j <number>")
+                    continue
                 if index.isdigit() and int(index) in range(1, len(results) + 1):
                     index = int(index) - 1
                     console.print(
