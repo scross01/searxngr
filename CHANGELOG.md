@@ -1,5 +1,7 @@
 # Change Log
 
+## v0.7.0
+
 - added `--secondary-url-handler` option to specify an alternative url handler
   executable to open urls
 - fixes error when url handler executable is not found
