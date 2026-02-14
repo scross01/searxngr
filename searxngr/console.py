@@ -11,9 +11,16 @@ class InteractiveConsole(Console):
     def __init__(
         self, history: Optional[Union[str, List[str]]] = None, *args: Any, **kwargs: Any
     ) -> None:
-        self.history = InMemoryHistory(history)
-        self.session = PromptSession(history=self.history)
+        self._history = InMemoryHistory(history)
+        self._session: Optional[PromptSession] = None
         super().__init__(*args, **kwargs)
+
+    @property
+    def session(self) -> PromptSession:
+        """Lazy-load the PromptSession only when needed for interactive input."""
+        if self._session is None:
+            self._session = PromptSession(history=self._history)
+        return self._session
 
     def input(
         self,
