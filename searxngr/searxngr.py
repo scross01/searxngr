@@ -608,7 +608,7 @@ class SearXNGClient:
 class SearxngrConfig:
 
     def __init__(
-        self, config_path: Optional[str] = None, config_file: Optional[str] = None
+        self, config_path: Optional[str] = None, config_file: Optional[str] = None, skip_config_creation: bool = False
     ) -> None:
         # Load default configuration from a file if it exists
         if config_path:
@@ -622,8 +622,9 @@ class SearxngrConfig:
             self.config_file = os.path.join(self.config_path, CONFIG_FILE)
 
         if not os.path.exists(self.config_file):
-            # first time setup, create new configuration file
-            self.create_config_file()
+            # first time setup, create new configuration file only if not skipped
+            if not skip_config_creation:
+                self.create_config_file()
 
         self.load_config()
 
@@ -668,7 +669,7 @@ class SearxngrConfig:
         self, parser: configparser.ConfigParser, key: str, default: Optional[List[str]]
     ) -> Optional[List[str]]:
         """Get list of strings from config with fallback"""
-        entry = parser["searxngr"][key] if key in parser["searxngr"] else default
+        entry = parser["searxngr"][key] if "searxngr" in parser and key in parser["searxngr"] else default
         if isinstance(entry, str):
             if "," in entry:
                 entry = entry.strip().split(",")
@@ -685,8 +686,8 @@ class SearxngrConfig:
     ) -> Optional[str]:
         """Get string value from config with fallback"""
         try:
-            return parser["searxngr"][key] if key in parser["searxngr"] else default
-        except ValueError as ve:
+            return parser["searxngr"][key] if "searxngr" in parser and key in parser["searxngr"] else default
+        except (ValueError, KeyError) as ve:
             print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
@@ -698,9 +699,9 @@ class SearxngrConfig:
         """Get integer value from config with fallback"""
         try:
             return (
-                int(parser["searxngr"][key]) if key in parser["searxngr"] else default
+                int(parser["searxngr"][key]) if "searxngr" in parser and key in parser["searxngr"] else default
             )
-        except ValueError as ve:
+        except (ValueError, KeyError) as ve:
             console.print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
@@ -712,9 +713,9 @@ class SearxngrConfig:
         """Get float value from config with fallback"""
         try:
             return (
-                float(parser["searxngr"][key]) if key in parser["searxngr"] else default
+                float(parser["searxngr"][key]) if "searxngr" in parser and key in parser["searxngr"] else default
             )
-        except ValueError as ve:
+        except (ValueError, KeyError) as ve:
             console.print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
@@ -727,11 +728,11 @@ class SearxngrConfig:
         try:
             result = (
                 parser["searxngr"].getboolean(key)
-                if key in parser["searxngr"]
+                if "searxngr" in parser and key in parser["searxngr"]
                 else default
             )
             return result if result else default
-        except ValueError as ve:
+        except (ValueError, KeyError) as ve:
             console.print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
@@ -750,11 +751,14 @@ class SearxngrConfig:
     def load_config(self) -> None:
         # read the settings from the config file
         parser = configparser.ConfigParser()
-        parser.read(self.config_file)
-        if "searxngr" not in parser:
-            # config file content is missing, create new configuration file
-            self.create_config_file()
+        
+        # Only try to read the config file if it exists
+        if os.path.exists(self.config_file):
             parser.read(self.config_file)
+            if "searxngr" not in parser:
+                # config file content is missing, create new configuration file
+                self.create_config_file()
+                parser.read(self.config_file)
 
         self.searxng_url = self.get_config_str(parser, "searxng_url", None)
         self.searxng_username = self.get_config_str(parser, "searxng_username", None)
@@ -789,7 +793,26 @@ def main() -> None:
     - Search execution
     - Interactive result navigation
     """
-    cfg = SearxngrConfig()
+    # First parse arguments that don't require a SearXNG URL
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument("--searxng-url", type=str, dest="searxng_url")
+    pre_parser.add_argument("--version", "-v", action="store_true", dest="version")
+    pre_parser.add_argument("--config", action="store_true", dest="config")
+    pre_parser.add_argument("--list-categories", action="store_true", dest="list_categories")
+    pre_parser.add_argument("--list-engines", action="store_true", dest="list_engines")
+    pre_parser.add_argument("--help", "-h", action="store_true", dest="help")
+    pre_args, _ = pre_parser.parse_known_args()
+    
+    # Skip config creation if searxng-url is provided OR if running commands that don't need it
+    skip_config_creation = (
+        pre_args.searxng_url is not None or
+        pre_args.version or
+        pre_args.config or
+        pre_args.list_categories or
+        pre_args.list_engines or
+        pre_args.help
+    )
+    cfg = SearxngrConfig(skip_config_creation=skip_config_creation)
 
     # Command line argument definitions
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
@@ -1035,10 +1058,30 @@ def main() -> None:
     DEBUG = args.debug
     console.print(f"Config: {args}") if DEBUG else None
 
+    # open the configuration file and edit
+    if args.config:
+        console.print(f"opening {cfg.config_file}")
+        editor = os.environ.get("EDITOR", DEFAULT_EDITOR[platform.system()])
+        try:
+            subprocess.run(shlex.split(editor) + [cfg.config_file], check=True)
+        except subprocess.CalledProcessError as e:
+            console.print(f"[red]Error opening editor:[/red] {e}")
+        exit(0)
+    # show version and exit
+    if args.version:
+        console.print(__version__)
+        exit(0)
+    # show help and exit
+    if pre_args.help:
+        parser.print_help()
+        exit(0)
+
     # validate that searxng url is set
     if not args.searxng_url:
-        console.print(f"[red]Error:[/red] searxng_url is not set in {cfg.config_file}")
-        return
+        # If no URL is provided via command line or config, prompt for it
+        args.searxng_url = input(f"Enter your SearXNG instance URL [{SAMPLE_SEARXNG_URL}]: ")
+        if not args.searxng_url:
+            args.searxng_url = SAMPLE_SEARXNG_URL
     # validate safe search is a valid value
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
         console.print(
@@ -1124,20 +1167,6 @@ def main() -> None:
         console.print(
             f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
         )
-
-    # open the configuration file and edit
-    if args.config:
-        console.print(f"opening {cfg.config_file}")
-        editor = os.environ.get("EDITOR", DEFAULT_EDITOR[platform.system()])
-        try:
-            subprocess.run(shlex.split(editor) + [cfg.config_file], check=True)
-        except subprocess.CalledProcessError as e:
-            console.print(f"[red]Error opening editor:[/red] {e}")
-        exit(0)
-    # show version and exit
-    if args.version:
-        console.print(__version__)
-        exit(0)
 
     searxng = SearXNGClient(
         url=args.searxng_url,

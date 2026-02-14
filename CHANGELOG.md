@@ -1,5 +1,9 @@
 # Change Log
-- changed invalid url handler from error to warning
+
+## 0.7.1
+
+- fixed startup check to allow searxngr to run entirely with command line options without requiring a config file.
+- changed invalid url handler from error to warning.
 
 ## v0.7.0
 
