@@ -1,4 +1,5 @@
 # Change Log
+- changed invalid url handler from error to warning
 
 ## v0.7.0
 

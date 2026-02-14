@@ -1102,7 +1102,7 @@ def main() -> None:
     # validate url_handler command
     if args.url_handler and not validate_url_handler(args.url_handler):
         console.print(
-            f"[red]Error:[/red] The url-handler command '{args.url_handler}' is not found or not executable."
+            f"[yellow]Warning:[/yellow] The url-handler command '{args.url_handler}' is not found or not executable."
         )
         console.print(
             "Make sure the command exists in your PATH or provide a full path to the executable."
@@ -1110,13 +1110,12 @@ def main() -> None:
         console.print(
             f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
         )
-        exit(1)
     # validate secondary_url_handler command
     if args.secondary_url_handler and not validate_url_handler(
         args.secondary_url_handler
     ):
         console.print(
-            f"[red]Error:[/red] The secondary-url-handler command "
+            f"[yellow]Warning:[/yellow] The secondary-url-handler command "
             f"'{args.secondary_url_handler}' is not found or not executable."
         )
         console.print(
@@ -1125,7 +1124,6 @@ def main() -> None:
         console.print(
             f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
         )
-        exit(1)
 
     # open the configuration file and edit
     if args.config:
