@@ -33,7 +33,7 @@ from .constants import (
 )
 
 
-def main() -> None:
+def parse_pre_args() -> argparse.Namespace:
     pre_parser = argparse.ArgumentParser(add_help=False)
     pre_parser.add_argument("--searxng-url", type=str, dest="searxng_url")
     pre_parser.add_argument("--version", "-v", action="store_true", dest="version")
@@ -43,12 +43,57 @@ def main() -> None:
     )
     pre_parser.add_argument("--list-engines", action="store_true", dest="list_engines")
     pre_parser.add_argument("--help", "-h", action="store_true", dest="help")
-    pre_args, _ = pre_parser.parse_known_args()
+    return pre_parser.parse_known_args()[0]
 
-    skip_config_creation = not pre_args.config
 
-    cfg = SearxngrConfig(skip_config_creation=skip_config_creation)
+def open_url(url: str, url_handler: str) -> bool:
+    try:
+        command = shlex.split(url_handler)
+        command.append(url)
+        subprocess.run(command, check=True)
+        return True
+    except FileNotFoundError:
+        console.print(
+            f"[yellow]Warning:[/yellow] URL handler '{url_handler}' not found, "
+            "update configuration or set --url-handler"
+        )
+        return False
+    except subprocess.CalledProcessError as e:
+        console.print(f"[red]Error opening URL:[/red] {e}")
+        return False
 
+
+def handle_results(results: list, args: argparse.Namespace) -> tuple[bool, list]:
+    if args.json:
+        print(json.dumps(results, indent=2))
+        return (False, results)
+
+    if not results:
+        console.print("\nNo results found or an error occurred during the search.\n")
+        return (True, results)
+
+    if args.first:
+        url = results[0].get("url")
+        if url:
+            open_url(url, args.url_handler)
+        else:
+            console.print("[red]Error:[/red] No URL found in result")
+        return (False, results)
+
+    if args.lucky:
+        result = random.choice(results)
+        url = result.get("url")
+        if url:
+            open_url(url, args.url_handler)
+        else:
+            console.print(f"[red]Error:[/red] No URL found in result {result}")
+        return (False, results)
+
+    print_results(results, count=args.num, start_at=0, expand=args.expand)
+    return (True, results)
+
+
+def create_parser(cfg: SearxngrConfig) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Perform a search using SearXNG")
     parser.add_argument(
         "query",
@@ -272,7 +317,17 @@ def main() -> None:
         action="store_true",
         help="show results from videos section. (same as --categories videos)",
     )
+    return parser
 
+
+def main() -> None:
+    pre_args = parse_pre_args()
+
+    skip_config_creation = not pre_args.config
+
+    cfg = SearxngrConfig(skip_config_creation=skip_config_creation)
+
+    parser = create_parser(cfg)
     args = parser.parse_args()
 
     query = ""
@@ -488,57 +543,9 @@ def main() -> None:
                 break
             pageno += 1
 
-        if args.json:
-            print(json.dumps(results, indent=2))
+        continue_loop, results = handle_results(results, args)
+        if not continue_loop:
             exit(0)
-
-        if results:
-            if args.first:
-                url = results[0].get("url")
-                if url:
-                    try:
-                        command = shlex.split(args.url_handler)
-                        command.append(url)
-                        subprocess.run(command, check=True)
-                    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                        if isinstance(e, FileNotFoundError):
-                            console.print(
-                                f"[yellow]Warning:[/yellow] URL handler '{args.url_handler}' not found, "
-                                "update configuration or set --url-handler"
-                            )
-                        else:
-                            console.print(f"[red]Error opening URL:[/red] {e}")
-                else:
-                    console.print("[red]Error:[/red] No URL found in result")
-                exit(0)
-
-            if args.lucky:
-                result = random.choice(results)
-                url = result.get("url")
-                if url:
-                    try:
-                        subprocess.run(
-                            shlex.split(args.url_handler) + [url], check=True
-                        )
-                    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                        if isinstance(e, FileNotFoundError):
-                            console.print(
-                                f"[yellow]Warning:[/yellow] URL handler '{args.url_handler}' not found, "
-                                "update configuration or set --url-handler"
-                            )
-                        else:
-                            console.print(f"[red]Error opening URL:[/red] {e}")
-                else:
-                    console.print(f"[red]Error:[/red] No URL found in result {result}")
-                exit(0)
-
-            print_results(
-                results, count=args.num, start_at=start_at, expand=args.expand
-            )
-        else:
-            console.print(
-                "\nNo results found or an error occurred during the search.\n"
-            )
 
         if args.np:
             exit(0)
