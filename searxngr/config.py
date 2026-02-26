@@ -1,4 +1,5 @@
 import os
+import platform
 import textwrap
 import configparser
 import httpx
@@ -115,6 +116,13 @@ class SearxngrConfig:
             return (True, "")
         except httpx.ConnectError as ce:
             return (False, f"Could not connect to {url}. {ce}")
+        except httpx.TimeoutException as te:
+            return (False, f"Connection to {url} timed out. {te}")
+        except httpx.HTTPStatusError as he:
+            return (
+                False,
+                f"Invalid response from {url} (HTTP {he.response.status_code}). {he}",
+            )
         except Exception as e:
             return (False, f"Unable to access JSON API for {url}. {e}")
 
@@ -227,13 +235,13 @@ class SearxngrConfig:
         self.expand = self.get_config_bool(parser, "expand", EXPAND)
         self.language = self.get_config_str(parser, "language", None)
         self.url_handler = self.get_config_str(
-            parser, "url_handler", URL_HANDLER.get("Darwin")
+            parser, "url_handler", URL_HANDLER.get(platform.system())
         )
         self.secondary_url_handler = self.get_config_str(
             parser, "secondary_url_handler", SECONDARY_URL_HANDLER
         )
         self.debug = self.get_config_bool(parser, "debug", False)
-        self.http_methed = self.get_config_str(parser, "http_method", HTTP_METHOD)
+        self.http_method = self.get_config_str(parser, "http_method", HTTP_METHOD)
         self.http_timeout = self.get_config_float(parser, "timeout", HTTP_TIMEOUT)
         self.no_user_agent = self.get_config_bool(parser, "no_user_agent", False)
         self.no_verify_ssl = self.get_config_bool(parser, "no_verify_ssl", False)

@@ -119,11 +119,11 @@ def main() -> None:
     parser.add_argument(
         "--http-method",
         type=str,
-        default=cfg.http_methed,
+        default=cfg.http_method,
         choices=["GET", "POST"],
         metavar="METHOD",
         help="HTTP method to use for search requests. GET or POST "
-        f"(default: {cfg.http_methed.upper() if cfg.http_methed else 'GET'})",
+        f"(default: {cfg.http_method.upper() if cfg.http_method else 'GET'})",
     )
     parser.add_argument(
         "--timeout",
