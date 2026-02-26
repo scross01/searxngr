@@ -17,133 +17,123 @@ def extract_engines_from_preferences(html_content: str) -> List[Dict[str, Any]]:
     soup = BeautifulSoup(html_content, "html.parser")
     engines = []
 
-    # Find all engine table rows
     engine_rows = soup.find_all("tr", class_="pref-group")
 
     for row in engine_rows:
-        # Skip category headers
         if row.th and row.th.get("colspan") == "2":
-            # category_name = row.th.text.strip()
-            # Find all engine rows within this category
             engine_rows_in_category = row.find_next_siblings("tr")
 
             for engine_row in engine_rows_in_category:
                 if engine_row.find("th", class_="name"):
-                    # Extract just the engine name
-                    name_element = engine_row.find("th", class_="name")
-                    label_element = name_element.find("label") if name_element else None
-                    engine_name = (
-                        label_element.text.strip()
-                        if label_element and label_element.text
-                        else ""
-                    )
+                    engine_entry = _extract_engine_info(engine_row)
+                    if engine_entry:
+                        engines.append(engine_entry)
 
-                    # Extract URL from the tooltip
-                    tooltip = engine_row.find("div", class_="engine-tooltip")
-                    engine_url = ""
-                    if tooltip:
-                        # Find the first link in the tooltip
-                        link = tooltip.find("a")
-                        if link and link.get("href"):
-                            engine_url = link.get("href")
-
-                    # Extract bang commands from the shortcut column
-                    shortcut_cell = engine_row.find("td", class_="shortcut")
-                    bangs = []
-                    if shortcut_cell:
-                        bang_spans = shortcut_cell.find_all("span", class_="bang")
-                        for span in bang_spans:
-                            bang_text = span.text.strip()
-                            # Only include bangs that start with ! followed by letters/numbers
-                            if re.match(r"^![a-zA-Z0-9_]+$", bang_text):
-                                bangs.append(bang_text)
-
-                    # Get bang commands from the tooltip
-                    # bangs = []
-                    # if tooltip:
-                    #     tooltip_text = tooltip.get_text()
-                    #     # Find the categories section
-                    #     bangs_match = re.search(
-                    #         r"!bang for this engine(.*?)(?=!bang|$)", tooltip_text
-                    #     )
-                    #     if bangs_match:
-                    #         bangs_section = bangs_match.group(1)
-                    #         # Extract engine bangs from this section
-                    #         bangs_matches = re.findall(
-                    #             r"(![a-zA-Z0-9_]+)", bangs_section
-                    #         )
-                    #         bangs = list(set(bangs_matches))  # Remove duplicates
-
-                    # Get categories from the tooltip
-                    categories = []
-                    if tooltip:
-                        tooltip_text = tooltip.get_text()
-                        # Find the categories section
-                        categories_match = re.search(
-                            r"!bang for its categories(.*?)(?=!bang|$)", tooltip_text
-                        )
-                        if categories_match:
-                            categories_section = categories_match.group(1)
-                            # Extract category bangs from this section
-                            category_matches = re.findall(
-                                r"(![a-zA-Z0-9_]+)", categories_section
-                            )
-                            categories = list(
-                                set(category_matches)
-                            )  # Remove duplicates
-
-                    # Extract reliability from the last table cell
-                    reliability = None
-                    reliability_cell = engine_row.find_all("td")[-1]
-                    if reliability_cell:
-                        reliability_span = reliability_cell.find("span")
-                        reliability = (
-                            reliability_span.text.strip() if reliability_span else None
-                        )
-
-                    # Extract errors from the tooltip
-                    errors = None
-                    if reliability_cell:
-                        errors_div = reliability_cell.find(
-                            "div", class_="engine-tooltip"
-                        )
-                        if errors_div:
-                            errors = errors_div.find_all("p")[1].text.strip()
-
-                    # Create engine entry
-                    engine_entry = {
-                        "name": engine_name,
-                        "url": engine_url,
-                        "bangs": bangs,
-                        "categories": categories,
-                        "reliability": reliability,
-                        "errors": errors,
-                    }
-
-                    engines.append(engine_entry)
-
-    # Remove duplicates by engine name
     unique_engines = {}
     for engine in engines:
         if engine["name"] not in unique_engines:
             unique_engines[engine["name"]] = engine
 
-    # Sort engines by name
     sorted_engines = sorted(unique_engines.values(), key=lambda x: x["name"].lower())
 
     return sorted_engines
 
 
-# Example usage:
-if __name__ == "__main__":
-    # Read the preferences.html file
-    with open("preferences.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
+def _extract_engine_info(engine_row: BeautifulSoup) -> Dict[str, Any]:
+    """Extract engine information from a single engine row."""
+    name_element = engine_row.find("th", class_="name")
+    if not name_element:
+        return None
 
-    # Extract engines
-    engines = extract_engines_from_preferences(html_content)
+    label_element = name_element.find("label")
+    engine_name = (
+        label_element.text.strip() if label_element and label_element.text else ""
+    )
 
-    # Print the result
-    import json
+    if not engine_name:
+        return None
 
-    print(json.dumps(engines, indent=2))
+    engine_url = _extract_engine_url(engine_row)
+    bangs = _extract_bangs(engine_row)
+    categories = _extract_categories(engine_row)
+    reliability, errors = _extract_reliability_and_errors(engine_row)
+
+    return {
+        "name": engine_name,
+        "url": engine_url,
+        "bangs": bangs,
+        "categories": categories,
+        "reliability": reliability,
+        "errors": errors,
+    }
+
+
+def _extract_engine_url(engine_row: BeautifulSoup) -> str:
+    """Extract engine URL from tooltip."""
+    tooltip = engine_row.find("div", class_="engine-tooltip")
+    if not tooltip:
+        return ""
+
+    link = tooltip.find("a")
+    return link.get("href", "") if link else ""
+
+
+def _extract_bangs(engine_row: BeautifulSoup) -> List[str]:
+    """Extract bang commands from shortcut column."""
+    bangs = []
+    shortcut_cell = engine_row.find("td", class_="shortcut")
+    if not shortcut_cell:
+        return bangs
+
+    bang_spans = shortcut_cell.find_all("span", class_="bang")
+    for span in bang_spans:
+        bang_text = span.text.strip()
+        if re.match(r"^![a-zA-Z0-9_]+$", bang_text):
+            bangs.append(bang_text)
+
+    return bangs
+
+
+def _extract_categories(engine_row: BeautifulSoup) -> List[str]:
+    """Extract category bangs from tooltip."""
+    categories = []
+    tooltip = engine_row.find("div", class_="engine-tooltip")
+    if not tooltip:
+        return categories
+
+    try:
+        tooltip_text = tooltip.get_text()
+        categories_match = re.search(
+            r"!bang for its categories(.*?)(?=!bang|$)", tooltip_text, re.DOTALL
+        )
+        if categories_match:
+            categories_section = categories_match.group(1)
+            category_matches = re.findall(r"(![a-zA-Z0-9_]+)", categories_section)
+            categories = list(set(category_matches))
+    except (AttributeError, re.error):
+        pass
+
+    return categories
+
+
+def _extract_reliability_and_errors(engine_row: BeautifulSoup) -> tuple:
+    """Extract reliability score and error messages."""
+    reliability = None
+    errors = None
+
+    try:
+        cells = engine_row.find_all("td")
+        if cells:
+            reliability_cell = cells[-1]
+            reliability_span = reliability_cell.find("span")
+            reliability = reliability_span.text.strip() if reliability_span else None
+
+            errors_div = reliability_cell.find("div", class_="engine-tooltip")
+            if errors_div:
+                paragraphs = errors_div.find_all("p")
+                if len(paragraphs) > 1:
+                    errors = paragraphs[1].text.strip()
+    except (AttributeError, IndexError):
+        pass
+
+    return reliability, errors
