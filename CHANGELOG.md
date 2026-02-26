@@ -2,11 +2,16 @@
 
 ## 0.8.0
 
-- updated onboarding experience to required running `searxngr --config` to create initial config file.
-- updated startup checks to allow searxngr to run without a config file when using the `--searxng-url` option.
-- fixed issues with running in headless linux environments where `xdg-open` is not avialable.
+- updated onboarding experience to required running `searxngr --config` to
+  create initial config file.
+- updated startup checks to allow searxngr to run without a config file when
+  using the `--searxng-url` option.
+- fixed issues with running in headless linux environments where `xdg-open` is
+  not avialable.
 - fixed "Input is not a terminal (fd=0)" error.
 - changed invalid url handler from error to warning.
+- fixed time conversion has a bug.
+- refactored source code structure for maintainability.
 
 ## v0.7.0
 

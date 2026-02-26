@@ -42,13 +42,14 @@ uv tool install .
 
 ## Configuration
 
-The `searxngr` configuration is stored in `$XDG_CONFIG_HOME/searxngr/config.ini`,
-on Mac and Linux this is typical under `$HOME/.config` and on Windows its under
-`%APPDATA%`.
+The `searxngr` configuration is stored in
+`$XDG_CONFIG_HOME/searxngr/config.ini`, on Mac and Linux this is typical under
+`$HOME/.config` and on Windows its under `%APPDATA%`.
 
 ### First-Time Setup
 
-On first run, if no configuration exists, `searxngr` will show an error with guidance:
+On first run, if no configuration exists, `searxngr` will show an error with
+guidance:
 
 ```shell
 $ searxngr "search query"
@@ -67,11 +68,12 @@ Run `searxngr --config` to edit all settings
 ```
 
 The setup will:
+
 1. Prompt for your SearXNG instance URL
-2. If using HTTPS, ask whether to disable SSL verification
-3. Validate that the instance is reachable
-4. Create the configuration file
-5. Show the location and how to edit settings later
+1. If using HTTPS, ask whether to disable SSL verification
+1. Validate that the instance is reachable
+1. Create the configuration file
+1. Show the location and how to edit settings later
 
 ### Configuration File
 
