@@ -1438,8 +1438,8 @@ def main() -> None:
                         subprocess.run(
                             shlex.split(args.url_handler) + [url], check=True
                         )
-                    except subprocess.CalledProcessError as e:
-                        console.print(f"[red]Error opening URL:[/red] {e}")
+                    except (subprocess.CalledProcessError, FileNotFoundError):
+                        pass
                 else:
                     console.print(
                         "[red]Error:[/red] No URL found for the selected result."
