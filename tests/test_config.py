@@ -2,7 +2,7 @@ import configparser
 import tempfile
 from unittest.mock import patch, mock_open
 
-from searxngr.searxngr import SearxngrConfig
+from searxngr.config import SearxngrConfig
 
 
 class TestSearxngrConfig:

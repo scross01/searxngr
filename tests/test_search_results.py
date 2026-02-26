@@ -1,6 +1,6 @@
 import os
 from unittest.mock import patch
-from searxngr.searxngr import print_results
+from searxngr.formatter import print_results
 
 
 class TestSearchResults:
@@ -56,8 +56,8 @@ class TestSearchResults:
             },
         ]
 
-    @patch("searxngr.searxngr.console")
-    @patch("searxngr.searxngr.os.get_terminal_size")
+    @patch("searxngr.formatter.console")
+    @patch("searxngr.formatter.os.get_terminal_size")
     def test_print_results_basic(self, mock_terminal_size, mock_console):
         """Test basic result printing functionality"""
         # Mock terminal size
@@ -74,8 +74,8 @@ class TestSearchResults:
         assert any("example.com" in str(call) for call in call_args)
         assert any("testengine" in str(call) for call in call_args)
 
-    @patch("searxngr.searxngr.console")
-    @patch("searxngr.searxngr.os.get_terminal_size")
+    @patch("searxngr.formatter.console")
+    @patch("searxngr.formatter.os.get_terminal_size")
     def test_print_results_with_long_content(self, mock_terminal_size, mock_console):
         """Test result printing with content that needs truncation"""
         # Mock terminal size
@@ -93,8 +93,8 @@ class TestSearchResults:
         ]
         assert len(content_calls) > 0
 
-    @patch("searxngr.searxngr.console")
-    @patch("searxngr.searxngr.os.get_terminal_size")
+    @patch("searxngr.formatter.console")
+    @patch("searxngr.formatter.os.get_terminal_size")
     def test_print_results_with_expand(self, mock_terminal_size, mock_console):
         """Test result printing with expand option"""
         # Mock terminal size
@@ -109,8 +109,8 @@ class TestSearchResults:
         call_args = mock_console.print.call_args_list
         assert any("https://example.com/result1" in str(call) for call in call_args)
 
-    @patch("searxngr.searxngr.console")
-    @patch("searxngr.searxngr.os.get_terminal_size")
+    @patch("searxngr.formatter.console")
+    @patch("searxngr.formatter.os.get_terminal_size")
     def test_print_results_news_category(self, mock_terminal_size, mock_console):
         """Test result printing for news category with date"""
         # Mock terminal size
@@ -128,8 +128,8 @@ class TestSearchResults:
         # Check that published date was formatted (could be different format)
         assert any("2023" in str(call) for call in call_args)
 
-    @patch("searxngr.searxngr.console")
-    @patch("searxngr.searxngr.os.get_terminal_size")
+    @patch("searxngr.formatter.console")
+    @patch("searxngr.formatter.os.get_terminal_size")
     def test_print_results_images_category(self, mock_terminal_size, mock_console):
         """Test result printing for images category"""
         # Mock terminal size
@@ -147,8 +147,8 @@ class TestSearchResults:
         assert any("Image Source" in str(call) for call in call_args)
         assert any("https://example.com/image.jpg" in str(call) for call in call_args)
 
-    @patch("searxngr.searxngr.console")
-    @patch("searxngr.searxngr.os.get_terminal_size")
+    @patch("searxngr.formatter.console")
+    @patch("searxngr.formatter.os.get_terminal_size")
     def test_print_results_videos_category(self, mock_terminal_size, mock_console):
         """Test result printing for videos category"""
         # Mock terminal size

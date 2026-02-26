@@ -1,6 +1,7 @@
 from unittest.mock import patch, MagicMock
 
-from searxngr.searxngr import SearXNGClient, SAFE_SEARCH_OPTIONS
+from searxngr.client import SearXNGClient
+from searxngr.constants import SAFE_SEARCH_OPTIONS
 
 
 class TestSearXNGClient:
@@ -29,7 +30,7 @@ class TestSearXNGClient:
         assert client.username == "testuser"
         assert client.password == "testpass"
 
-    @patch("searxngr.searxngr.httpx.Client")
+    @patch("searxngr.client.httpx.Client")
     def test_get_request(self, mock_httpx_client):
         """Test GET request functionality"""
         # Mock the HTTP client and response
@@ -48,7 +49,7 @@ class TestSearXNGClient:
         )
         assert response == mock_response
 
-    @patch("searxngr.searxngr.httpx.Client")
+    @patch("searxngr.client.httpx.Client")
     def test_post_request(self, mock_httpx_client):
         """Test POST request functionality"""
         # Mock the HTTP client and response
@@ -69,7 +70,7 @@ class TestSearXNGClient:
         )
         assert response == mock_response
 
-    @patch("searxngr.searxngr.httpx.Client")
+    @patch("searxngr.client.httpx.Client")
     def test_search_get_method(self, mock_httpx_client):
         """Test search functionality with GET method"""
         # Mock the HTTP client and response
@@ -104,10 +105,12 @@ class TestSearXNGClient:
         call_args = mock_httpx_client.return_value.get.call_args
         assert "test query" in call_args[0][0]
         assert "general" in call_args[0][0]
-        assert "testengine" not in call_args[0][0]  # engines not used when category is set
+        assert (
+            "testengine" not in call_args[0][0]
+        )  # engines not used when category is set
         assert str(SAFE_SEARCH_OPTIONS["moderate"]) in call_args[0][0]
 
-    @patch("searxngr.searxngr.httpx.Client")
+    @patch("searxngr.client.httpx.Client")
     def test_search_post_method(self, mock_httpx_client):
         """Test search functionality with POST method"""
         # Mock the HTTP client and response
@@ -146,7 +149,7 @@ class TestSearXNGClient:
         assert "engines" not in body  # engines not used when category is set
         assert body["safesearch"] == SAFE_SEARCH_OPTIONS["strict"]
 
-    @patch("searxngr.searxngr.httpx.Client")
+    @patch("searxngr.client.httpx.Client")
     def test_search_with_site_filter(self, mock_httpx_client):
         """Test search functionality with site filter"""
         # Mock the HTTP client and response
@@ -162,7 +165,7 @@ class TestSearXNGClient:
         call_args = mock_httpx_client.return_value.get.call_args
         assert "site:example.com test query" in call_args[0][0]
 
-    @patch("searxngr.searxngr.httpx.Client")
+    @patch("searxngr.client.httpx.Client")
     def test_search_with_time_range(self, mock_httpx_client):
         """Test search functionality with time range filter"""
         # Mock the HTTP client and response
@@ -178,7 +181,7 @@ class TestSearXNGClient:
         call_args = mock_httpx_client.return_value.get.call_args
         assert "time_range=week" in call_args[0][0]
 
-    @patch("searxngr.searxngr.httpx.Client")
+    @patch("searxngr.client.httpx.Client")
     def test_empty_results_handling(self, mock_httpx_client):
         """Test handling of empty search results"""
         # Mock the HTTP client and response with empty results
@@ -193,7 +196,7 @@ class TestSearXNGClient:
         # Verify empty results are handled correctly
         assert results == []
 
-    @patch("searxngr.searxngr.httpx.Client")
+    @patch("searxngr.client.httpx.Client")
     def test_unresponsive_engines_handling(self, mock_httpx_client):
         """Test handling of unresponsive engines"""
         # Mock the HTTP client and response with unresponsive engines

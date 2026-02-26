@@ -1,3 +1,3 @@
-from .searxngr import main
+from .cli import main
 
 __all__ = ["main"]
