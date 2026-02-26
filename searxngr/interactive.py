@@ -1,5 +1,4 @@
 import json
-import random
 import shlex
 import subprocess
 import textwrap
@@ -12,7 +11,6 @@ from .constants import (
     TIME_RANGE_OPTIONS,
     TIME_RANGE_SHORT_OPTIONS,
     SAFE_SEARCH_OPTIONS,
-    DEBUG,
     console,
 )
 from .formatter import print_results
@@ -75,7 +73,7 @@ def run_interactive_loop(
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
                     if isinstance(e, FileNotFoundError):
                         console.print(
-                            f"[yellow]Warning:[/yellow] URL handler '{handler}' not found, "
+                            f"[yellow]Warning:[/yellow] URL handler '{args.url_handler}' not found, "
                             "update configuration or set --url-handler"
                         )
                     else:

@@ -1,8 +1,6 @@
-import os
-import platform
 import shutil
 import shlex
-from typing import List, Dict, Any, Optional
+from typing import List
 
 from .console import InteractiveConsole as Console
 from .__version__ import __version__

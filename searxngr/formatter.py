@@ -14,7 +14,7 @@ def print_results(
 ) -> None:
     console.print()
     for i, result in enumerate(
-        results[start_at : (start_at + count)], start=start_at + 1
+        results[start_at:(start_at + count)], start=start_at + 1
     ):
         title = result.get("title", "No title")
         title = textwrap.shorten(title, width=70, placeholder="...")

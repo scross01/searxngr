@@ -13,7 +13,6 @@ from .constants import (
     RESULT_COUNT,
     SAFE_SEARCH,
     ENGINES,
-    CATEGORIES,
     EXPAND,
     CONFIG_FILE,
     HTTP_METHOD,

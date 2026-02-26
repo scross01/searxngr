@@ -108,7 +108,8 @@ Manages interactive console session:
 Global constants and utility functions:
 
 - Default settings and configuration values
-- Helper functions: `parse_engine_command()`, `validate_engines()`, `validate_url_handler()`
+- Helper functions: `parse_engine_command()`, `validate_engines()`,
+  `validate_url_handler()`
 - URL handlers for different platforms
 - Time range and category definitions
 
@@ -325,12 +326,14 @@ The client uses a custom exception hierarchy for testable error handling:
 - **`SearXNGHTTPError`**: Raised for HTTP error responses (4xx, 5xx)
 - **`SearXNGJSONError`**: Raised when JSON response cannot be decoded
 
-Exceptions are caught in `cli.py` and displayed to the user with appropriate error messages.
+Exceptions are caught in `cli.py` and displayed to the user with appropriate
+error messages.
 
 ### HTTP Error Management
 
 - **JSON Decode Errors**: Graceful handling via `SearXNGJSONError`
-- **Connection Failures**: Timeout and network error handling via `SearXNGConnectionError`
+- **Connection Failures**: Timeout and network error handling via
+  `SearXNGConnectionError`
 - **SSL Issues**: Configurable certificate verification
 - **Engine Failures**: Reporting of unresponsive search engines
 

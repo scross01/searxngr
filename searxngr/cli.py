@@ -15,10 +15,6 @@ from .config import SearxngrConfig
 from .client import (
     SearXNGClient,
     SearXNGError,
-    SearXNGConnectionError,
-    SearXNGTimeoutError,
-    SearXNGHTTPError,
-    SearXNGJSONError,
 )
 from .formatter import print_results
 from .interactive import run_interactive_loop
@@ -28,8 +24,6 @@ from .constants import (
     TIME_RANGE_SHORT_OPTIONS,
     SAFE_SEARCH_OPTIONS,
     URL_HANDLER,
-    DEFAULT_EDITOR,
-    DEBUG,
     console,
 )
 
