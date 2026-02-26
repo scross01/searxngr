@@ -1,8 +1,11 @@
 # Change Log
 
-## 0.7.1
+## 0.8.0
 
-- fixed startup check to allow searxngr to run entirely with command line options without requiring a config file.
+- updated onboarding experience to required running `searxngr --config` to create initial config file.
+- updated startup checks to allow searxngr to run without a config file when using the `--searxng-url` option.
+- fixed issues with running in headless linux environments where `xdg-open` is not avialable.
+- fixed "Input is not a terminal (fd=0)" error.
 - changed invalid url handler from error to warning.
 
 ## v0.7.0

@@ -96,7 +96,7 @@ def print_results(
     """
     console.print()
     for i, result in enumerate(
-        results[start_at:(start_at + count)], start=start_at + 1
+        results[start_at : (start_at + count)], start=start_at + 1
     ):
         title = result.get("title", "No title")
         # truncate the title to 70 characters if it's too long
@@ -330,7 +330,6 @@ def validate_url_handler(url_handler: str) -> bool:
 
 
 class SearXNGClient:
-
     def __init__(
         self,
         url: str,
@@ -606,9 +605,11 @@ class SearXNGClient:
 
 
 class SearxngrConfig:
-
     def __init__(
-        self, config_path: Optional[str] = None, config_file: Optional[str] = None, skip_config_creation: bool = False
+        self,
+        config_path: Optional[str] = None,
+        config_file: Optional[str] = None,
+        skip_config_creation: bool = False,
     ) -> None:
         # Load default configuration from a file if it exists
         if config_path:
@@ -629,16 +630,36 @@ class SearxngrConfig:
         self.load_config()
 
     def create_config_file(self):
+        file = os.path.join(self.config_path, self.config_file)
+        console.print(f"[dim]creating initial configuration file {file}[/dim]")
 
         if not os.path.isdir(self.config_path):
             os.makedirs(self.config_path)
 
-        file = os.path.join(self.config_path, self.config_file)
-
-        # request user to input the searxng instance url
         searxng_url = input(f"Enter your SearXNG instance URL [{SAMPLE_SEARXNG_URL}]: ")
+        if not searxng_url:
+            searxng_url = SAMPLE_SEARXNG_URL
 
-        # construct the initial config file
+        no_verify_ssl = False
+        if searxng_url.startswith("https://"):
+            no_verify_ssl = (
+                input("Disable SSL verification (y/N)? ").strip().lower() == "y"
+            )
+
+        valid, message = self.validate_searxng_url(searxng_url, not no_verify_ssl)
+        if not valid:
+            console.print(f"[red]Error:[/red] {message}")
+            console.print("Please check the URL and try again.")
+            exit(1)
+        else:
+            console.print("Connection successful.")
+
+        no_verify_ssl_line = (
+            f"no_verify_ssl = {str(no_verify_ssl).lower()}"
+            if no_verify_ssl
+            else "# no_verify_ssl = false"
+        )
+
         default_config = textwrap.dedent(
             f"""
             [searxngr]
@@ -651,25 +672,51 @@ class SearxngrConfig:
             # language = en
             # http_method = {HTTP_METHOD}
             # timeout = {HTTP_TIMEOUT}
-            # no_verify_ssl = false
+            {no_verify_ssl_line}
             # no_user_agent = false
             # no_color = false
-            # url_handler = {URL_HANDLER.get(platform.system(), 'open')}
+            # url_handler = {URL_HANDLER.get(platform.system(), "open")}
             # secondary_url_handler =
         """
         ).split("\n", 1)[1:][0]
 
-        with open(file, "w") as f:
-            f.write(default_config)
+        try:
+            with open(file, "w") as f:
+                f.write(default_config)
+        except OSError as e:
+            console.print(f"[red]Error:[/red] Could not write config file: {e}")
+            exit(1)
 
-        console.print(f"[dim]created {file}[/dim]")
+        console.print("Run `searxngr --config` to edit all settings")
+        exit(0)
+
+    def validate_searxng_url(self, url: str, verify_ssl: bool) -> tuple[bool, str]:
+        """Validate that the SearXNG instance is reachable and JSON API works
+
+        Returns:
+            tuple: (success: bool, message: str)
+        """
+        try:
+            client = httpx.Client(verify=verify_ssl, timeout=10)
+            response = client.get(f"{url.rstrip('/')}/search?q=test&format=json")
+            response.raise_for_status()
+            response.json()
+            return (True, "")
+        except httpx.ConnectError as ce:
+            return (False, f"Could not connect to {url}. {ce}")
+        except Exception as e:
+            return (False, f"Unable to access JSON API for {url}. {e}")
 
     # Config helper functions with type-specific handling
     def get_config_list(
         self, parser: configparser.ConfigParser, key: str, default: Optional[List[str]]
     ) -> Optional[List[str]]:
         """Get list of strings from config with fallback"""
-        entry = parser["searxngr"][key] if "searxngr" in parser and key in parser["searxngr"] else default
+        entry = (
+            parser["searxngr"][key]
+            if "searxngr" in parser and key in parser["searxngr"]
+            else default
+        )
         if isinstance(entry, str):
             if "," in entry:
                 entry = entry.strip().split(",")
@@ -686,7 +733,11 @@ class SearxngrConfig:
     ) -> Optional[str]:
         """Get string value from config with fallback"""
         try:
-            return parser["searxngr"][key] if "searxngr" in parser and key in parser["searxngr"] else default
+            return (
+                parser["searxngr"][key]
+                if "searxngr" in parser and key in parser["searxngr"]
+                else default
+            )
         except (ValueError, KeyError) as ve:
             print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
@@ -699,7 +750,9 @@ class SearxngrConfig:
         """Get integer value from config with fallback"""
         try:
             return (
-                int(parser["searxngr"][key]) if "searxngr" in parser and key in parser["searxngr"] else default
+                int(parser["searxngr"][key])
+                if "searxngr" in parser and key in parser["searxngr"]
+                else default
             )
         except (ValueError, KeyError) as ve:
             console.print(
@@ -713,7 +766,9 @@ class SearxngrConfig:
         """Get float value from config with fallback"""
         try:
             return (
-                float(parser["searxngr"][key]) if "searxngr" in parser and key in parser["searxngr"] else default
+                float(parser["searxngr"][key])
+                if "searxngr" in parser and key in parser["searxngr"]
+                else default
             )
         except (ValueError, KeyError) as ve:
             console.print(
@@ -751,7 +806,7 @@ class SearxngrConfig:
     def load_config(self) -> None:
         # read the settings from the config file
         parser = configparser.ConfigParser()
-        
+
         # Only try to read the config file if it exists
         if os.path.exists(self.config_file):
             parser.read(self.config_file)
@@ -798,20 +853,16 @@ def main() -> None:
     pre_parser.add_argument("--searxng-url", type=str, dest="searxng_url")
     pre_parser.add_argument("--version", "-v", action="store_true", dest="version")
     pre_parser.add_argument("--config", action="store_true", dest="config")
-    pre_parser.add_argument("--list-categories", action="store_true", dest="list_categories")
+    pre_parser.add_argument(
+        "--list-categories", action="store_true", dest="list_categories"
+    )
     pre_parser.add_argument("--list-engines", action="store_true", dest="list_engines")
     pre_parser.add_argument("--help", "-h", action="store_true", dest="help")
     pre_args, _ = pre_parser.parse_known_args()
-    
-    # Skip config creation if searxng-url is provided OR if running commands that don't need it
-    skip_config_creation = (
-        pre_args.searxng_url is not None or
-        pre_args.version or
-        pre_args.config or
-        pre_args.list_categories or
-        pre_args.list_engines or
-        pre_args.help
-    )
+
+    # Skip config creation by default, only create when --config is explicitly passed
+    skip_config_creation = not pre_args.config
+
     cfg = SearxngrConfig(skip_config_creation=skip_config_creation)
 
     # Command line argument definitions
@@ -867,7 +918,7 @@ def main() -> None:
         default=cfg.engines,
         metavar="ENGINE",
         help="list of engines to use for the search "
-        f"(default: {" ".join(cfg.engines) if cfg.engines else 'NOT SET'})",
+        f"(default: {' '.join(cfg.engines) if cfg.engines else 'NOT SET'})",
     )
     parser.add_argument(
         "-x",
@@ -1060,12 +1111,25 @@ def main() -> None:
 
     # open the configuration file and edit
     if args.config:
+        if not os.path.exists(cfg.config_file):
+            cfg.create_config_file()
+            exit(0)
         console.print(f"opening {cfg.config_file}")
-        editor = os.environ.get("EDITOR", DEFAULT_EDITOR[platform.system()])
+        editor = os.environ.get("EDITOR") or DEFAULT_EDITOR.get(platform.system())
+        if not editor:
+            console.print(
+                "[red]Error:[/red] No editor found. Set $EDITOR or configure a default editor for your platform."
+            )
+            exit(1)
         try:
             subprocess.run(shlex.split(editor) + [cfg.config_file], check=True)
+        except FileNotFoundError:
+            console.print(f"[red]Error:[/red] Editor '{editor}' not found.")
+            console.print("Set the EDITOR environment variable or install an editor.")
+            exit(1)
         except subprocess.CalledProcessError as e:
             console.print(f"[red]Error opening editor:[/red] {e}")
+            exit(1)
         exit(0)
     # show version and exit
     if args.version:
@@ -1078,10 +1142,11 @@ def main() -> None:
 
     # validate that searxng url is set
     if not args.searxng_url:
-        # If no URL is provided via command line or config, prompt for it
-        args.searxng_url = input(f"Enter your SearXNG instance URL [{SAMPLE_SEARXNG_URL}]: ")
-        if not args.searxng_url:
-            args.searxng_url = SAMPLE_SEARXNG_URL
+        console.print(
+            "[red]Error:[/red] No SearXNG instance URL set. Use --searxng-url or run `searxngr --config`"
+        )
+        console.print("Run `searxngr --help` for more options")
+        exit(1)
     # validate safe search is a valid value
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
         console.print(
@@ -1190,7 +1255,6 @@ def main() -> None:
         # table.add_column("Errors", style="red")
 
         for engine in engines:
-
             reliability = None
             if engine["reliability"]:
                 r = int(engine["reliability"])
@@ -1203,7 +1267,7 @@ def main() -> None:
 
             table.add_row(
                 engine["name"]
-                + (f' [red]({engine["errors"]})[red]' if engine["errors"] else ""),
+                + (f" [red]({engine['errors']})[red]" if engine["errors"] else ""),
                 engine["url"],
                 " ".join(engine["bangs"]),
                 " ".join(engine["categories"]),
@@ -1272,8 +1336,14 @@ def main() -> None:
                         command = shlex.split(args.url_handler)
                         command.append(url)
                         subprocess.run(command, check=True)
-                    except subprocess.CalledProcessError as e:
-                        console.print(f"[red]Error opening URL:[/red] {e}")
+                    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                        if isinstance(e, FileNotFoundError):
+                            console.print(
+                                f"[yellow]Warning:[/yellow] URL handler '{args.url_handler}' not found, "
+                                "update configuration or set --url-handler"
+                            )
+                        else:
+                            console.print(f"[red]Error opening URL:[/red] {e}")
                 else:
                     console.print("[red]Error:[/red] No URL found in result")
                 exit(0)
@@ -1287,8 +1357,14 @@ def main() -> None:
                         subprocess.run(
                             shlex.split(args.url_handler) + [url], check=True
                         )
-                    except subprocess.CalledProcessError as e:
-                        console.print(f"[red]Error opening URL:[/red] {e}")
+                    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                        if isinstance(e, FileNotFoundError):
+                            console.print(
+                                f"[yellow]Warning:[/yellow] URL handler '{args.url_handler}' not found, "
+                                "update configuration or set --url-handler"
+                            )
+                        else:
+                            console.print(f"[red]Error opening URL:[/red] {e}")
                 else:
                     console.print(f"[red]Error:[/red] No URL found in result {result}")
                 exit(0)
@@ -1390,8 +1466,14 @@ def main() -> None:
                         )
                         try:
                             subprocess.run(shlex.split(handler) + [url], check=True)
-                        except subprocess.CalledProcessError as e:
-                            console.print(f"[red]Error opening URL:[/red] {e}")
+                        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                            if isinstance(e, FileNotFoundError):
+                                console.print(
+                                    f"[yellow]Warning:[/yellow] URL handler '{handler}' not found, "
+                                    "update configuration or set --url-handler"
+                                )
+                            else:
+                                console.print(f"[red]Error opening URL:[/red] {e}")
                     else:
                         console.print(
                             "[red]Error:[/red] No URL found for the selected result."
@@ -1652,19 +1734,37 @@ def main() -> None:
                         SearXNG URL:       {args.searxng_url}
                         HTTP method:       {args.http_method}
                         Timeout:           {args.timeout}
-                        Verify SSL:        {'enabled' if not args.no_verify_ssl else 'disabled'}
-                        Result per page:   {args.num if args.num > 0 else '[dim]default[/dim]'}
-                        Engines:           {args.engines if args.engines else '[dim]not set[/dim]'}
-                        Categories:        {args.categories if args.categories else '[dim]not set[/dim]'}
-                        Language:          {args.language if args.language else '[dim]not set[/dim]'}
+                        Verify SSL:        {
+                            "enabled" if not args.no_verify_ssl else "disabled"
+                        }
+                        Result per page:   {
+                            args.num if args.num > 0 else "[dim]default[/dim]"
+                        }
+                        Engines:           {
+                            args.engines if args.engines else "[dim]not set[/dim]"
+                        }
+                        Categories:        {
+                            args.categories if args.categories else "[dim]not set[/dim]"
+                        }
+                        Language:          {
+                            args.language if args.language else "[dim]not set[/dim]"
+                        }
                         Safe search:       {args.safe_search}
-                        Site filter:       {args.site if args.site else '[dim]not set[/dim]'}
-                        Time range filter: {args.time_range if args.time_range else '[dim]not set[/dim]'}
-                        Expand URLs:       {'enabled' if args.expand else '[dim]disabled[/dim]'}
+                        Site filter:       {
+                            args.site if args.site else "[dim]not set[/dim]"
+                        }
+                        Time range filter: {
+                            args.time_range if args.time_range else "[dim]not set[/dim]"
+                        }
+                        Expand URLs:       {
+                            "enabled" if args.expand else "[dim]disabled[/dim]"
+                        }
                         URL Handler:       {args.url_handler}
-                        Secondary Handler: {args.secondary_url_handler
-                                            if args.secondary_url_handler
-                                            else '[dim]not set[/dim]'}
+                        Secondary Handler: {
+                            args.secondary_url_handler
+                            if args.secondary_url_handler
+                            else "[dim]not set[/dim]"
+                        }
                         """
                     )
                 )

@@ -42,21 +42,55 @@ uv tool install .
 
 ## Configuration
 
-The `searxngr` configuration is stored in `$XDG_CONFIG_HOME/searxng/config.ini`,
+The `searxngr` configuration is stored in `$XDG_CONFIG_HOME/searxngr/config.ini`,
 on Mac and Linux this is typical under `$HOME/.config` and on Windows its under
-`%APPDATA%`
+`%APPDATA%`.
 
-If the config file it not found is will be created and populated with a
-configuration template. On first run `searxngr` will prompt for your SearXNG
-instance URL to populate the configuation file.
+### First-Time Setup
+
+On first run, if no configuration exists, `searxngr` will show an error with guidance:
+
+```shell
+$ searxngr "search query"
+Error: No SearXNG instance URL set. Use --searxng-url or run `searxngr --config`
+Run `searxngr --help` for more options
+```
+
+To set up configuration, run `searxngr --config`:
+
+```shell
+$ searxngr --config
+creating initial configuration file /root/.config/searxngr/config.ini
+Enter your SearXNG instance URL [https://searxng.example.com]: https://searxng.my-instance.local
+Disable SSL verification (y/N)? y
+Run `searxngr --config` to edit all settings
+```
+
+The setup will:
+1. Prompt for your SearXNG instance URL
+2. If using HTTPS, ask whether to disable SSL verification
+3. Validate that the instance is reachable
+4. Create the configuration file
+5. Show the location and how to edit settings later
+
+### Configuration File
 
 ```ini
 [searxngr]
 searxng_url = https://searxng.example.com
-results_per_page = 10
-safe_mode = moderate
-expand = false
-engines = duckduckgo google brave
+# result_count = 10
+# categories = general news social+media
+# safe_search = strict
+# engines = google duckduckgo brave
+# expand = false
+# language = en
+# http_method = GET
+# timeout = 30.0
+# no_verify_ssl = false
+# no_user_agent = false
+# no_color = false
+# url_handler = open
+# secondary_url_handler =
 ```
 
 ### Configuration options
