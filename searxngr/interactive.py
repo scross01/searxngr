@@ -72,8 +72,14 @@ def run_interactive_loop(
             if url:
                 try:
                     subprocess.run(shlex.split(args.url_handler) + [url], check=True)
-                except (subprocess.CalledProcessError, FileNotFoundError):
-                    pass
+                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                    if isinstance(e, FileNotFoundError):
+                        console.print(
+                            f"[yellow]Warning:[/yellow] URL handler '{handler}' not found, "
+                            "update configuration or set --url-handler"
+                        )
+                    else:
+                        console.print(f"[red]Error opening URL:[/red] {e}")
             else:
                 console.print("[red]Error:[/red] No URL found for the selected result.")
             continue

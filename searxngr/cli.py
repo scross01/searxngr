@@ -4,6 +4,7 @@ import os
 import platform
 import random
 import shlex
+import shutil
 import subprocess
 
 from rich.table import Table
@@ -351,12 +352,26 @@ def main() -> None:
             cfg.create_config_file()
             exit(0)
         console.print(f"opening {cfg.config_file}")
-        editor = os.environ.get("EDITOR") or DEFAULT_EDITOR.get(platform.system())
+        editor = os.environ.get("EDITOR")
         if not editor:
-            console.print(
-                "[red]Error:[/red] No editor found. Set $EDITOR or configure a default editor for your platform."
-            )
-            exit(1)
+            system = platform.system()
+            if system == "Linux":
+                fallback = "xdg-open"
+            elif system == "Darwin":
+                fallback = "open"
+            elif system == "Windows":
+                fallback = "notepad"
+            else:
+                fallback = None
+
+            if fallback and shutil.which(fallback):
+                editor = fallback
+            else:
+                console.print(
+                    "[red]Error:[/red] No editor found. Set $EDITOR environment variable "
+                    "or install an editor."
+                )
+                exit(1)
         try:
             subprocess.run(shlex.split(editor) + [cfg.config_file], check=True)
         except FileNotFoundError:

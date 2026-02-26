@@ -1,5 +1,7 @@
 import os
 import platform
+import shlex
+import shutil
 import textwrap
 import configparser
 import httpx
@@ -71,6 +73,33 @@ class SearxngrConfig:
         else:
             console.print("Connection successful.")
 
+        default_handler = URL_HANDLER.get(platform.system(), "open")
+        from .constants import validate_url_handler
+
+        if validate_url_handler(default_handler):
+            console.print(f"Using default URL handler: {default_handler}")
+            url_handler = default_handler
+        else:
+            console.print(f"Default URL handler '{default_handler}' not found.")
+            while True:
+                url_handler = input("Enter command to open URLs in browser: ").strip()
+                if not url_handler:
+                    console.print("[red]Error:[/red] Command cannot be empty.")
+                    continue
+                command_parts = shlex.split(url_handler)
+                command = command_parts[0]
+                full_path = shutil.which(command)
+                if full_path is None:
+                    console.print(
+                        f"[red]Error:[/red] Command '{command}' not found. "
+                        "Please enter a valid command."
+                    )
+                else:
+                    if full_path != command:
+                        url_handler = url_handler.replace(command, full_path, 1)
+                    console.print(f"Using URL handler: {url_handler}")
+                    break
+
         no_verify_ssl_line = (
             f"no_verify_ssl = {str(no_verify_ssl).lower()}"
             if no_verify_ssl
@@ -92,7 +121,7 @@ class SearxngrConfig:
             {no_verify_ssl_line}
             # no_user_agent = false
             # no_color = false
-            # url_handler = {URL_HANDLER.get("Darwin", "open")}
+            url_handler = {url_handler}
             # secondary_url_handler =
         """
         ).split("\n", 1)[1:][0]
@@ -104,7 +133,9 @@ class SearxngrConfig:
             console.print(f"[red]Error:[/red] Could not write config file: {e}")
             exit(1)
 
-        console.print("Run `searxngr --config` to edit all settings")
+        console.print(
+            "Initial settings created. Run 'searxngr --config' again to edit all settings."
+        )
         exit(0)
 
     def validate_searxng_url(self, url: str, verify_ssl: bool) -> tuple[bool, str]:
