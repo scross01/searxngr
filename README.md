@@ -65,7 +65,7 @@ creating initial configuration file /root/.config/searxngr/config.ini
 Enter your SearXNG instance URL [https://searxng.example.com]: https://searxng.my-instance.local
 Disable SSL verification (y/N)? y
 Connection successful.
-Initial setting created. Run `searxngr --config` again to edit all settings.
+Initial setting created. Run 'searxngr --config' again to edit all settings.
 ```
 
 The setup will:
@@ -130,14 +130,26 @@ searxng_url = https://searxng.example.com
 
 ### Basic Usage
 
+To start the interactive search console using the configured settings:
+
 ```shell
 searxngr why is the sky blue
 ```
 
+### Console output without interactive mode and configuration file
+
+You can use `searxngr` without a configuration file by specifying the SearXNG instance URL directly. To display search results to the console without entering the interactive prompt use the `--np` (or `--noprompt`) flag, and the `-x` (or `--expand`) to include search result URL.
+
+```shell
+searxngr --searxng-url https://searxng.example.com --noprompt --expand "search query"
+```
+
+This is useful for one-off searches without setting up configuration and scripted automation where you want to pass the instance URL dynamically and return the results to integrate `searxngr` into pipelines or other commands
+
 ### Options
 
 Command line options can be used to modify the output and override the
-configuraiton defaults.
+configuration defaults.
 
 ```txt
 usage: searxngr [-h] [--searxng-url SEARXNG_URL] [-c [CATEGORY ...]] [--config] [-d] [-e [ENGINE ...]] [-x] [-j]
