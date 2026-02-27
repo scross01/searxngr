@@ -12,6 +12,7 @@ from .constants import (
     TIME_RANGE_SHORT_OPTIONS,
     SAFE_SEARCH_OPTIONS,
     console,
+    DEBUG,
 )
 from .formatter import print_results
 from .client import SearXNGClient
@@ -51,9 +52,11 @@ def run_interactive_loop(
                 - Type 'F filter' to change safe search filter (e.g `F moderate`).
                 - Type 'site:example.com' to filter results by a specific site.
                 - Type 'e' plus engine names to change search engines
-                  (e.g., 'e duckduckgo brave', 'e +google -bing').
+                           (e.g., 'e duckduckgo brave', 'e +google -bing').
                 - Type 'x' to toggle showing to result URL.
                 - Type 's' to show the current configuration settings.
+                - Type 'm words' to change the number of words to display per result before truncating
+                           (e.g., `m 200` or `m 0` to disable truncation).
                 - Type 'd' to toggle debug output.
                 - Type 'j' plus the index ('j 1', 'j 2') to show the JSON result for the specified index.
                 - Type 'q', 'quit', or 'exit' to exit the program.
@@ -158,7 +161,11 @@ def run_interactive_loop(
             start_at += args.num
             if len(results) >= (start_at + args.num):
                 print_results(
-                    results, count=args.num, start_at=start_at, expand=args.expand
+                    results,
+                    count=args.num,
+                    start_at=start_at,
+                    expand=args.expand,
+                    max_content_words=args.max_content_words,
                 )
                 continue
             else:
@@ -168,13 +175,21 @@ def run_interactive_loop(
         elif new_query.strip() == "p":
             start_at -= args.num if start_at >= args.num else 0
             print_results(
-                results, count=args.num, start_at=start_at, expand=args.expand
+                results,
+                count=args.num,
+                start_at=start_at,
+                expand=args.expand,
+                max_content_words=args.max_content_words,
             )
             continue
         elif new_query.strip() == "f":
             start_at = 0
             print_results(
-                results, count=args.num, start_at=start_at, expand=args.expand
+                results,
+                count=args.num,
+                start_at=start_at,
+                expand=args.expand,
+                max_content_words=args.max_content_words,
             )
             continue
         elif new_query.strip() == "t" or new_query.strip().startswith("t "):
@@ -352,6 +367,9 @@ def run_interactive_loop(
                     Expand URLs:       {
                         "enabled" if args.expand else "[dim]disabled[/dim]"
                     }
+                    Max Content Words: {
+                        args.max_content_words if args.max_content_words != 0 else "[dim]disabled[/dim]"
+                    }
                     URL Handler:       {args.url_handler}
                     Secondary Handler: {
                         args.secondary_url_handler
@@ -362,6 +380,31 @@ def run_interactive_loop(
                 )
             )
             continue
+        elif new_query.strip() == "m" or new_query.strip().startswith("m "):
+            max_words_str = new_query[2:].strip()
+            if not max_words_str:
+                console.print(
+                    "[red]Error:[/red] No max words value specified. Usage: m <number>"
+                )
+                continue
+            try:
+                max_words = int(max_words_str)
+                if max_words < 0:
+                    raise ValueError
+                args.max_content_words = max_words
+                console.print(f"[green]Max content words set to:[/green] {max_words}")
+                print_results(
+                    results,
+                    count=args.num,
+                    start_at=start_at,
+                    expand=args.expand,
+                    max_content_words=args.max_content_words,
+                )
+            except ValueError:
+                console.print(
+                    "[red]Error:[/red] Invalid value. Please enter a non-negative integer."
+                )
+                continue
         elif new_query.strip() == "d":
             global DEBUG
             DEBUG = not DEBUG

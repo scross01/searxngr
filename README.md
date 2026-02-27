@@ -138,13 +138,18 @@ searxngr why is the sky blue
 
 ### Console output without interactive mode and configuration file
 
-You can use `searxngr` without a configuration file by specifying the SearXNG instance URL directly. To display search results to the console without entering the interactive prompt use the `--np` (or `--noprompt`) flag, and the `-x` (or `--expand`) to include search result URL.
+You can use `searxngr` without a configuration file by specifying the SearXNG
+instance URL directly. To display search results to the console without entering
+the interactive prompt use the `--np` (or `--noprompt`) flag, and the `-x` (or
+`--expand`) to include search result URL.
 
 ```shell
 searxngr --searxng-url https://searxng.example.com --noprompt --expand "search query"
 ```
 
-This is useful for one-off searches without setting up configuration and scripted automation where you want to pass the instance URL dynamically and return the results to integrate `searxngr` into pipelines or other commands
+This is useful for one-off searches without setting up configuration and
+scripted automation where you want to pass the instance URL dynamically and
+return the results to integrate `searxngr` into pipelines or other commands
 
 ### Options
 
@@ -177,6 +182,9 @@ options:
   -e, --engines [ENGINE ...]
                         list of engines to use for the search (default: NOT SET)
   -x, --expand          Show complete url in search results
+  -m N, --max-content-words N
+                        maximum number of words to display in result content
+                        before truncating (default: 128); N=0 disables
   -j, --first           open the first result in web browser and exit
   --http-method METHOD  HTTP method to use for search requests. GET or POST (default: GET)
   --timeout SECONDS     HTTP request timeout in seconds (default: 30.0)

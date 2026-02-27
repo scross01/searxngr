@@ -2,7 +2,10 @@
 
 ## 0.8.1
 
-- fixes terminal width when not running in a terminal environment.
+- added `--max-content-words` option and `m` interactive prompt to control
+  content truncation (0 to disable truncation).
+- fixed terminal width when not running in a terminal environment.
+- fixed debug option.
 
 ## 0.8.0
 

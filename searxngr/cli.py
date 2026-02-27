@@ -25,6 +25,7 @@ from .constants import (
     SAFE_SEARCH_OPTIONS,
     URL_HANDLER,
     console,
+    DEBUG,
 )
 
 
@@ -84,7 +85,13 @@ def handle_results(results: list, args: argparse.Namespace) -> tuple[bool, list]
             console.print(f"[red]Error:[/red] No URL found in result {result}")
         return (False, results)
 
-    print_results(results, count=args.num, start_at=0, expand=args.expand)
+    print_results(
+        results,
+        count=args.num,
+        start_at=0,
+        expand=args.expand,
+        max_content_words=args.max_content_words,
+    )
     return (True, results)
 
 
@@ -312,6 +319,14 @@ def create_parser(cfg: SearxngrConfig) -> argparse.ArgumentParser:
         action="store_true",
         help="show results from videos section. (same as --categories videos)",
     )
+    parser.add_argument(
+        "-m",
+        "--max-content-words",
+        type=int,
+        default=cfg.max_content_words,
+        metavar="N",
+        help=f"maximum number of words to display in result content before truncating (default: {cfg.max_content_words}); N=0 disables truncation",
+    )
     return parser
 
 
@@ -337,7 +352,6 @@ def main() -> None:
     else:
         console = Console(history=[query])
 
-    global DEBUG
     DEBUG = args.debug
     console.print(f"Config: {args}") if DEBUG else None
 

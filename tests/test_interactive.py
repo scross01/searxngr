@@ -12,6 +12,7 @@ class MockArgs:
         self.secondary_url_handler = None
         self.num = 10
         self.expand = False
+        self.max_content_words = 128
         self.safe_search = "strict"
         self.time_range = None
         self.engines = None

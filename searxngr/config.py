@@ -20,6 +20,7 @@ from .constants import (
     URL_HANDLER,
     SECONDARY_URL_HANDLER,
     SEARXNG_CATEGORIES,
+    MAX_CONTENT_WORDS,
     console,
 )
 
@@ -120,6 +121,7 @@ class SearxngrConfig:
             {no_verify_ssl_line}
             # no_user_agent = false
             # no_color = false
+            # max_content_words = {MAX_CONTENT_WORDS}
             url_handler = {url_handler}
             # secondary_url_handler =
         """
@@ -276,3 +278,6 @@ class SearxngrConfig:
         self.no_user_agent = self.get_config_bool(parser, "no_user_agent", False)
         self.no_verify_ssl = self.get_config_bool(parser, "no_verify_ssl", False)
         self.no_color = self.get_config_bool(parser, "no_color", False)
+        self.max_content_words = self.get_config_int(
+            parser, "max_content_words", MAX_CONTENT_WORDS
+        )

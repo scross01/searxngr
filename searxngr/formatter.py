@@ -10,7 +10,11 @@ from .constants import MAX_CONTENT_WORDS, DEBUG, console
 
 
 def print_results(
-    results: List[Dict[str, Any]], count: int, start_at: int = 0, expand: bool = False
+    results: List[Dict[str, Any]],
+    count: int,
+    start_at: int = 0,
+    expand: bool = False,
+    max_content_words: int = MAX_CONTENT_WORDS,
 ) -> None:
     console.print()
     for i, result in enumerate(
@@ -33,8 +37,11 @@ def print_results(
         content_text = html2text(content).strip() if content else ""
         content_words = content_text.split(" ") if content_text else []
         content = None
-        if len(content_words) > MAX_CONTENT_WORDS:
-            content = " ".join(content_words[:MAX_CONTENT_WORDS]) + " ..."
+        if max_content_words == 0:
+            # Disable truncation
+            content = " ".join(content_words)
+        elif len(content_words) > max_content_words:
+            content = " ".join(content_words[:max_content_words]) + " ..."
         else:
             content = " ".join(content_words)
         # Get terminal width for wrapping, use fallback if not available
