@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.8.1
+
+- fixes terminal width when not running in a terminal environment.
+
 ## 0.8.0
 
 - updated onboarding experience to required running `searxngr --config` to

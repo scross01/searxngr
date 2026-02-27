@@ -37,7 +37,14 @@ def print_results(
             content = " ".join(content_words[:MAX_CONTENT_WORDS]) + " ..."
         else:
             content = " ".join(content_words)
-        content = textwrap.wrap(content, width=os.get_terminal_size().columns - 5)
+        # Get terminal width for wrapping, use fallback if not available
+        try:
+            terminal_width = os.get_terminal_size().columns
+            wrap_width = terminal_width - 5
+        except OSError:
+            # Fallback to a reasonable default if terminal size can't be determined
+            wrap_width = 80
+        content = textwrap.wrap(content, width=wrap_width)
 
         published_date = None
         if result.get("publishedDate"):
