@@ -2,6 +2,7 @@
 
 ## 0.8.2
 
+- fixed crash in interactive mode when using `c` or `C` commands with non-numeric input.
 - fixed search results reverting to first page when an engine timeout causes a re-fetch during paging.
 
 ## 0.8.1

@@ -120,8 +120,8 @@ def run_interactive_loop(
             if not index:
                 console.print("[red]Error:[/red] No index specified. Usage: c <number>")
                 continue
-            result = results[int(index) - 1]
             if index.isdigit() and int(index) in range(1, len(results) + 1):
+                result = results[int(index) - 1]
                 url = result.get("url")
                 if url:
                     pyperclip.copy(url)
@@ -137,8 +137,8 @@ def run_interactive_loop(
             if not index:
                 console.print("[red]Error:[/red] No index specified. Usage: C <number>")
                 continue
-            result = results[int(index) - 1]
             if index.isdigit() and int(index) in range(1, len(results) + 1):
+                result = results[int(index) - 1]
                 category = result.get("category", None)
                 template = result.get("template", None)
 
@@ -368,7 +368,9 @@ def run_interactive_loop(
                         "enabled" if args.expand else "[dim]disabled[/dim]"
                     }
                     Max Content Words: {
-                        args.max_content_words if args.max_content_words != 0 else "[dim]disabled[/dim]"
+                        args.max_content_words
+                        if args.max_content_words != 0
+                        else "[dim]disabled[/dim]"
                     }
                     URL Handler:       {args.url_handler}
                     Secondary Handler: {
