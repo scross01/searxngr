@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.8.2
+
+- fixed search results reverting to first page when an engine timeout causes a re-fetch during paging.
+
 ## 0.8.1
 
 - added `--max-content-words` option and `m` interactive prompt to control

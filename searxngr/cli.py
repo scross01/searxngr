@@ -59,7 +59,9 @@ def open_url(url: str, url_handler: str) -> bool:
         return False
 
 
-def handle_results(results: list, args: argparse.Namespace) -> tuple[bool, list]:
+def handle_results(
+    results: list, args: argparse.Namespace, start_at: int = 0
+) -> tuple[bool, list]:
     if args.json:
         print(json.dumps(results, indent=2))
         return (False, results)
@@ -88,7 +90,7 @@ def handle_results(results: list, args: argparse.Namespace) -> tuple[bool, list]
     print_results(
         results,
         count=args.num,
-        start_at=0,
+        start_at=start_at,
         expand=args.expand,
         max_content_words=args.max_content_words,
     )
@@ -566,7 +568,7 @@ def main() -> None:
                 break
             pageno += 1
 
-        continue_loop, results = handle_results(results, args)
+        continue_loop, results = handle_results(results, args, start_at)
         if not continue_loop:
             exit(0)
 
