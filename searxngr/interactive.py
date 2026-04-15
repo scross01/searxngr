@@ -402,11 +402,12 @@ def run_interactive_loop(
                     expand=args.expand,
                     max_content_words=args.max_content_words,
                 )
+                continue
             except ValueError:
                 console.print(
                     "[red]Error:[/red] Invalid value. Please enter a non-negative integer."
                 )
-                continue
+            continue
         elif new_query.strip() == "d":
             global DEBUG
             DEBUG = not DEBUG
@@ -420,6 +421,8 @@ def run_interactive_loop(
             if index.isdigit() and int(index) in range(1, len(results) + 1):
                 index = int(index) - 1
                 console.print(json.dumps(results[index], indent=2, ensure_ascii=False))
+            else:
+                console.print("[red]Error:[/red] Invalid index specified.")
             continue
         elif new_query.strip() != "":
             query = new_query.strip()
