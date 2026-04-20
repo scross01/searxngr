@@ -12,7 +12,7 @@ dependencies = [
     "prompt-toolkit>=3.0.52",
     "pyperclip>=1.11.0",
     "python-dateutil>=2.9.0.post0",
-    "rich>=14.0.0",
+    "rich>=15.0.0",
     "xdg-base-dirs>=6.0.2",
 ]
 
