@@ -1,5 +1,6 @@
-from typing import Optional, List, Union, Any
+from typing import Optional, List, Union, Any, TextIO
 from rich.console import Console
+from rich.text import TextType
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
 from getpass import getpass
@@ -24,11 +25,12 @@ class InteractiveConsole(Console):
 
     def input(
         self,
-        prompt: str = "",
+        prompt: TextType = "",
+        *,
         markup: bool = True,
         emoji: bool = True,
         password: bool = False,
-        stream: Optional[Any] = None,
+        stream: Optional[TextIO] = None,
     ) -> str:
         if prompt:
             self.print(prompt, markup=markup, emoji=emoji, end="")
