@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.8.4 (wawow830 fork)
+
+- Retry transient transport errors and HTTP 500/502/503/504 responses with bounded backoff.
+- Add configurable backup engines for failed default web searches without changing servers or filters.
+- Preserve the selected backup engines across subsequent result pages.
+- Validate malformed result objects and engine diagnostics before processing.
+- Preserve per-request headers, including the preferences HTML Accept header.
+- Add an opt-in local systemd health monitor and recovery tests.
+
 ## 0.8.3 (wawow830 fork)
 
 - Encode GET queries and filters correctly, including `&`, `+`, `#`, and Unicode.

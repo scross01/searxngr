@@ -1,4 +1,5 @@
 import json
+import time
 from urllib.parse import urlencode
 
 import httpx
@@ -46,6 +47,10 @@ class SearXNGJSONError(SearXNGError):
     pass
 
 
+class SearXNGEngineError(SearXNGError):
+    """No results were returned and one or more engines failed."""
+
+
 class SearXNGClient:
     def __init__(
         self,
@@ -55,7 +60,14 @@ class SearXNGClient:
         verify_ssl: bool = True,
         no_user_agent: Optional[bool] = None,
         timeout: Union[int, float] = 30,
+        retries: int = 2,
+        fallback_engines: Optional[List[str]] = None,
     ) -> None:
+        if not isinstance(retries, int) or not 0 <= retries <= 5:
+            raise ValueError("retries must be an integer between 0 and 5")
+        self.retries = retries
+        self.fallback_engines = list(fallback_engines or [])
+        self._fallback_search_key = None
         self.url = url.rstrip("/")
         self.username = username
         self.password = password
@@ -84,30 +96,50 @@ class SearXNGClient:
             del self.client.headers["User-Agent"]
             del self.default_headers["User-Agent"]
 
+    def _request(
+        self, method: str, path: str, headers: Optional[Dict[str, str]] = None, **kwargs
+    ) -> httpx.Response:
+        headers = {**self.default_headers, **(headers or {})}
+        for attempt in range(self.retries + 1):
+            try:
+                response = getattr(self.client, method)(
+                    f"{self.url}{path}",
+                    headers=headers,
+                    follow_redirects=True,
+                    **kwargs,
+                )
+                response.raise_for_status()
+                return response
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code not in (500, 502, 503, 504):
+                    raise SearXNGHTTPError(str(exc)) from exc
+                error = SearXNGHTTPError(str(exc))
+                cause = exc
+            except httpx.TimeoutException as exc:
+                error = SearXNGTimeoutError(
+                    f"Request to {self.url} timed out (timeout: {self.timeout}s)."
+                )
+                cause = exc
+            except httpx.TransportError as exc:
+                error = SearXNGConnectionError(f"Request to {self.url} failed: {exc}")
+                cause = exc
+            except httpx.RequestError as exc:
+                raise SearXNGConnectionError(str(exc)) from exc
+
+            if attempt == self.retries:
+                raise error from cause
+            delay = min(0.25 * 2**attempt, 2.0)
+            error_console.print(
+                f"Transient request failure; retry {attempt + 1}/{self.retries} "
+                f"in {delay:g}s.",
+                markup=False,
+            )
+            time.sleep(delay)
+
     def get(
         self, path: str, headers: Optional[Dict[str, str]] = None
     ) -> httpx.Response:
-        try:
-            if headers is None:
-                headers = {}
-            headers.update(self.default_headers)
-            response = self.client.get(
-                f"{self.url}{path}", headers=headers, follow_redirects=True
-            )
-            response.raise_for_status()
-            return response
-
-        except httpx.HTTPStatusError as e:
-            raise SearXNGHTTPError(str(e)) from e
-        except httpx.ConnectError as ce:
-            raise SearXNGConnectionError(
-                f"Could not connect to SearXNG instance at {self.url}{path}"
-            ) from ce
-        except httpx.TimeoutException as te:
-            raise SearXNGTimeoutError(
-                f"Request to SearXNG instance at {self.url}{path} "
-                f"timed out after {self.timeout} seconds."
-            ) from te
+        return self._request("get", path, headers)
 
     def post(
         self,
@@ -115,27 +147,7 @@ class SearXNGClient:
         data: Optional[Dict[str, Any]] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> httpx.Response:
-        try:
-            if headers is None:
-                headers = {}
-            headers.update(self.default_headers)
-            response = self.client.post(
-                f"{self.url}{path}", data=data, headers=headers, follow_redirects=True
-            )
-            response.raise_for_status()
-            return response
-
-        except httpx.HTTPStatusError as e:
-            raise SearXNGHTTPError(str(e)) from e
-        except httpx.ConnectError as ce:
-            raise SearXNGConnectionError(
-                f"Could not connect to SearXNG instance at {self.url}{path}"
-            ) from ce
-        except httpx.TimeoutException as te:
-            raise SearXNGTimeoutError(
-                f"Request to SearXNG instance at {self.url}{path} "
-                f"timed out after {self.timeout} seconds."
-            ) from te
+        return self._request("post", path, headers, data=data)
 
     def _fetch_preferences(self) -> str:
         headers = {"Accept": "application/html"}
@@ -163,6 +175,67 @@ class SearXNGClient:
         return sorted_categories
 
     def search(
+        self,
+        query: str,
+        pageno: int = 0,
+        safe_search: Optional[str] = None,
+        categories: Optional[List[str]] = None,
+        engines: Optional[List[str]] = None,
+        language: Optional[str] = None,
+        time_range: Optional[str] = None,
+        site: Optional[str] = None,
+        http_method: str = "GET",
+    ) -> List[Dict[str, Any]]:
+        options = dict(
+            pageno=pageno,
+            safe_search=safe_search,
+            categories=categories,
+            engines=engines,
+            language=language,
+            time_range=time_range,
+            site=site,
+            http_method=http_method,
+        )
+        search_key = (
+            query,
+            safe_search,
+            tuple(categories or []),
+            tuple(engines or []),
+            language,
+            time_range,
+            site,
+            http_method,
+        )
+        if pageno <= 1:
+            self._fallback_search_key = None
+        elif self._fallback_search_key == search_key:
+            options["engines"] = self.fallback_engines
+        try:
+            return self._search_once(query, **options)
+        except SearXNGEngineError:
+            # Never override explicit engine/category/bang selection or switch
+            # engines halfway through pagination. Only one backup batch is tried.
+            if (
+                not self.fallback_engines
+                or engines
+                or categories
+                or pageno > 1
+                or "!" in query
+            ):
+                raise
+            error_console.print(
+                "Default engines failed; trying configured backup engines: "
+                + ", ".join(self.fallback_engines),
+                markup=False,
+            )
+            options["engines"] = self.fallback_engines
+            results = self._search_once(query, **options)
+            if not results:
+                raise
+            self._fallback_search_key = search_key
+            return results
+
+    def _search_once(
         self,
         query: str,
         pageno: int = 0,
@@ -212,27 +285,27 @@ class SearXNGClient:
                 response = self.get(path)
 
             data = response.json()
-            if not isinstance(data, dict) or not isinstance(data.get("results"), list):
-                raise SearXNGJSONError(
-                    "Invalid SearXNG response: expected a results list"
-                )
-
             if (
-                data
-                and "unresponsive_engines" in data
-                and len(data["unresponsive_engines"]) > 0
+                not isinstance(data, dict)
+                or not isinstance(data.get("results"), list)
+                or any(not isinstance(r, dict) for r in data["results"])
             ):
-                unique_list = [
-                    list(item)
-                    for item in {
-                        tuple(sublist) for sublist in data["unresponsive_engines"]
-                    }
-                ]
-                for engine, error in unique_list:
-                    error_console.print(f"Engine: {engine} [red]{error}[/red]")
+                raise SearXNGJSONError(
+                    "Invalid SearXNG response: expected a list of result objects"
+                )
+            failures = data.get("unresponsive_engines", [])
+            if not isinstance(failures, list) or any(
+                not isinstance(f, (list, tuple))
+                or len(f) != 2
+                or not all(isinstance(v, str) for v in f)
+                for f in failures
+            ):
+                raise SearXNGJSONError("Invalid SearXNG engine diagnostics")
+            for engine, error in sorted({tuple(f) for f in failures}):
+                error_console.print(f"Engine: {engine} {error}", markup=False)
 
-            if not data["results"] and data.get("unresponsive_engines"):
-                raise SearXNGError(
+            if not data["results"] and failures:
+                raise SearXNGEngineError(
                     "No results returned and search engines failed. "
                     "Try another engine with -e or retry after its cooldown."
                 )

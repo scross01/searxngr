@@ -184,6 +184,20 @@ def create_parser(cfg: SearxngrConfig) -> argparse.ArgumentParser:
         help=f"HTTP request timeout in seconds (default: {cfg.http_timeout})",
     )
     parser.add_argument(
+        "--retries",
+        type=int,
+        choices=range(6),
+        default=cfg.retries,
+        help="retries per request for transient transport/5xx failures (default: 2)",
+    )
+    parser.add_argument(
+        "--fallback-engines",
+        type=lambda value: [name.strip() for name in value.split(",") if name.strip()],
+        default=cfg.fallback_engines,
+        metavar="ENGINES",
+        help="comma-separated backup engines for failed default web searches; empty disables",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="output the search results in JSON format and exit",
@@ -480,6 +494,9 @@ def main() -> None:
             f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
         )
 
+    if not 0 <= args.retries <= 5:
+        parser.error("--retries must be between 0 and 5")
+
     searxng = SearXNGClient(
         url=args.searxng_url,
         username=cfg.searxng_username,
@@ -487,6 +504,8 @@ def main() -> None:
         verify_ssl=not args.no_verify_ssl,
         no_user_agent=args.noua,
         timeout=args.timeout,
+        retries=args.retries,
+        fallback_engines=args.fallback_engines,
     )
 
     if args.list_engines:

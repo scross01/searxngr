@@ -7,7 +7,7 @@ outages, CAPTCHAs, rate limits, or simultaneous engine failures.
 ## CLI behavior
 
 - GET and POST preserve query characters and use the same filters.
-- `--json` fetches one server page and writes the result array to stdout.
+- `--json` returns one server page and writes the result array to stdout.
   `-n` controls text display, not the number of JSON results.
 - Search diagnostics and debug output go to stderr. A search that returns no
   results and reports engine failures exits nonzero. A successful zero-match
@@ -21,6 +21,27 @@ outages, CAPTCHAs, rate limits, or simultaneous engine failures.
 
 No queries are silently redirected to public instances. TLS verification stays
 on unless explicitly disabled by the user.
+
+## Recovery and limits
+
+`--retries` (INI: `retries`, default 2, range 0–5) retries transport failures,
+timeouts, and HTTP 500/502/503/504 responses. Backoff starts at 0.25 seconds and
+is capped at 2 seconds. HTTP 4xx responses, including 401/403/429, are not retried;
+CAPTCHAs and invalid JSON do not trigger HTTP retries. `--timeout` applies to each
+HTTP attempt, not the whole command. There are at most `1 + retries` attempts per
+request, and a backup-engine request can add another such batch.
+
+`--fallback-engines 'google,mwmbl'` (INI: `fallback_engines = google, mwmbl`)
+enables one backup-engine batch if default engines return no results and report
+failures. It is disabled by default, and an empty CLI value disables a configured
+list. Engine names are comma-separated, preserving names containing spaces.
+
+Backup requests use the same server, query, site, language, time, and safe-search
+filters. They do not override explicit engine/category/bang selection, retry
+authentication failures, or turn a genuine zero-match result into extra traffic.
+Successful backup selection persists across pagination; a new search starts
+with the server defaults again. If backup engines also fail or return nothing,
+the command reports failure rather than falsely claiming success.
 
 ## Server configuration
 
@@ -57,6 +78,41 @@ searxngr --json -q 'site:docs.rs tokio spawn' -e naver
 
 Test relevance, not just whether a nonempty result array is returned. Keep any
 server secrets, credentials, and machine-specific deployment files private.
+
+## Optional local-server health monitor (Linux/systemd)
+
+The files in [`contrib/systemd`](../contrib/systemd) are for a local server at
+`http://127.0.0.1:8080` managed by an **existing user** `searxng.service`.
+They are not installed or enabled automatically by the Python package.
+From a clone of this repository:
+
+```sh
+install -d ~/.local/share/searxng ~/.config/systemd/user
+install -m 755 contrib/systemd/check-health.sh ~/.local/share/searxng/
+install -m 644 contrib/systemd/searxng-healthcheck.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now searxng-healthcheck.timer
+```
+
+The timer checks only `/healthz` about once per minute. After two failed probes,
+it restarts `searxng.service` and checks readiness. It never sends periodic
+search queries or restarts the server because an upstream engine is blocked.
+Each probe has a five-second limit; recovery is capped by a 120-second service
+timeout. Check failures with:
+
+```sh
+journalctl --user -u searxng-healthcheck.service
+```
+
+Disable the timer before deliberately stopping the stack, otherwise it will
+bring it back:
+
+```sh
+systemctl --user disable --now searxng-healthcheck.timer
+```
+
+This handles a stopped/unresponsive local HTTP server, not internet loss or
+upstream search availability. It requires `curl` and a working stack service.
 
 ## Development
 

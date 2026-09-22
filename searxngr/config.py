@@ -106,8 +106,7 @@ class SearxngrConfig:
             else "# no_verify_ssl = false"
         )
 
-        default_config = textwrap.dedent(
-            f"""
+        default_config = textwrap.dedent(f"""
             [searxngr]
             searxng_url = {searxng_url}
             # result_count = {RESULT_COUNT}
@@ -118,14 +117,15 @@ class SearxngrConfig:
             # language = en
             # http_method = {HTTP_METHOD}
             # timeout = {HTTP_TIMEOUT}
+            # retries = 2
+            # fallback_engines = google, mwmbl
             {no_verify_ssl_line}
             # no_user_agent = false
             # no_color = false
             # max_content_words = {MAX_CONTENT_WORDS}
             url_handler = {url_handler}
             # secondary_url_handler =
-        """
-        ).split("\n", 1)[1:][0]
+        """).split("\n", 1)[1:][0]
 
         try:
             with open(file, "w") as f:
@@ -275,6 +275,12 @@ class SearxngrConfig:
         self.debug = self.get_config_bool(parser, "debug", False)
         self.http_method = self.get_config_str(parser, "http_method", HTTP_METHOD)
         self.http_timeout = self.get_config_float(parser, "timeout", HTTP_TIMEOUT)
+        self.retries = self.get_config_int(parser, "retries", 2)
+        # Commas preserve engine names containing spaces, e.g. "google cse".
+        fallback = self.get_config_str(parser, "fallback_engines", "") or ""
+        self.fallback_engines = [
+            name.strip() for name in fallback.split(",") if name.strip()
+        ]
         self.no_user_agent = self.get_config_bool(parser, "no_user_agent", False)
         self.no_verify_ssl = self.get_config_bool(parser, "no_verify_ssl", False)
         self.no_color = self.get_config_bool(parser, "no_color", False)

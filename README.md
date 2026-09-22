@@ -93,6 +93,8 @@ searxng_url = https://searxng.example.com
 # language = en
 # http_method = GET
 # timeout = 30.0
+# retries = 2
+# fallback_engines = google, mwmbl
 # no_verify_ssl = false
 # no_user_agent = false
 # no_color = false
@@ -119,7 +121,12 @@ searxng_url = https://searxng.example.com
   etc.
 - `http_method` - use either `GET` or `POST` requests to the SearXNG API.
   Default is `GET`
-- `timeout` - Timeout in seconds. Default is `30`.
+- `timeout` - HTTP timeout in seconds per attempt. Default is `30`.
+- `retries` - Retry transient transport or HTTP 500/502/503/504 failures, with
+  backoff. Default is `2`; use `0` to disable (maximum `5`).
+- `fallback_engines` - Optional comma-separated backup engines for failed default
+  web searches, e.g. `google, mwmbl`. Names may contain spaces. Disabled by default;
+  explicit engine/category/bang selection is never overridden.
 - `no_verify_ssl` - disable SSL verification if you are hosting SearXNG with
   self-signed certificated. Default is `false`.
 - `no_user_agent` - Clear the user agent. Default is `false`.
@@ -169,6 +176,15 @@ stdin automatically disables the interactive prompt.
 A reachable SearXNG server with JSON output enabled is still required. Enable
 multiple working engines on that server so one blocked engine does not disable
 all searches; the CLI does not bypass CAPTCHAs or change servers automatically.
+
+```shell
+searxngr --json --retries 2 --fallback-engines 'google,mwmbl' 'search query'
+```
+
+If the default engines return no results and report failures, the configured
+backup engines are tried once on the same server, preserving query filters.
+See [reliability notes](docs/reliability.md) for retry bounds and an optional
+local-server health monitor.
 
 ### Options
 
