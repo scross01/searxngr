@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.8.3 (wawow830 fork)
+
+- Encode GET queries and filters correctly, including `&`, `+`, `#`, and Unicode.
+- Keep search diagnostics on stderr and report failed searches with a nonzero exit.
+- Validate response schemas and retain results when some engines fail.
+- Fetch one server page in JSON mode; avoid unnecessary requests at page boundaries.
+- Deduplicate URLs, stop repeated pages, and bound automatic pagination.
+- Preserve earlier pages if a later request fails.
+- Skip the interactive prompt when stdin is not a terminal.
+- Add offline regression tests and GitHub Actions verification.
+
 ## 0.8.2
 
 - fixed crash in interactive mode when using `c` or `C` commands with non-numeric input.

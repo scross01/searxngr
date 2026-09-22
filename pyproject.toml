@@ -21,8 +21,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.urls]
-Homepage = "https://github.com/scross01/searxngr"
-Issues = "https://github.com/scross01/searxngr/issues"
+Homepage = "https://github.com/wawow830/searxngr"
+Issues = "https://github.com/wawow830/searxngr/issues"
+Upstream = "https://github.com/scross01/searxngr"
 
 [project.scripts]
 searxngr = "searxngr:main"

@@ -28,13 +28,13 @@ Configuration is managed through an INI file.
 The recommended way to install `searxngr` is using the `uv` package manager:
 
 ```bash
-uv tool install https://github.com/scross01/searxngr.git
+uv tool install --force git+https://github.com/wawow830/searxngr.git
 ```
 
 To install from source:
 
 ```bash
-git clone https://github.com/scross01/searxngr.git
+git clone https://github.com/wawow830/searxngr.git
 cd searxngr
 uv venv && source .venv/bin/activate # (optional)
 uv sync
@@ -51,7 +51,7 @@ searxngr why is the sky blue
 
 ### Configuration
 
-The configuration file is located at `$XDG_CONFIG_HOME/searxng/config.ini`. If
+The configuration file is located at `$XDG_CONFIG_HOME/searxngr/config.ini`. If
 not found, it will be created with a template. On first run, `searxngr` will
 prompt for your SearXNG instance URL.
 
@@ -60,8 +60,8 @@ Example `config.ini`:
 ```ini
 [searxngr]
 searxng_url = https://searxng.example.com
-results_per_page = 10
-safe_mode = moderate
+result_count = 10
+safe_search = moderate
 expand = false
 engines = duckduckgo google brave
 ```

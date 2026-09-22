@@ -6,6 +6,7 @@ import random
 import shlex
 import shutil
 import subprocess
+import sys
 
 from rich.table import Table
 
@@ -15,6 +16,7 @@ from .config import SearxngrConfig
 from .client import (
     SearXNGClient,
     SearXNGError,
+    error_console,
 )
 from .formatter import print_results
 from .interactive import run_interactive_loop
@@ -355,7 +357,7 @@ def main() -> None:
         console = Console(history=[query])
 
     DEBUG = args.debug
-    console.print(f"Config: {args}") if DEBUG else None
+    error_console.print(f"Config: {args}") if DEBUG else None
 
     if args.config:
         if not os.path.exists(cfg.config_file):
@@ -547,7 +549,11 @@ def main() -> None:
     results = []
 
     while True:
-        while len(results) <= (start_at + args.num):
+        # Bound work even when an upstream repeats a page or ignores pagination.
+        pages_fetched = 0
+        while (
+            not results or len(results) < start_at + args.num
+        ) and pages_fetched < 10:
             try:
                 query_results = searxng.search(
                     query,
@@ -561,18 +567,29 @@ def main() -> None:
                     categories=args.categories,
                 )
             except SearXNGError as e:
-                console.print(f"[red]Error:[/red] {e}")
+                error_console.print(f"Error: {e}", markup=False)
+                if results:
+                    break  # Do not discard successful pages on a later failure.
                 exit(1)
-            results.extend(query_results)
-            if args.num == 0 or len(query_results) == 0:
-                break
+            seen = {result.get("url") for result in results if result.get("url")}
+            new_results = []
+            for result in query_results:
+                url = result.get("url")
+                if not url or url not in seen:
+                    new_results.append(result)
+                    if url:
+                        seen.add(url)
+            results.extend(new_results)
+            pages_fetched += 1
             pageno += 1
+            if args.json or args.num == 0 or not new_results:
+                break
 
         continue_loop, results = handle_results(results, args, start_at)
         if not continue_loop:
             exit(0)
 
-        if args.np:
+        if args.np or not sys.stdin.isatty():
             exit(0)
 
         new_query, start_at, pageno, results = run_interactive_loop(

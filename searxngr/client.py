@@ -1,15 +1,19 @@
 import json
+from urllib.parse import urlencode
 
 import httpx
+from rich.console import Console
 from typing import List, Dict, Any, Optional, Union
 
 from .constants import (
     USER_AGENT,
     SAFE_SEARCH_OPTIONS,
     PREFERENCES_URL_PATH,
-    console,
 )
 from .engines import extract_engines_from_preferences
+
+# Diagnostics must not corrupt machine-readable JSON on stdout.
+error_console = Console(stderr=True)
 
 
 class SearXNGError(Exception):
@@ -52,7 +56,7 @@ class SearXNGClient:
         no_user_agent: Optional[bool] = None,
         timeout: Union[int, float] = 30,
     ) -> None:
-        self.url = url
+        self.url = url.rstrip("/")
         self.username = username
         self.password = password
         self.verify_ssl = verify_ssl
@@ -171,51 +175,30 @@ class SearXNGClient:
         http_method: str = "GET",
     ) -> List[Dict[str, Any]]:
         query = f"site:{site} {query}" if site else query
-        path = None
-        body = None
-
-        if engines and categories:
-            console.print("Engines setting ignored when using categories")
-
-        if http_method == "POST":
-            path = "/search"
-            body = {
-                "q": query,
-                "format": "json",
-            }
-            if categories:
-                if "social+media" in categories:
-                    for i in range(len(categories)):
-                        if categories[i] == "social+media":
-                            categories[i] = "social media"
-                body["categories"] = ",".join(categories)
-            if engines and not categories:
-                body["engines"] = ",".join(engines)
-            if language:
-                body["language"] = language
-            if pageno > 1:
-                body["pageno"] = str(pageno)
-            if safe_search:
-                body["safesearch"] = str(SAFE_SEARCH_OPTIONS[safe_search])
-            if time_range:
-                body["time_range"] = time_range
-
-        elif http_method == "GET":
-            path = f"/search?q={query}&format=json"
-            path += f"&categories={','.join(categories)}" if categories else ""
-            path += (
-                f"&engines={','.join(engines)}" if engines and not categories else ""
-            )
-            path += f"&language={language}" if language else ""
-            path += (
-                f"&safesearch={SAFE_SEARCH_OPTIONS[safe_search]}" if safe_search else ""
-            )
-            path += f"&time_range={time_range}" if time_range else ""
-            path += f"&pageno={pageno}" if pageno > 1 else ""
-        else:
+        if http_method not in ("GET", "POST"):
             raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
 
-        path = "".join(c for c in path if c.isprintable())
+        if engines and categories:
+            error_console.print("Engines setting ignored when using categories")
+
+        body = {"q": query, "format": "json"}
+        if categories:
+            body["categories"] = ",".join(
+                "social media" if c == "social+media" else c for c in categories
+            )
+        if engines and not categories:
+            body["engines"] = ",".join(engines)
+        if language:
+            body["language"] = language
+        if pageno > 1:
+            body["pageno"] = str(pageno)
+        if safe_search:
+            body["safesearch"] = str(SAFE_SEARCH_OPTIONS[safe_search])
+        if time_range:
+            body["time_range"] = time_range
+        path = "/search"
+        if http_method == "GET":
+            path += "?" + urlencode(body)
 
         try:
             response = None
@@ -229,6 +212,10 @@ class SearXNGClient:
                 response = self.get(path)
 
             data = response.json()
+            if not isinstance(data, dict) or not isinstance(data.get("results"), list):
+                raise SearXNGJSONError(
+                    "Invalid SearXNG response: expected a results list"
+                )
 
             if (
                 data
@@ -242,14 +229,18 @@ class SearXNGClient:
                     }
                 ]
                 for engine, error in unique_list:
-                    console.print(f"Engine: {engine} [red]{error}[/red]")
+                    error_console.print(f"Engine: {engine} [red]{error}[/red]")
 
-            if data and "results" in data:
-                return data["results"]
-            else:
-                return []
+            if not data["results"] and data.get("unresponsive_engines"):
+                raise SearXNGError(
+                    "No results returned and search engines failed. "
+                    "Try another engine with -e or retry after its cooldown."
+                )
+            return data["results"]
 
         except json.JSONDecodeError as e:
             raise SearXNGJSONError(f"Could not decode JSON response: {e}") from e
+        except httpx.RequestError as e:
+            raise SearXNGConnectionError(f"Search request failed: {e}") from e
         except SearXNGError:
             raise

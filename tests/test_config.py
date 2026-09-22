@@ -77,7 +77,7 @@ categories = news general
         # Test invalid category
         assert SearxngrConfig.validate_category("invalid_category") is False
 
-    def test_config_helper_methods(self):
+    def test_config_helper_methods(self, tmp_path):
         """Test configuration helper methods"""
         parser = configparser.ConfigParser()
         parser["searxngr"] = {
@@ -100,7 +100,7 @@ categories = news general
             "test_list_one_item": "item1",
         }
 
-        config = SearxngrConfig()
+        config = SearxngrConfig(config_path=str(tmp_path), skip_config_creation=True)
 
         # Test string helper
         result = config.get_config_str(parser, "test_string", "default")

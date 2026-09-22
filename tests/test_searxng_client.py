@@ -1,6 +1,9 @@
 from unittest.mock import patch, MagicMock
+from urllib.parse import parse_qs, urlsplit
 
-from searxngr.client import SearXNGClient
+import pytest
+
+from searxngr.client import SearXNGClient, SearXNGError
 from searxngr.constants import SAFE_SEARCH_OPTIONS
 
 
@@ -103,7 +106,7 @@ class TestSearXNGClient:
 
         # Verify the URL was constructed correctly
         call_args = mock_httpx_client.return_value.get.call_args
-        assert "test query" in call_args[0][0]
+        assert parse_qs(urlsplit(call_args[0][0]).query)["q"] == ["test query"]
         assert "general" in call_args[0][0]
         assert (
             "testengine" not in call_args[0][0]
@@ -163,7 +166,9 @@ class TestSearXNGClient:
 
         # Verify the site filter was applied
         call_args = mock_httpx_client.return_value.get.call_args
-        assert "site:example.com test query" in call_args[0][0]
+        assert parse_qs(urlsplit(call_args[0][0]).query)["q"] == [
+            "site:example.com test query"
+        ]
 
     @patch("searxngr.client.httpx.Client")
     def test_search_with_time_range(self, mock_httpx_client):
@@ -209,7 +214,5 @@ class TestSearXNGClient:
         mock_httpx_client.return_value.get.return_value = mock_response
 
         client = SearXNGClient(url=self.base_url)
-        results = client.search(query="test query")
-
-        # Verify results are returned despite unresponsive engines
-        assert results == []
+        with pytest.raises(SearXNGError, match="search engines failed"):
+            client.search(query="test query")

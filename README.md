@@ -2,6 +2,10 @@
 
 SearXNG from the command line, inspired by `ddgr` and `googler`.
 
+This fork of [scross01/searxngr](https://github.com/scross01/searxngr) adds
+correct query encoding, bounded pagination, noninteractive execution, and
+clear search failure reporting. See [reliability notes](docs/reliability.md).
+
 ![demo](demo/demo.gif)
 
 `searxngr` is a command-line interface (CLI) tool that allows you to perform web
@@ -27,13 +31,13 @@ Installation requires the
 [`uv`](https://docs.astral.sh/uv/getting-started/installation/) package manager.
 
 ```shell
-uv tool install https://github.com/scross01/searxngr.git
+uv tool install --force git+https://github.com/wawow830/searxngr.git
 ```
 
 To install from source
 
 ```shell
-git clone https://github.com/scross01/searxngr.git
+git clone https://github.com/wawow830/searxngr.git
 cd searxngr
 uv venv && source .venv/bin/activate # (optional)
 uv sync
@@ -150,6 +154,21 @@ searxngr --searxng-url https://searxng.example.com --noprompt --expand "search q
 This is useful for one-off searches without setting up configuration and
 scripted automation where you want to pass the instance URL dynamically and
 return the results to integrate `searxngr` into pipelines or other commands
+
+### Scripting
+
+```shell
+searxngr --json 'C++ & C# differences' > results.json
+```
+
+JSON mode returns one server page. Search diagnostics go to stderr; a failed
+search with no results exits nonzero, while a successful search with no matches
+returns `[]`. Partial results are retained when other engines fail. Non-terminal
+stdin automatically disables the interactive prompt.
+
+A reachable SearXNG server with JSON output enabled is still required. Enable
+multiple working engines on that server so one blocked engine does not disable
+all searches; the CLI does not bypass CAPTCHAs or change servers automatically.
 
 ### Options
 
