@@ -186,32 +186,37 @@ class SearXNGClient:
         site: Optional[str] = None,
         http_method: str = "GET",
     ) -> List[Dict[str, Any]]:
-        options = dict(
-            pageno=pageno,
-            safe_search=safe_search,
-            categories=categories,
-            engines=engines,
-            language=language,
-            time_range=time_range,
-            site=site,
-            http_method=http_method,
-        )
+        if http_method not in ("GET", "POST"):
+            raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
+        if engines and categories:
+            error_console.print("Engines setting ignored when using categories")
+
+        body = {"q": f"site:{site} {query}" if site else query, "format": "json"}
+        if categories:
+            body["categories"] = ",".join(
+                "social media" if c == "social+media" else c for c in categories
+            )
+        if engines and not categories:
+            body["engines"] = ",".join(engines)
+        if language:
+            body["language"] = language
+        if pageno > 1:
+            body["pageno"] = str(pageno)
+        if safe_search:
+            body["safesearch"] = str(SAFE_SEARCH_OPTIONS[safe_search])
+        if time_range:
+            body["time_range"] = time_range
+
         search_key = (
-            query,
-            safe_search,
-            tuple(categories or []),
-            tuple(engines or []),
-            language,
-            time_range,
-            site,
             http_method,
+            tuple((k, v) for k, v in body.items() if k != "pageno"),
         )
         if pageno <= 1:
             self._fallback_search_key = None
         elif self._fallback_search_key == search_key:
-            options["engines"] = self.fallback_engines
+            body["engines"] = ",".join(self.fallback_engines)
         try:
-            return self._search_once(query, **options)
+            return self._search_once(body, http_method)
         except SearXNGEngineError:
             # Never override explicit engine/category/bang selection or switch
             # engines halfway through pagination. Only one backup batch is tried.
@@ -228,47 +233,16 @@ class SearXNGClient:
                 + ", ".join(self.fallback_engines),
                 markup=False,
             )
-            options["engines"] = self.fallback_engines
-            results = self._search_once(query, **options)
+            body["engines"] = ",".join(self.fallback_engines)
+            results = self._search_once(body, http_method)
             if not results:
                 raise
             self._fallback_search_key = search_key
             return results
 
     def _search_once(
-        self,
-        query: str,
-        pageno: int = 0,
-        safe_search: Optional[str] = None,
-        categories: Optional[List[str]] = None,
-        engines: Optional[List[str]] = None,
-        language: Optional[str] = None,
-        time_range: Optional[str] = None,
-        site: Optional[str] = None,
-        http_method: str = "GET",
+        self, body: Dict[str, str], http_method: str
     ) -> List[Dict[str, Any]]:
-        query = f"site:{site} {query}" if site else query
-        if http_method not in ("GET", "POST"):
-            raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
-
-        if engines and categories:
-            error_console.print("Engines setting ignored when using categories")
-
-        body = {"q": query, "format": "json"}
-        if categories:
-            body["categories"] = ",".join(
-                "social media" if c == "social+media" else c for c in categories
-            )
-        if engines and not categories:
-            body["engines"] = ",".join(engines)
-        if language:
-            body["language"] = language
-        if pageno > 1:
-            body["pageno"] = str(pageno)
-        if safe_search:
-            body["safesearch"] = str(SAFE_SEARCH_OPTIONS[safe_search])
-        if time_range:
-            body["time_range"] = time_range
         path = "/search"
         if http_method == "GET":
             path += "?" + urlencode(body)
@@ -313,7 +287,3 @@ class SearXNGClient:
 
         except json.JSONDecodeError as e:
             raise SearXNGJSONError(f"Could not decode JSON response: {e}") from e
-        except httpx.RequestError as e:
-            raise SearXNGConnectionError(f"Search request failed: {e}") from e
-        except SearXNGError:
-            raise

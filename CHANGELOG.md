@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.8.5 (wawow830 fork)
+
+- Remove the optional watchdog script, service, timer, and associated tests.
+- Simplify search/fallback parameter handling and remove redundant error handling.
+- Keep bounded retries, one backup batch, and explicit failures without extra infrastructure.
+
 ## 0.8.4 (wawow830 fork)
 
 - Retry transient transport errors and HTTP 500/502/503/504 responses with bounded backoff.

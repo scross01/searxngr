@@ -183,8 +183,8 @@ searxngr --json --retries 2 --fallback-engines 'google,mwmbl' 'search query'
 
 If the default engines return no results and report failures, the configured
 backup engines are tried once on the same server, preserving query filters.
-See [reliability notes](docs/reliability.md) for retry bounds and an optional
-local-server health monitor.
+See [reliability notes](docs/reliability.md) for limits. No background services
+or automatic server restarts are added.
 
 ### Options
 

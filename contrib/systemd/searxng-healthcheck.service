@@ -1,8 +1,0 @@
-[Unit]
-Description=Check local SearXNG availability and recover a stopped server
-After=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/bin/sh %h/.local/share/searxng/check-health.sh
-TimeoutStartSec=120
