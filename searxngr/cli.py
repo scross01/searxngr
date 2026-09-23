@@ -191,13 +191,6 @@ def create_parser(cfg: SearxngrConfig) -> argparse.ArgumentParser:
         help="retries per request for transient transport/5xx failures (default: 2)",
     )
     parser.add_argument(
-        "--fallback-engines",
-        type=lambda value: [name.strip() for name in value.split(",") if name.strip()],
-        default=cfg.fallback_engines,
-        metavar="ENGINES",
-        help="comma-separated backup engines for failed default web searches; empty disables",
-    )
-    parser.add_argument(
         "--json",
         action="store_true",
         help="output the search results in JSON format and exit",
@@ -505,7 +498,6 @@ def main() -> None:
         no_user_agent=args.noua,
         timeout=args.timeout,
         retries=args.retries,
-        fallback_engines=args.fallback_engines,
     )
 
     if args.list_engines:

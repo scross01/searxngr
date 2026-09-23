@@ -16,37 +16,10 @@ import pytest
     "responses,expected_exit",
     [
         (
-            [
-                (503, {}),
-                (
-                    200,
-                    {"results": [], "unresponsive_engines": [["primary", "CAPTCHA"]]},
-                ),
-                (
-                    200,
-                    {
-                        "results": [
-                            {
-                                "url": "https://example.com/recovered",
-                                "title": "Recovered",
-                            }
-                        ]
-                    },
-                ),
-            ],
+            [(503, {}), (200, {"results": [{"url": "https://example.com/recovered", "title": "Recovered"}]})],
             0,
         ),
-        ([(503, {}), (503, {})], 1),
-        (
-            [
-                (
-                    200,
-                    {"results": [], "unresponsive_engines": [["primary", "CAPTCHA"]]},
-                ),
-                (200, {"results": [], "unresponsive_engines": [["backup", "CAPTCHA"]]}),
-            ],
-            1,
-        ),
+        ([(503, {}), (503, {}), (503, {})], 1),
     ],
 )
 def test_cli_recovers_or_fails_cleanly(tmp_path, responses, expected_exit):
@@ -81,11 +54,9 @@ def test_cli_recovers_or_fails_cleanly(tmp_path, responses, expected_exit):
                     f"http://127.0.0.1:{server.server_port}",
                     "--json",
                     "--retries",
-                    "1",
+                    "2",
                     "--timeout",
                     "1",
-                    "--fallback-engines",
-                    "backup",
                     "--url-handler",
                     shlex.quote(sys.executable),
                     "C++ & C#",
@@ -107,8 +78,7 @@ def test_cli_recovers_or_fails_cleanly(tmp_path, responses, expected_exit):
     assert all(request["q"] == ["C++ & C#"] for request in requests)
     if expected_exit == 0:
         assert json.loads(result.stdout)[0]["url"] == "https://example.com/recovered"
-        assert requests[-1]["engines"] == ["backup"]
-        assert "retry" in result.stderr and "backup engines" in result.stderr
+        assert "retry" in result.stderr
     else:
         assert result.stdout == ""
         assert "Error:" in result.stderr

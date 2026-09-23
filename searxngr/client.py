@@ -61,13 +61,10 @@ class SearXNGClient:
         no_user_agent: Optional[bool] = None,
         timeout: Union[int, float] = 30,
         retries: int = 2,
-        fallback_engines: Optional[List[str]] = None,
     ) -> None:
         if not isinstance(retries, int) or not 0 <= retries <= 5:
             raise ValueError("retries must be an integer between 0 and 5")
         self.retries = retries
-        self.fallback_engines = list(fallback_engines or [])
-        self._fallback_search_key = None
         self.url = url.rstrip("/")
         self.username = username
         self.password = password
@@ -207,38 +204,7 @@ class SearXNGClient:
         if time_range:
             body["time_range"] = time_range
 
-        search_key = (
-            http_method,
-            tuple((k, v) for k, v in body.items() if k != "pageno"),
-        )
-        if pageno <= 1:
-            self._fallback_search_key = None
-        elif self._fallback_search_key == search_key:
-            body["engines"] = ",".join(self.fallback_engines)
-        try:
-            return self._search_once(body, http_method)
-        except SearXNGEngineError:
-            # Never override explicit engine/category/bang selection or switch
-            # engines halfway through pagination. Only one backup batch is tried.
-            if (
-                not self.fallback_engines
-                or engines
-                or categories
-                or pageno > 1
-                or "!" in query
-            ):
-                raise
-            error_console.print(
-                "Default engines failed; trying configured backup engines: "
-                + ", ".join(self.fallback_engines),
-                markup=False,
-            )
-            body["engines"] = ",".join(self.fallback_engines)
-            results = self._search_once(body, http_method)
-            if not results:
-                raise
-            self._fallback_search_key = search_key
-            return results
+        return self._search_once(body, http_method)
 
     def _search_once(
         self, body: Dict[str, str], http_method: str

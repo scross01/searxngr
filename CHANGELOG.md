@@ -15,9 +15,6 @@ preserved commit authorship.
 - Skip the interactive prompt when stdin is not a terminal.
 - Retry transient transport errors and HTTP 500/502/503/504 responses with bounded
   backoff (`--retries`, default 2, range 0–5; new `retries` config key).
-- Add opt-in backup engines for failed default web searches (`--fallback-engines`,
-  `fallback_engines` config key; disabled by default; explicit engine / category /
-  bang selection is never overridden).
 - Preserve per-request headers, including the preferences `Accept` header.
 - Add offline regression tests and a GitHub Actions test-and-build workflow.
 - Document reliability limits in `docs/reliability.md`.

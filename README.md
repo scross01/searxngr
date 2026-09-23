@@ -2,7 +2,7 @@
 
 SearXNG from the command line, inspired by `ddgr` and `googler`.
 
-Search reliability — retries, fallback engines, pagination bounds, JSON/error
+Search reliability — retries, pagination bounds, JSON/error
 stream behavior — is documented in [reliability notes](docs/reliability.md).
 
 ![demo](demo/demo.gif)
@@ -93,7 +93,6 @@ searxng_url = https://searxng.example.com
 # http_method = GET
 # timeout = 30.0
 # retries = 2
-# fallback_engines = google, mwmbl
 # no_verify_ssl = false
 # no_user_agent = false
 # no_color = false
@@ -123,9 +122,6 @@ searxng_url = https://searxng.example.com
 - `timeout` - HTTP timeout in seconds per attempt. Default is `30`.
 - `retries` - Retry transient transport or HTTP 500/502/503/504 failures, with
   backoff. Default is `2`; use `0` to disable (maximum `5`).
-- `fallback_engines` - Optional comma-separated backup engines for failed default
-  web searches, e.g. `google, mwmbl`. Names may contain spaces. Disabled by default;
-  explicit engine/category/bang selection is never overridden.
 - `no_verify_ssl` - disable SSL verification if you are hosting SearXNG with
   self-signed certificated. Default is `false`.
 - `no_user_agent` - Clear the user agent. Default is `false`.
@@ -177,12 +173,11 @@ multiple working engines on that server so one blocked engine does not disable
 all searches; the CLI does not bypass CAPTCHAs or change servers automatically.
 
 ```shell
-searxngr --json --retries 2 --fallback-engines 'google,mwmbl' 'search query'
+searxngr --json --retries 2 'search query'
 ```
 
-If the default engines return no results and report failures, the configured
-backup engines are tried once on the same server, preserving query filters.
-See [reliability notes](docs/reliability.md) for limits. No background services
+Transient transport and 5xx failures are retried with bounded backoff. See
+[reliability notes](docs/reliability.md) for limits. No background services
 or automatic server restarts are added.
 
 ### Options

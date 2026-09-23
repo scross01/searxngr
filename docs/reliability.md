@@ -13,12 +13,6 @@ instance fallbacks.
   HTTP 500/502/503/504 are retried. Backoff starts at 0.25 seconds, capped at 2.
 - HTTP 4xx responses, CAPTCHAs, and invalid JSON do not trigger HTTP retries.
 - `--timeout` applies per HTTP attempt, not to the whole command.
-- `--fallback-engines 'google,mwmbl'` enables one backup batch when default web
-  engines return no results and report failures. It is disabled by default.
-  An empty value disables a configured list; commas preserve spaces in names.
-- Backup requests keep the same server and filters. Explicit engine, category,
-  or bang selection is never overridden. Pagination stays with the selected
-  engines; a new search starts with the defaults again.
 
 These options can also be set in `config.ini`:
 
@@ -26,7 +20,6 @@ These options can also be set in `config.ini`:
 [searxngr]
 searxng_url = http://127.0.0.1:8080
 retries = 2
-fallback_engines = google, mwmbl
 ```
 
 ## Output and pagination
