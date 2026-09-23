@@ -1,30 +1,26 @@
 # Change Log
 
-## 0.8.5 (wawow830 fork)
+## 0.9.0
 
-- Remove the optional watchdog script, service, timer, and associated tests.
-- Simplify search/fallback parameter handling and remove redundant error handling.
-- Keep bounded retries, one backup batch, and explicit failures without extra infrastructure.
-
-## 0.8.4 (wawow830 fork)
-
-- Retry transient transport errors and HTTP 500/502/503/504 responses with bounded backoff.
-- Add configurable backup engines for failed default web searches without changing servers or filters.
-- Preserve the selected backup engines across subsequent result pages.
-- Validate malformed result objects and engine diagnostics before processing.
-- Preserve per-request headers, including the preferences HTML Accept header.
-- Add an opt-in local systemd health monitor and recovery tests.
-
-## 0.8.3 (wawow830 fork)
+Based on the reliability work by wawow830
+([wawow830/searxngr](https://github.com/wawow830/searxngr)); merged with
+preserved commit authorship.
 
 - Encode GET queries and filters correctly, including `&`, `+`, `#`, and Unicode.
 - Keep search diagnostics on stderr and report failed searches with a nonzero exit.
 - Validate response schemas and retain results when some engines fail.
 - Fetch one server page in JSON mode; avoid unnecessary requests at page boundaries.
-- Deduplicate URLs, stop repeated pages, and bound automatic pagination.
+- Deduplicate URLs, stop repeated pages, and bound automatic pagination (max 10 pages).
 - Preserve earlier pages if a later request fails.
 - Skip the interactive prompt when stdin is not a terminal.
-- Add offline regression tests and GitHub Actions verification.
+- Retry transient transport errors and HTTP 500/502/503/504 responses with bounded
+  backoff (`--retries`, default 2, range 0–5; new `retries` config key).
+- Add opt-in backup engines for failed default web searches (`--fallback-engines`,
+  `fallback_engines` config key; disabled by default; explicit engine / category /
+  bang selection is never overridden).
+- Preserve per-request headers, including the preferences `Accept` header.
+- Add offline regression tests and a GitHub Actions test-and-build workflow.
+- Document reliability limits in `docs/reliability.md`.
 
 ## 0.8.2
 

@@ -1,5 +1,7 @@
 # Reliability
 
+> Adapted from the reliability work of [wawow830](https://github.com/wawow830/searxngr).
+
 `searxngr` needs a reachable SearXNG server with JSON output enabled and working
 search engines. It cannot guarantee results during outages or upstream blocks.
 There are no background monitors, automatic server restarts, or hidden public

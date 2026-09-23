@@ -2,9 +2,8 @@
 
 SearXNG from the command line, inspired by `ddgr` and `googler`.
 
-This fork of [scross01/searxngr](https://github.com/scross01/searxngr) adds
-correct query encoding, bounded pagination, noninteractive execution, and
-clear search failure reporting. See [reliability notes](docs/reliability.md).
+Search reliability — retries, fallback engines, pagination bounds, JSON/error
+stream behavior — is documented in [reliability notes](docs/reliability.md).
 
 ![demo](demo/demo.gif)
 
@@ -31,13 +30,13 @@ Installation requires the
 [`uv`](https://docs.astral.sh/uv/getting-started/installation/) package manager.
 
 ```shell
-uv tool install --force git+https://github.com/wawow830/searxngr.git
+uv tool install https://github.com/scross01/searxngr.git
 ```
 
 To install from source
 
 ```shell
-git clone https://github.com/wawow830/searxngr.git
+git clone https://github.com/scross01/searxngr.git
 cd searxngr
 uv venv && source .venv/bin/activate # (optional)
 uv sync

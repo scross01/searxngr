@@ -28,13 +28,13 @@ Configuration is managed through an INI file.
 The recommended way to install `searxngr` is using the `uv` package manager:
 
 ```bash
-uv tool install --force git+https://github.com/wawow830/searxngr.git
+uv tool install https://github.com/scross01/searxngr.git
 ```
 
 To install from source:
 
 ```bash
-git clone https://github.com/wawow830/searxngr.git
+git clone https://github.com/scross01/searxngr.git
 cd searxngr
 uv venv && source .venv/bin/activate # (optional)
 uv sync
