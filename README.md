@@ -165,8 +165,8 @@ searxngr --json 'C++ & C# differences' > results.json
 
 JSON mode returns one server page. Search diagnostics go to stderr; a failed
 search with no results exits nonzero, while a successful search with no matches
-returns `[]`. Partial results are retained when other engines fail. Non-terminal
-stdin automatically disables the interactive prompt.
+returns `[]`. Partial results are retained when other engines fail. Interactive
+prompting is disabled when stdin or stdout is not a terminal (or pass `--np`).
 
 A reachable SearXNG server with JSON output enabled is still required. Enable
 multiple working engines on that server so one blocked engine does not disable

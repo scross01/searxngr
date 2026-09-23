@@ -464,26 +464,26 @@ def main() -> None:
     from .constants import validate_url_handler
 
     if args.url_handler and not validate_url_handler(args.url_handler):
-        console.print(
+        error_console.print(
             f"[yellow]Warning:[/yellow] The url-handler command '{args.url_handler}' is not found or not executable."
         )
-        console.print(
+        error_console.print(
             "Make sure the command exists in your PATH or provide a full path to the executable."
         )
-        console.print(
+        error_console.print(
             f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
         )
     if args.secondary_url_handler and not validate_url_handler(
         args.secondary_url_handler
     ):
-        console.print(
+        error_console.print(
             f"[yellow]Warning:[/yellow] The secondary-url-handler command "
             f"'{args.secondary_url_handler}' is not found or not executable."
         )
-        console.print(
+        error_console.print(
             "Make sure the command exists in your PATH or provide a full path to the executable."
         )
-        console.print(
+        error_console.print(
             f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
         )
 
@@ -600,7 +600,7 @@ def main() -> None:
         if not continue_loop:
             exit(0)
 
-        if args.np or not sys.stdin.isatty():
+        if args.np or not sys.stdin.isatty() or not sys.stdout.isatty():
             exit(0)
 
         new_query, start_at, pageno, results = run_interactive_loop(

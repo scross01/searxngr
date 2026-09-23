@@ -10,7 +10,9 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --no-install-project
 
 COPY searxngr/ searxngr/
-COPY README.md ./
-RUN uv pip install --system -e .
+COPY README.md ./README.md
+COPY tests/ ./tests/
+# pytest ships in the image for the integration profile (tests/integration).
+RUN uv pip install --system -e . "pytest>=9.1.1"
 
 CMD ["searxngr"]

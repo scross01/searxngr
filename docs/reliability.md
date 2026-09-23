@@ -28,7 +28,8 @@ retries = 2
 Search diagnostics go to stderr. Failure without results exits nonzero; a
 successful zero-match search returns `[]`. Partial results are preserved.
 Text pagination deduplicates URLs, stops repeated pages, and fetches at most
-ten pages per display cycle. Non-terminal stdin disables interactive prompting.
+ten pages per display cycle. Interactive prompting is disabled when stdin or
+stdout is not a terminal (pipes and file redirects); `--np` forces it off.
 
 ## Server setup
 

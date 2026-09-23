@@ -141,6 +141,46 @@ def test_pagination_is_bounded():
     assert run_cli(["--np", "-n", "1000"], pages).search.call_count == 10
 
 
+def _tty_run_cli(arguments, pages, stdout_tty: bool):
+    """Run the CLI with stdin as a TTY and stdout as configured.
+
+    The patched run_interactive_loop raises SystemExit, so a call through it
+    is distinguishable from an exit at the non-interactive gate.
+    """
+    with (
+        patch("sys.argv", ["searxngr", *arguments, "query"]),
+        patch("searxngr.cli.SearXNGClient") as client,
+        patch("searxngr.cli.print_results"),
+        patch("searxngr.cli.run_interactive_loop") as interactive,
+        patch("sys.stdin.isatty", return_value=True),
+        patch("sys.stdout.isatty", return_value=stdout_tty),
+    ):
+        interactive.side_effect = SystemExit(0)
+        client.return_value.search.side_effect = pages
+        with pytest.raises(SystemExit) as exit_info:
+            cli.main()
+        return exit_info.value.code, interactive
+
+
+def _full_page():
+    """A full display page, so main does not auto-fetch a second one."""
+    return [{"url": f"https://example.com/{i}"} for i in range(10)]
+
+
+def test_interactive_mode_engages_on_tty_stdin_and_stdout():
+    code, interactive = _tty_run_cli([], [_full_page()], stdout_tty=True)
+    assert code == 0
+    interactive.assert_called()
+
+
+def test_redirected_stdout_disables_interactive_mode():
+    """Regression: stdout redirected to a file/pipe must skip the prompt even
+    when stdin is a TTY — an unanswerable prompt would block forever."""
+    code, interactive = _tty_run_cli([], [_full_page()], stdout_tty=False)
+    assert code == 0
+    interactive.assert_not_called()
+
+
 def test_failed_search_exits_nonzero_without_corrupting_json(capsys):
     with (
         patch("sys.argv", ["searxngr", "--json", "query"]),

@@ -12,7 +12,12 @@ preserved commit authorship.
 - Fetch one server page in JSON mode; avoid unnecessary requests at page boundaries.
 - Deduplicate URLs, stop repeated pages, and bound automatic pagination (max 10 pages).
 - Preserve earlier pages if a later request fails.
-- Skip the interactive prompt when stdin is not a terminal.
+- Skip the interactive prompt when stdin is not a terminal, and also when
+  stdout is redirected (a prompt no one can see or answer must not block).
+- Route url-handler warnings to stderr so piped `--json` output stays parseable.
+- Add a docker-based live integration suite (`docker compose --profile
+  integration`) covering query encoding, JSON purity, non-interactive
+  behavior, retries, and CLI metadata against a real SearXNG server.
 - Retry transient transport errors and HTTP 500/502/503/504 responses with bounded
   backoff (`--retries`, default 2, range 0–5; new `retries` config key).
 - Preserve per-request headers, including the preferences `Accept` header.

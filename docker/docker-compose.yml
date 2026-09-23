@@ -1,0 +1,54 @@
+services:
+  searxngr:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    hostname: searxngr
+    container_name: searxngr
+    image: searxngr
+    restart: unless-stopped
+    environment:
+      EDITOR: vi
+    volumes:
+      - ./config/searxngr/config.ini:/root/.config/searxngr/config.ini
+    depends_on:
+      - searxng
+
+  searxng:
+    hostname: searxng
+    container_name: searxng
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    expose:
+      - 8080
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+      UWSGI_WORKERS: 4
+      UWSGI_THREADS: 4
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    volumes:
+      - ./config/searxng:/etc/searxng:rw
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"  
+
+  # Live integration suite: `docker compose --profile integration build`
+  # then `docker compose --profile integration run --rm integration`.
+  integration:
+    profiles: ["integration"]
+    image: searxngr
+    container_name: searxngr-integration
+    depends_on:
+      - searxng
+    environment:
+      SEARXNG_URL: http://searxng:8080
+    command: ["python", "-m", "pytest", "tests/integration", "-v"]
