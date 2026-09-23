@@ -30,10 +30,8 @@ searxngr = "searxngr:main"
 [tool.hatch.version]
 path = "searxngr/__version__.py"
 
-[tool.pytest.ini_options]
-markers = [
-    "integration: live tests against a real SearXNG server (deselected by default; run via docker compose --profile integration)",
-]
+[tool.black]
+line-length = 120
 
 [dependency-groups]
 dev = [

@@ -6,10 +6,13 @@ Build the searxngr container
 docker build . -t searxngr
 ```
 
-Run the container against an local SearXNG instance.  Set the `--dns` option to your local dns to find local host names.
+Run the container against a local SearXNG instance. Set `--dns` to a DNS
+server that can resolve your instance's hostname, and substitute your own
+instance URL and credentials:
 
 ```shell
-podman run --dns 192.168.50.238 -it --rm searxngr searxngr "test" --searxng-url https://searxng.home.lan --no-verify-ssl --url-handler echo
+podman run --dns <dns-ip> -it --rm searxngr searxngr "test" \
+  --searxng-url https://searxng.example.com --no-verify-ssl --url-handler echo
 ```
 
 Run SearXNG and searxng in docker.
