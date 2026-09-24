@@ -36,7 +36,9 @@ jobs:
         run: uv run --locked pytest -q
 
       - name: Build distributions
-        run: uv build --locked
+        run: |
+          uv lock --check
+          uv build
 
       - name: Prepare draft release
         env:

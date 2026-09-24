@@ -35,4 +35,6 @@ jobs:
       - name: Run offline tests
         run: uv run --locked --python '${{ matrix.python }}' pytest -q
       - name: Build package
-        run: uv build --locked
+        run: |
+          uv lock --check
+          uv build
