@@ -21,6 +21,13 @@ the `searxngr/` directory. It interacts with SearXNG instances via HTTP
 requests, processing and displaying results in a terminal-friendly format.
 Configuration is managed through an INI file.
 
+Detailed design documentation — component map, data flow, retry semantics, and
+the fork-heritage section tracking what was merged from wawow830's fork (and
+what was deliberately excluded, such as `--fallback-engines`) — lives in
+[ARCHITECTURE.md](ARCHITECTURE.md). Development setup, test commands, and PR
+conventions are in [CONTRIBUTING.md](CONTRIBUTING.md). When cherry-picking or
+porting commits from forks, preserve the original commit authorship.
+
 ## Building and Running
 
 ### Installation
@@ -64,23 +71,32 @@ result_count = 10
 safe_search = moderate
 expand = false
 engines = duckduckgo google brave
+retries = 2
 ```
 
 ## Development Conventions
 
 ### Code Style
 
-Follow Python best practices and PEP 8 guidelines. Use ruff for formatting
-and linting (flake8-equivalent rule set) and limit the line length to 120
+Follow Python best practices and PEP 8 guidelines. Use ruff for formatting and
+linting (flake8-equivalent rule set) and limit the line length to 120
 characters.
 
 ### Testing
 
-`pytest` is used for unit and integration tests.
+`pytest` is used for unit and integration tests. The offline suite needs no
+network, server, or configuration file and must stay deterministic:
 
 ```bash
-uv run pytest
+make test # offline suite (also: uv run --locked pytest)
+make test-integration # docker SearXNG stack + tests/integration
+make lint # ruff check (gates)
+make fmt # ruff format + mdformat
 ```
+
+The live integration tests in `tests/integration/` are skipped unless the
+`SEARXNG_URL` environment variable is set, so a plain pytest run never needs a
+server.
 
 ### Contribution Guidelines
 
