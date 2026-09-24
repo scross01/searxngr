@@ -225,7 +225,7 @@ class SearXNGClient:
             ):
                 raise SearXNGJSONError("Invalid SearXNG engine diagnostics")
             for engine, error in sorted({tuple(f) for f in failures}):
-                error_console.print(f"Engine: {engine} {error}", markup=False)
+                error_console.print(f"Engine: {engine} [red]{error}[/red]")
 
             if not data["results"] and failures:
                 raise SearXNGEngineError(
