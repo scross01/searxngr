@@ -2,40 +2,28 @@
 
 ## 0.9.0
 
-Based on the reliability work by wawow830
-([wawow830/searxngr](https://github.com/wawow830/searxngr)); merged with
-preserved commit authorship.
+### Reliability hardening (from wawow830's [wawow830/searxngr](https://github.com/wawow830/searxngr) fork, merged with preserved commit authorship)
 
+- Retry transient transport errors and HTTP 500/502/503/504 with bounded
+  backoff: new `--retries` option and `retries` config key (default 2, max 5).
 - Encode GET queries and filters correctly, including `&`, `+`, `#`, and
   Unicode.
-- Keep search diagnostics on stderr and report failed searches with a nonzero
-  exit.
 - Validate response schemas and retain results when some engines fail.
-- Fetch one server page in JSON mode; avoid unnecessary requests at page
-  boundaries.
 - Deduplicate URLs, stop repeated pages, and bound automatic pagination (max 10
-  pages).
-- Preserve earlier pages if a later request fails.
-- Skip the interactive prompt when stdin is not a terminal, and also when stdout
-  is redirected (a prompt no one can see or answer must not block).
-- Route url-handler warnings to stderr so piped `--json` output stays parseable.
-- Add a docker-based live integration suite
-  (`docker compose --profile integration`) covering query encoding, JSON purity,
-  non-interactive behavior, retries, and CLI metadata against a real SearXNG
-  server.
-- Retry transient transport errors and HTTP 500/502/503/504 responses with
-  bounded backoff (`--retries`, default 2, range 0–5; new `retries` config key).
-- Preserve per-request headers, including the preferences `Accept` header.
-- Add offline regression tests and a GitHub Actions test-and-build workflow;
-  developer tooling now uses ruff for formatting and linting (replacing black
-  and flake8), with the lint rule set expanded to include import sorting,
-  pyupgrade typing modernization, and `sys.exit()` enforcement. No
-  user-facing behavior change.
-- Document reliability limits in `docs/reliability.md` (later consolidated into
-  `ARCHITECTURE.md`; the `docs/` folder was removed).
-- Add a fork-heritage and active-fork-tracking section to `ARCHITECTURE.md`
-  covering the hardening work brought across from wawow830 and the deliberate
-  exclusion of the fork's `--fallback-engines` option.
+  pages); fetch one server page in JSON mode.
+- Keep search diagnostics on stderr so piped `--json` output stays parseable;
+  report failed searches with a nonzero exit.
+- Skip the interactive prompt when stdin or stdout is not a terminal.
+- Preserve earlier pages of results if a later request fails.
+
+### Other changes
+
+- Validate result URLs against an http(s) allowlist before opening them.
+- Validate the configured SearXNG instance URL syntax at startup.
+- CI runs format, lint, and offline tests on pull requests and `main`, and
+  builds a draft GitHub release with artifacts on `v*` version tags.
+- Internal: ruff replaces black and flake8; docker-based live integration suite
+  (`docker compose --profile integration`); offline suite expanded to 181 tests.
 
 ## 0.8.2
 
