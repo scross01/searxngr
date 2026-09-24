@@ -16,8 +16,4 @@ wheels/
 .keeenv
 skills-lock.json
 telemetry-id
-err.log
-out.log
-out.txt
-out.json
 
