@@ -416,7 +416,7 @@ url content for console output. This uses
 [github.com/charmbracelet/glow](glow)
 
 ```shell
-brew install grow
+brew install glow
 uv tool install github.com/scross01/fetch
 ```
 
