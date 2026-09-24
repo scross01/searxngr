@@ -1,0 +1,4 @@
+[favicons]
+cfg_schema = 1   # config's schema version no.
+
+[favicons.cache]

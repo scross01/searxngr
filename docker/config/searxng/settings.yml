@@ -1,0 +1,17 @@
+# Test-instance settings for the docker compose stack (see docker/README.md).
+# Not for production: the limiter is off and the secret key is a static
+# placeholder (fine for a throwaway local test server; regenerate for
+# anything long-lived).
+use_default_settings: true
+server:
+  secret_key: "searxng"
+  limiter: false
+  image_proxy: true
+search:
+  favicon_resolver: ""
+  formats:
+    - html
+    - json
+engines:
+  - name: radio browser
+    disabled: true
