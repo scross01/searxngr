@@ -3,6 +3,9 @@ name = "searxngr"
 dynamic = ["version"]
 description = "SearXNG from the terminal"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["searxng", "search", "cli", "terminal", "tui"]
 requires-python = ">=3.10"
 dependencies = [
     "babel>=2.18.0",
@@ -29,6 +32,19 @@ searxngr = "searxngr:main"
 
 [tool.hatch.version]
 path = "searxngr/__version__.py"
+
+[tool.hatch.build.targets.sdist]
+# Agent state and internal planning must not ship in published artifacts.
+# When adopting a new tool that writes into the repo, add its directory here.
+exclude = [
+    ".agents",
+    ".crush",
+    ".freebuff",
+    ".hermes",
+    ".kilo",
+    ".vscode",
+    "plans",
+]
 
 [tool.ruff]
 line-length = 120
