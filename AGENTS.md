@@ -79,8 +79,9 @@ retries = 2
 ### Code Style
 
 Follow Python best practices and PEP 8 guidelines. Use ruff for formatting and
-linting (flake8-equivalent rule set) and limit the line length to 120
-characters.
+linting (flake8-equivalent rules plus import sorting, pyupgrade typing
+modernization, and PLR1722 `sys.exit()` enforcement) and limit the line length
+to 120 characters.
 
 ### Testing
 

@@ -28,7 +28,9 @@ preserved commit authorship.
 - Preserve per-request headers, including the preferences `Accept` header.
 - Add offline regression tests and a GitHub Actions test-and-build workflow;
   developer tooling now uses ruff for formatting and linting (replacing black
-  and flake8).
+  and flake8), with the lint rule set expanded to include import sorting,
+  pyupgrade typing modernization, and `sys.exit()` enforcement. No
+  user-facing behavior change.
 - Document reliability limits in `docs/reliability.md` (later consolidated into
   `ARCHITECTURE.md`; the `docs/` folder was removed).
 - Add a fork-heritage and active-fork-tracking section to `ARCHITECTURE.md`
