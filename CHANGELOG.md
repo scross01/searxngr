@@ -6,32 +6,43 @@ Based on the reliability work by wawow830
 ([wawow830/searxngr](https://github.com/wawow830/searxngr)); merged with
 preserved commit authorship.
 
-- Encode GET queries and filters correctly, including `&`, `+`, `#`, and Unicode.
-- Keep search diagnostics on stderr and report failed searches with a nonzero exit.
+- Encode GET queries and filters correctly, including `&`, `+`, `#`, and
+  Unicode.
+- Keep search diagnostics on stderr and report failed searches with a nonzero
+  exit.
 - Validate response schemas and retain results when some engines fail.
-- Fetch one server page in JSON mode; avoid unnecessary requests at page boundaries.
-- Deduplicate URLs, stop repeated pages, and bound automatic pagination (max 10 pages).
+- Fetch one server page in JSON mode; avoid unnecessary requests at page
+  boundaries.
+- Deduplicate URLs, stop repeated pages, and bound automatic pagination (max 10
+  pages).
 - Preserve earlier pages if a later request fails.
-- Skip the interactive prompt when stdin is not a terminal, and also when
-  stdout is redirected (a prompt no one can see or answer must not block).
+- Skip the interactive prompt when stdin is not a terminal, and also when stdout
+  is redirected (a prompt no one can see or answer must not block).
 - Route url-handler warnings to stderr so piped `--json` output stays parseable.
-- Add a docker-based live integration suite (`docker compose --profile
-  integration`) covering query encoding, JSON purity, non-interactive
-  behavior, retries, and CLI metadata against a real SearXNG server.
-- Retry transient transport errors and HTTP 500/502/503/504 responses with bounded
-  backoff (`--retries`, default 2, range 0–5; new `retries` config key).
+- Add a docker-based live integration suite
+  (`docker compose --profile integration`) covering query encoding, JSON purity,
+  non-interactive behavior, retries, and CLI metadata against a real SearXNG
+  server.
+- Retry transient transport errors and HTTP 500/502/503/504 responses with
+  bounded backoff (`--retries`, default 2, range 0–5; new `retries` config key).
 - Preserve per-request headers, including the preferences `Accept` header.
 - Add offline regression tests and a GitHub Actions test-and-build workflow;
   developer tooling now uses ruff for formatting and linting (replacing black
   and flake8).
-- Document reliability limits in `docs/reliability.md`.
+- Document reliability limits in `docs/reliability.md` (later consolidated into
+  `ARCHITECTURE.md`; the `docs/` folder was removed).
+- Add a fork-heritage and active-fork-tracking section to `ARCHITECTURE.md`
+  covering the hardening work brought across from wawow830 and the deliberate
+  exclusion of the fork's `--fallback-engines` option.
 
 ## 0.8.2
 
-- fixed crash in interactive mode when using `c` or `C` commands with non-numeric input.
+- fixed crash in interactive mode when using `c` or `C` commands with
+  non-numeric input.
 - fixed `m` command triggering a new search instead of returning to the prompt.
 - fixed `j` command silently ignoring invalid index input.
-- fixed search results reverting to first page when an engine timeout causes a re-fetch during paging.
+- fixed search results reverting to first page when an engine timeout causes a
+  re-fetch during paging.
 
 ## 0.8.1
 

@@ -33,7 +33,7 @@ clean: ## Remove build artifacts and caches
 
 fmt: ## Format code and docs
 	uv run ruff format searxngr/ tests/
-	uv run mdformat --wrap 80 *.md docs/*.md
+	uv run mdformat --wrap 80 *.md
 
 lint: ## Run ruff lint (flake8-equivalent rules; gates)
 	uv run ruff check searxngr tests

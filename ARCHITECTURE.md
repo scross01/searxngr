@@ -11,6 +11,7 @@ interface tool for performing web searches using SearXNG instances.
 1. [Data Flow](#data-flow)
 1. [Configuration Architecture](#configuration-architecture)
 1. [Search Categories](#search-categories)
+1. [Fork Heritage and Active Fork Tracking](#fork-heritage-and-active-fork-tracking)
 1. [External Dependencies](#external-dependencies)
 1. [Error Handling](#error-handling)
 1. [Interactive Features](#interactive-features)
@@ -48,6 +49,11 @@ Abstracts all communication with SearXNG instances:
 - Custom User-Agent headers
 - JSON response parsing with error handling
 - Basic authentication support
+- Bounded retry loop for transient failures (retries default 2, range 0–5): only
+  transport failures, timeouts, and HTTP 500/502/503/504 are retried, with
+  exponential backoff starting at 0.25 seconds and capped at 2 seconds. HTTP 4xx
+  responses, CAPTCHAs, and invalid JSON do **not** trigger retries. `--timeout`
+  applies per HTTP attempt, not to the whole command.
 - Custom exception hierarchy for testable error handling:
   - `SearXNGError` - base exception
   - `SearXNGConnectionError` - connection failures
@@ -268,6 +274,51 @@ graph LR
 1. **Terminal Formatting**: Dynamic width adjustment using
    `os.get_terminal_size()`
 
+## Fork Heritage and Active Fork Tracking
+
+searxngr's 0.9.0 release incorporates the reliability work of
+[wawow830](https://github.com/wawow830/searxngr)'s fork, merged locally from
+per-fork-commit cherry-picks (original authorship preserved in git history;
+credit recorded in the CHANGELOG 0.9.0 entry). This section tracks what was
+brought across and what was deliberately not.
+
+### Initial hardening brought across from wawow830
+
+- **Bounded retries with backoff** — `--retries` flag and `retries` config key
+  (default 2, max 5), retrying only transport failures, timeouts, and HTTP
+  500/502/503/504; 0.25 s initial backoff capped at 2 s.
+- **Diagnostic stream discipline** — search diagnostics and warnings belong on
+  stderr; stdout carries results only (just JSON in `--json` mode).
+- **Pagination hardening** — text pagination deduplicates URLs, stops on
+  repeated pages, and fetches at most ten pages per display cycle; `--json`
+  always returns exactly one server page (`-n` controls text display only).
+- **Partial-result preservation** — a failed engine contributes an error
+  diagnostic while results from healthy engines are still shown; a successful
+  zero-match search returns `[]`, a failure without results exits nonzero.
+- **Non-interactive safety** — interactive prompting is disabled when stdin or
+  stdout is not a terminal (pipes and file redirects); `--np` forces it off.
+
+### Deliberately not ported
+
+- **`--fallback-engines`** — wawow830's backup-engine option was specifically
+  excluded from being ported back. It duplicated `--engines`, and hidden engine
+  substitution contradicts the tool's explicit-selection philosophy (maintainer
+  decision, 2026-09-23; the fork's `fallback_engines` config keys are silently
+  ignored).
+- **Watchdog / systemd recovery service** — the fork itself removed this
+  infrastructure in its final commit; no background monitors, automatic server
+  restarts, or hidden public-instance fallbacks exist, by design.
+
+### Fork tracking status
+
+| Fork | Status | |---|---| |
+[wawow830/searxngr](https://github.com/wawow830/searxngr) | **Merged** —
+reliability work incorporated in 0.9.0 (cherry-picks `f905838`, `9e9879e`,
+`d14707e`); `--fallback-engines` excluded; re-check before future merges | |
+n4s5ti/searxngr | Nothing to merge — stale May 2026 snapshot, 0 commits ahead |
+| noahbenjamin1994/searxngr | Nothing to merge — earlier work already in
+upstream `main` |
+
 ## External Dependencies
 
 ### Core Runtime Dependencies
@@ -285,8 +336,8 @@ graph LR
 ### Development Dependencies
 
 - **`pytest`**: Testing framework with extensive mocking support
-- **`black`**: Code formatting (120 character line limit)
-- **`flake8`**: Linting and style checking
+- **`ruff`**: Linting and formatting (flake8-equivalent rule set, 120 character
+  line limit)
 - **`hatchling`**: Build backend for package distribution
 - **`uv`**: Package manager and tool installer
 
@@ -424,8 +475,14 @@ The searxngr architecture demonstrates a well-structured CLI application with:
 - **Robust configuration management** following XDG standards
 - **Extensible search engine management** with dynamic discovery
 - **Rich terminal interface** with interactive features
-- **Comprehensive error handling** for reliable operation
+- **Comprehensive error handling** with bounded retries for reliable operation
 - **Modular design** enabling easy testing and maintenance
 
 This architecture provides a solid foundation for both current functionality and
 future enhancements while maintaining simplicity for end users.
+
+> **Note on reliability claims**: searxngr needs a reachable SearXNG server with
+> JSON output enabled and working search engines; it cannot guarantee results
+> during outages or upstream blocks. There are no background monitors, automatic
+> server restarts, or hidden public-instance fallbacks — see the fork-heritage
+> section above.

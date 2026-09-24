@@ -103,5 +103,5 @@ Commit messages follow the conventional-commit style used in the history
   `config.ini` keys or options.
 - Diagnostics belong on stderr; stdout carries results only (just JSON in
   `--json` mode).
-- New user-visible behavior should be reflected in `README.md` and, when
-  reliability-related, in `docs/reliability.md`.
+- New user-visible behavior should be reflected in `README.md` and, when it
+  changes internal structure or reliability semantics, in `ARCHITECTURE.md`.

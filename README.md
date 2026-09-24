@@ -2,8 +2,8 @@
 
 SearXNG from the command line, inspired by `ddgr` and `googler`.
 
-Search reliability — retries, pagination bounds, JSON/error
-stream behavior — is documented in [reliability notes](docs/reliability.md).
+Retry behavior, pagination bounds, and JSON/error stream semantics are
+documented in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ![demo](demo/demo.gif)
 
@@ -46,9 +46,8 @@ uv tool install .
 ## Contributing
 
 Development setup, building, and running the tests (including the docker
-integration suite) are documented in
-[CONTRIBUTING.md](CONTRIBUTING.md). Contributions are accepted through
-pull requests.
+integration suite) are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are accepted through pull requests.
 
 ## Configuration
 
@@ -183,9 +182,9 @@ all searches; the CLI does not bypass CAPTCHAs or change servers automatically.
 searxngr --json --retries 2 'search query'
 ```
 
-Transient transport and 5xx failures are retried with bounded backoff. See
-[reliability notes](docs/reliability.md) for limits. No background services
-or automatic server restarts are added.
+Transient transport and 5xx failures are retried with bounded backoff — see
+[ARCHITECTURE.md](ARCHITECTURE.md) for the exact retry semantics. No background
+services or automatic server restarts are added.
 
 ### Options
 
