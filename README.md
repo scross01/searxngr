@@ -2,9 +2,6 @@
 
 SearXNG from the command line, inspired by `ddgr` and `googler`.
 
-Retry behavior, pagination bounds, and JSON/error stream semantics are
-documented in [ARCHITECTURE.md](ARCHITECTURE.md).
-
 ![demo](demo/demo.gif)
 
 `searxngr` is a command-line interface (CLI) tool that allows you to perform web
@@ -28,6 +25,15 @@ various search categories and advanced filtering options.
 
 Installation requires the
 [`uv`](https://docs.astral.sh/uv/getting-started/installation/) package manager.
+
+To try it without installing (runs from the repo's default branch; add `@v0.9.0`
+to pin a release tag):
+
+```shell
+uvx git+https://github.com/scross01/searxngr
+```
+
+To install (recommended for regular and interactive use):
 
 ```shell
 uv tool install https://github.com/scross01/searxngr.git
@@ -181,10 +187,6 @@ all searches; the CLI does not bypass CAPTCHAs or change servers automatically.
 ```shell
 searxngr --json --retries 2 'search query'
 ```
-
-Transient transport and 5xx failures are retried with bounded backoff — see
-[ARCHITECTURE.md](ARCHITECTURE.md) for the exact retry semantics. No background
-services or automatic server restarts are added.
 
 ### Options
 
