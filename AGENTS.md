@@ -70,8 +70,9 @@ engines = duckduckgo google brave
 
 ### Code Style
 
-Follow Python best practices and PEP 8 guidelines. Use Black and Flake8 style
-rules and limit the line length to 120 characters.
+Follow Python best practices and PEP 8 guidelines. Use ruff for formatting
+and linting (flake8-equivalent rule set) and limit the line length to 120
+characters.
 
 ### Testing
 

@@ -78,7 +78,7 @@ SEARXNG_URL=http://127.0.0.1:8080 make test-live
 ## Formatting and linting
 
 ```shell
-make lint               # flake8, informational
+make lint               # ruff (flake8-equivalent rules)
 ```
 
 The project follows PEP 8 with a 120-character line limit (configured in

@@ -32,11 +32,11 @@ clean: ## Remove build artifacts and caches
 	rm -rf dist build .pytest_cache tests/__pycache__ tests/integration/__pycache__ searxngr/__pycache__
 
 fmt: ## Format code and docs
-	uv run black searxngr/ tests/
+	uv run ruff format searxngr/ tests/
 	uv run mdformat --wrap 80 *.md docs/*.md
 
-lint: ## Run flake8 (informational: pre-existing findings are not gated)
-	-uv run flake8 searxngr/ --max-line-length 120
+lint: ## Run ruff lint (flake8-equivalent rules)
+	-uv run ruff check .
 
 check: test ## Alias for test
 
