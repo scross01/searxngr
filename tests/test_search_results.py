@@ -88,9 +88,7 @@ class TestSearchResults:
 
         # Check that content was truncated
         call_args = mock_console.print.call_args_list
-        content_calls = [
-            call for call in call_args if "This is a test result" in str(call)
-        ]
+        content_calls = [call for call in call_args if "This is a test result" in str(call)]
         assert len(content_calls) > 0
 
     @patch("searxngr.formatter.console")

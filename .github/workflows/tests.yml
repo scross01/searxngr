@@ -17,6 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
+      - name: Lint (ruff)
+        run: uv run --locked ruff check .
       - name: Run offline tests
         run: uv run --locked --python '${{ matrix.python }}' pytest -q
       - name: Build package

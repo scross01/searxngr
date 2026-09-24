@@ -94,9 +94,7 @@ def validate_engines(engines: List[str], searxng_client) -> tuple:
             f"[red]Error:[/red] Could not fetch available engines from SearXNG instance. "
             f"Please check your SearXNG instance URL and network connection. Error: {e}"
         )
-        console.print(
-            "[yellow]Note:[/yellow] Engine validation skipped, using provided engines as-is."
-        )
+        console.print("[yellow]Note:[/yellow] Engine validation skipped, using provided engines as-is.")
         return engines, []
 
     valid_engines = []

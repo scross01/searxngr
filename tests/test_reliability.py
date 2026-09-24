@@ -28,9 +28,7 @@ def test_query_and_filters_roundtrip(method):
     query = "C++ & C# 日本語 %20 &engines=evil #fragment\nnext"
     categories = ["social+media"]
     with patch("searxngr.client.httpx.Client") as http:
-        getattr(http.return_value, method.lower()).return_value.json.return_value = {
-            "results": []
-        }
+        getattr(http.return_value, method.lower()).return_value.json.return_value = {"results": []}
         client = SearXNGClient("https://example.com/")
         client.search(
             query,
@@ -43,9 +41,7 @@ def test_query_and_filters_roundtrip(method):
         )
         call = getattr(http.return_value, method.lower()).call_args
         if method == "GET":
-            params = {
-                k: v[0] for k, v in parse_qs(urlsplit(call.args[0]).query).items()
-            }
+            params = {k: v[0] for k, v in parse_qs(urlsplit(call.args[0]).query).items()}
         else:
             params = call.kwargs["data"]
         assert params == {
@@ -61,9 +57,7 @@ def test_query_and_filters_roundtrip(method):
         assert call.args[0].startswith("https://example.com/search")
 
 
-@pytest.mark.parametrize(
-    "payload", [None, [], {"error": "broken"}, {"results": "wrong"}]
-)
+@pytest.mark.parametrize("payload", [None, [], {"error": "broken"}, {"results": "wrong"}])
 def test_invalid_response_is_an_error(payload):
     with patch("searxngr.client.httpx.Client") as http:
         http.return_value.get.return_value.json.return_value = payload
@@ -86,9 +80,7 @@ def test_partial_engine_failure_keeps_results_and_stdout_clean(capsys):
 
 def test_transport_failure_is_a_client_error():
     with patch("searxngr.client.httpx.Client") as http:
-        http.return_value.get.side_effect = httpx.RemoteProtocolError(
-            "server disconnected"
-        )
+        http.return_value.get.side_effect = httpx.RemoteProtocolError("server disconnected")
         with pytest.raises(SearXNGError, match="server disconnected"):
             SearXNGClient("https://example.com").search("query")
 
@@ -128,12 +120,7 @@ def test_repeated_page_stops_pagination():
 
 
 def test_successful_page_survives_later_failure():
-    assert (
-        run_cli(
-            ["--np"], [[{"url": "https://example.com"}], SearXNGError("timeout")]
-        ).search.call_count
-        == 2
-    )
+    assert run_cli(["--np"], [[{"url": "https://example.com"}], SearXNGError("timeout")]).search.call_count == 2
 
 
 def test_pagination_is_bounded():

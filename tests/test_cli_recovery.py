@@ -40,9 +40,7 @@ def test_cli_recovers_or_fails_cleanly(tmp_path, responses, expected_exit):
             pass
 
     with ThreadingHTTPServer(("127.0.0.1", 0), Handler) as server:
-        thread = threading.Thread(
-            target=server.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True
-        )
+        thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True)
         thread.start()
         try:
             result = subprocess.run(

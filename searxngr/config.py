@@ -61,9 +61,7 @@ class SearxngrConfig:
 
         no_verify_ssl = False
         if searxng_url.startswith("https://"):
-            no_verify_ssl = (
-                input("Disable SSL verification (y/N)? ").strip().lower() == "y"
-            )
+            no_verify_ssl = input("Disable SSL verification (y/N)? ").strip().lower() == "y"
 
         valid, message = self.validate_searxng_url(searxng_url, not no_verify_ssl)
         if not valid:
@@ -90,10 +88,7 @@ class SearxngrConfig:
                 command = command_parts[0]
                 full_path = shutil.which(command)
                 if full_path is None:
-                    console.print(
-                        f"[red]Error:[/red] Command '{command}' not found. "
-                        "Please enter a valid command."
-                    )
+                    console.print(f"[red]Error:[/red] Command '{command}' not found. Please enter a valid command.")
                 else:
                     if full_path != command:
                         url_handler = url_handler.replace(command, full_path, 1)
@@ -101,9 +96,7 @@ class SearxngrConfig:
                     break
 
         no_verify_ssl_line = (
-            f"no_verify_ssl = {str(no_verify_ssl).lower()}"
-            if no_verify_ssl
-            else "# no_verify_ssl = false"
+            f"no_verify_ssl = {str(no_verify_ssl).lower()}" if no_verify_ssl else "# no_verify_ssl = false"
         )
 
         default_config = textwrap.dedent(f"""
@@ -133,9 +126,7 @@ class SearxngrConfig:
             console.print(f"[red]Error:[/red] Could not write config file: {e}")
             exit(1)
 
-        console.print(
-            "Initial settings created. Run 'searxngr --config' again to edit all settings."
-        )
+        console.print("Initial settings created. Run 'searxngr --config' again to edit all settings.")
         exit(0)
 
     def validate_searxng_url(self, url: str, verify_ssl: bool) -> tuple[bool, str]:
@@ -160,11 +151,7 @@ class SearxngrConfig:
     def get_config_list(
         self, parser: configparser.ConfigParser, key: str, default: Optional[List[str]]
     ) -> Optional[List[str]]:
-        entry = (
-            parser["searxngr"][key]
-            if "searxngr" in parser and key in parser["searxngr"]
-            else default
-        )
+        entry = parser["searxngr"][key] if "searxngr" in parser and key in parser["searxngr"] else default
         if isinstance(entry, str):
             if "," in entry:
                 entry = entry.strip().split(",")
@@ -176,59 +163,37 @@ class SearxngrConfig:
             entry = None
         return entry
 
-    def get_config_str(
-        self, parser: configparser.ConfigParser, key: str, default: Optional[str]
-    ) -> Optional[str]:
+    def get_config_str(self, parser: configparser.ConfigParser, key: str, default: Optional[str]) -> Optional[str]:
         try:
-            return (
-                parser["searxngr"][key]
-                if "searxngr" in parser and key in parser["searxngr"]
-                else default
-            )
+            return parser["searxngr"][key] if "searxngr" in parser and key in parser["searxngr"] else default
         except (ValueError, KeyError) as ve:
             console.print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
             return default
 
-    def get_config_int(
-        self, parser: configparser.ConfigParser, key: str, default: int
-    ) -> int:
+    def get_config_int(self, parser: configparser.ConfigParser, key: str, default: int) -> int:
         try:
-            return (
-                int(parser["searxngr"][key])
-                if "searxngr" in parser and key in parser["searxngr"]
-                else default
-            )
+            return int(parser["searxngr"][key]) if "searxngr" in parser and key in parser["searxngr"] else default
         except (ValueError, KeyError) as ve:
             console.print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
             return default
 
-    def get_config_float(
-        self, parser: configparser.ConfigParser, key: str, default: float
-    ) -> float:
+    def get_config_float(self, parser: configparser.ConfigParser, key: str, default: float) -> float:
         try:
-            return (
-                float(parser["searxngr"][key])
-                if "searxngr" in parser and key in parser["searxngr"]
-                else default
-            )
+            return float(parser["searxngr"][key]) if "searxngr" in parser and key in parser["searxngr"] else default
         except (ValueError, KeyError) as ve:
             console.print(
                 f'[red]Error:[/red] unable to set value for "{key}", using default setting "{default}". [dim]{ve}[/dim]'
             )
             return default
 
-    def get_config_bool(
-        self, parser: configparser.ConfigParser, key: str, default: bool
-    ) -> bool:
+    def get_config_bool(self, parser: configparser.ConfigParser, key: str, default: bool) -> bool:
         try:
             result = (
-                parser["searxngr"].getboolean(key)
-                if "searxngr" in parser and key in parser["searxngr"]
-                else default
+                parser["searxngr"].getboolean(key) if "searxngr" in parser and key in parser["searxngr"] else default
             )
             return result if result else default
         except (ValueError, KeyError) as ve:
@@ -265,12 +230,8 @@ class SearxngrConfig:
         self.engines = self.get_config_list(parser, "engines", ENGINES)
         self.expand = self.get_config_bool(parser, "expand", EXPAND)
         self.language = self.get_config_str(parser, "language", None)
-        self.url_handler = self.get_config_str(
-            parser, "url_handler", URL_HANDLER.get(platform.system())
-        )
-        self.secondary_url_handler = self.get_config_str(
-            parser, "secondary_url_handler", SECONDARY_URL_HANDLER
-        )
+        self.url_handler = self.get_config_str(parser, "url_handler", URL_HANDLER.get(platform.system()))
+        self.secondary_url_handler = self.get_config_str(parser, "secondary_url_handler", SECONDARY_URL_HANDLER)
         self.debug = self.get_config_bool(parser, "debug", False)
         self.http_method = self.get_config_str(parser, "http_method", HTTP_METHOD)
         self.http_timeout = self.get_config_float(parser, "timeout", HTTP_TIMEOUT)
@@ -278,6 +239,4 @@ class SearxngrConfig:
         self.no_user_agent = self.get_config_bool(parser, "no_user_agent", False)
         self.no_verify_ssl = self.get_config_bool(parser, "no_verify_ssl", False)
         self.no_color = self.get_config_bool(parser, "no_color", False)
-        self.max_content_words = self.get_config_int(
-            parser, "max_content_words", MAX_CONTENT_WORDS
-        )
+        self.max_content_words = self.get_config_int(parser, "max_content_words", MAX_CONTENT_WORDS)

@@ -18,9 +18,7 @@ class TestConstants:
 
     def test_parse_engine_command_plain(self):
         """Test parsing plain engine names"""
-        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command(
-            "google duckduckgo"
-        )
+        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command("google duckduckgo")
         assert to_add == []
         assert to_remove == []
         assert replacement_list == ["google", "duckduckgo"]
@@ -28,9 +26,7 @@ class TestConstants:
 
     def test_parse_engine_command_with_add(self):
         """Test parsing engines with + prefix"""
-        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command(
-            "+google +bing"
-        )
+        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command("+google +bing")
         assert to_add == ["google", "bing"]
         assert to_remove == []
         assert replacement_list == []
@@ -38,9 +34,7 @@ class TestConstants:
 
     def test_parse_engine_command_with_remove(self):
         """Test parsing engines with - prefix"""
-        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command(
-            "-google -bing"
-        )
+        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command("-google -bing")
         assert to_add == []
         assert to_remove == ["google", "bing"]
         assert replacement_list == []
@@ -48,9 +42,7 @@ class TestConstants:
 
     def test_parse_engine_command_mixed(self):
         """Test parsing engines with mixed modifiers"""
-        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command(
-            "google +bing -duckduckgo"
-        )
+        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command("google +bing -duckduckgo")
         assert to_add == ["bing"]
         assert to_remove == ["duckduckgo"]
         assert replacement_list == ["google"]
@@ -58,9 +50,7 @@ class TestConstants:
 
     def test_parse_engine_command_comma_separated(self):
         """Test parsing comma-separated engine names"""
-        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command(
-            "google, duckduckgo, brave"
-        )
+        to_add, to_remove, replacement_list, has_modifiers = parse_engine_command("google, duckduckgo, brave")
         assert to_add == []
         assert to_remove == []
         assert replacement_list == ["google", "duckduckgo", "brave"]
@@ -154,9 +144,7 @@ class TestConstants:
             {"name": "brave"},
         ]
 
-        valid, invalid = validate_engines(
-            ["google", "duckduckgo", "invalid_engine"], mock_client
-        )
+        valid, invalid = validate_engines(["google", "duckduckgo", "invalid_engine"], mock_client)
 
         assert valid == ["google", "duckduckgo"]
         assert invalid == ["invalid_engine"]

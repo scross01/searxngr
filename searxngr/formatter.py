@@ -17,9 +17,7 @@ def print_results(
     max_content_words: int = MAX_CONTENT_WORDS,
 ) -> None:
     console.print()
-    for i, result in enumerate(
-        results[start_at:(start_at + count)], start=start_at + 1
-    ):
+    for i, result in enumerate(results[start_at : (start_at + count)], start=start_at + 1):
         title = result.get("title", "No title")
         title = textwrap.shorten(title, width=70, placeholder="...")
 
@@ -74,9 +72,7 @@ def print_results(
                 console.print(f"     {line}", highlight=False)
 
         if category == "news" and published_date:
-            console.print(
-                f"     [cyan dim]{published_date}[/cyan dim]", highlight=False
-            )
+            console.print(f"     [cyan dim]{published_date}[/cyan dim]", highlight=False)
         if category == "images":
             source = result.get("source")
             resolution = result.get("resolution")
@@ -92,18 +88,14 @@ def print_results(
             if isinstance(length, float):
                 length = f"{int(length // 60):02}:{int(length % 60):02}"
             if author or length:
-                console.print(
-                    f"     [cyan dim]{length if length else ''}[/cyan dim] {author if author else ''}"
-                )
+                console.print(f"     [cyan dim]{length if length else ''}[/cyan dim] {author if author else ''}")
         if category == "music" and result.get("publishedDate"):
             author = result.get("author")
             length = result.get("length")
             if isinstance(length, float):
                 length = f"{int(length // 60):02}:{int(length % 60):02}"
             if author or length:
-                console.print(
-                    f"     [cyan dim]{length if length else ''}[/cyan dim] {author if author else ''}"
-                )
+                console.print(f"     [cyan dim]{length if length else ''}[/cyan dim] {author if author else ''}")
         if category == "map":
             address = result.get("address")
             if address:
@@ -138,9 +130,7 @@ def print_results(
                 leech = result.get("leech")
                 filesize = result.get("filesize")
                 console.print(f"     [dim]{magnet_link}[/dim]", highlight=False)
-                console.print(
-                    f"     [cyan dim]{filesize}[/cyan dim] ↑{seed} seeders, ↓{leech} leechers"
-                )
+                console.print(f"     [cyan dim]{filesize}[/cyan dim] ↑{seed} seeders, ↓{leech} leechers")
             elif template == "files.html":
                 metadata = result.get("metadata")
                 size = result.get("size")

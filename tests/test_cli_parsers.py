@@ -201,9 +201,7 @@ class TestMainValidation:
             patch("searxngr.cli.print_results"),
         ):
             mock_cfg.return_value = self._mock_config()
-            mock_client.return_value.search.return_value = [
-                {"url": f"https://example.com/{i}"} for i in range(10)
-            ]
+            mock_client.return_value.search.return_value = [{"url": f"https://example.com/{i}"} for i in range(10)]
             with pytest.raises(SystemExit) as exit_info:
                 main()
             assert exit_info.value.code == 0
@@ -229,9 +227,7 @@ class TestMainValidation:
             mock_cfg.return_value = self._mock_config(categories=["genral"])
             # Use the real category validation (classmethod bound to the class);
             # a MagicMock method would be truthy and skip the check.
-            mock_cfg.return_value.validate_category.side_effect = (
-                SearxngrConfig.validate_category
-            )
+            mock_cfg.return_value.validate_category.side_effect = SearxngrConfig.validate_category
             with patch("searxngr.cli.SearXNGClient"):
                 with pytest.raises(SystemExit) as exit_info:
                     main()

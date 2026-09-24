@@ -12,7 +12,6 @@ import json
 import os
 import pty
 import subprocess
-import sys
 import tempfile
 import time
 
@@ -21,9 +20,7 @@ import pytest
 from searxngr.constants import validate_result_url
 
 SEARXNG_URL = os.environ.get("SEARXNG_URL", "").rstrip("/")
-pytestmark = pytest.mark.skipif(
-    not SEARXNG_URL, reason="SEARXNG_URL not set; live SearXNG server required"
-)
+pytestmark = pytest.mark.skipif(not SEARXNG_URL, reason="SEARXNG_URL not set; live SearXNG server required")
 
 READ_TIMEOUT = float(os.environ.get("SEARXNG_TIMEOUT", "90"))
 
@@ -182,9 +179,7 @@ def test_piped_output_does_not_hang_or_prompt(client):
                     )
             output = open(outfile).read()
             if proc.returncode == 0 and output.strip():
-                assert "for help" not in output, (
-                    f"interactive prompt leaked into redirected output: {output!r}"
-                )
+                assert "for help" not in output, f"interactive prompt leaked into redirected output: {output!r}"
                 return
         finally:
             os.close(master)
@@ -281,9 +276,7 @@ def test_live_results_pass_url_allowlist(client):
     it — this surfaces that as a policy decision, not a silent regression."""
     results = search_json("searxng")
     assert results, "expected at least one result"
-    rejected = [
-        r.get("url") for r in results if not validate_result_url(r.get("url", ""))
-    ]
+    rejected = [r.get("url") for r in results if not validate_result_url(r.get("url", ""))]
     assert not rejected, (
         f"live search returned URLs the allowlist rejects: {rejected}; "
         "extend ALLOWED_URL_SCHEMES deliberately if these should be openable"

@@ -43,9 +43,7 @@ class TestOpenUrl:
     @patch("searxngr.cli.shlex.split")
     @patch("searxngr.cli.subprocess.run")
     @patch("searxngr.cli.console")
-    def test_open_url_command_constructed_correctly(
-        self, mock_console, mock_run, mock_split
-    ):
+    def test_open_url_command_constructed_correctly(self, mock_console, mock_run, mock_split):
         """Test open_url constructs command correctly"""
         mock_split.return_value = ["open"]
         mock_run.return_value = MagicMock()
@@ -55,9 +53,7 @@ class TestOpenUrl:
         called_command = mock_run.call_args[0][0]
         assert called_command == ["open", "https://example.com"]
 
-    @pytest.mark.parametrize(
-        "url", ["file:///etc/passwd", "--some-flag", "magnet:?xt=urn:btih:xyz", ""]
-    )
+    @pytest.mark.parametrize("url", ["file:///etc/passwd", "--some-flag", "magnet:?xt=urn:btih:xyz", ""])
     @patch("searxngr.cli.subprocess.run")
     @patch("searxngr.cli.console")
     def test_open_url_refuses_non_http_urls(self, mock_console, mock_run, url):

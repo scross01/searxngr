@@ -26,9 +26,7 @@ class TestSearXNGClient:
 
     def test_client_initialization_with_auth(self):
         """Test client initialization with authentication"""
-        client = SearXNGClient(
-            url=self.base_url, username="testuser", password="testpass"
-        )
+        client = SearXNGClient(url=self.base_url, username="testuser", password="testpass")
 
         assert client.username == "testuser"
         assert client.password == "testpass"
@@ -108,9 +106,7 @@ class TestSearXNGClient:
         call_args = mock_httpx_client.return_value.get.call_args
         assert parse_qs(urlsplit(call_args[0][0]).query)["q"] == ["test query"]
         assert "general" in call_args[0][0]
-        assert (
-            "testengine" not in call_args[0][0]
-        )  # engines not used when category is set
+        assert "testengine" not in call_args[0][0]  # engines not used when category is set
         assert str(SAFE_SEARCH_OPTIONS["moderate"]) in call_args[0][0]
 
     @patch("searxngr.client.httpx.Client")
@@ -166,9 +162,7 @@ class TestSearXNGClient:
 
         # Verify the site filter was applied
         call_args = mock_httpx_client.return_value.get.call_args
-        assert parse_qs(urlsplit(call_args[0][0]).query)["q"] == [
-            "site:example.com test query"
-        ]
+        assert parse_qs(urlsplit(call_args[0][0]).query)["q"] == ["site:example.com test query"]
 
     @patch("searxngr.client.httpx.Client")
     def test_search_with_time_range(self, mock_httpx_client):

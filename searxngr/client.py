@@ -85,17 +85,13 @@ class SearXNGClient:
                 auth=auth,
             )
         else:
-            self.client = httpx.Client(
-                verify=verify_ssl, timeout=httpx.Timeout(timeout)
-            )
+            self.client = httpx.Client(verify=verify_ssl, timeout=httpx.Timeout(timeout))
 
         if no_user_agent:
             del self.client.headers["User-Agent"]
             del self.default_headers["User-Agent"]
 
-    def _request(
-        self, method: str, path: str, headers: Optional[Dict[str, str]] = None, **kwargs
-    ) -> httpx.Response:
+    def _request(self, method: str, path: str, headers: Optional[Dict[str, str]] = None, **kwargs) -> httpx.Response:
         headers = {**self.default_headers, **(headers or {})}
         for attempt in range(self.retries + 1):
             try:
@@ -113,9 +109,7 @@ class SearXNGClient:
                 error = SearXNGHTTPError(str(exc))
                 cause = exc
             except httpx.TimeoutException as exc:
-                error = SearXNGTimeoutError(
-                    f"Request to {self.url} timed out (timeout: {self.timeout}s)."
-                )
+                error = SearXNGTimeoutError(f"Request to {self.url} timed out (timeout: {self.timeout}s).")
                 cause = exc
             except httpx.TransportError as exc:
                 error = SearXNGConnectionError(f"Request to {self.url} failed: {exc}")
@@ -127,15 +121,12 @@ class SearXNGClient:
                 raise error from cause
             delay = min(0.25 * 2**attempt, 2.0)
             error_console.print(
-                f"Transient request failure; retry {attempt + 1}/{self.retries} "
-                f"in {delay:g}s.",
+                f"Transient request failure; retry {attempt + 1}/{self.retries} in {delay:g}s.",
                 markup=False,
             )
             time.sleep(delay)
 
-    def get(
-        self, path: str, headers: Optional[Dict[str, str]] = None
-    ) -> httpx.Response:
+    def get(self, path: str, headers: Optional[Dict[str, str]] = None) -> httpx.Response:
         return self._request("get", path, headers)
 
     def post(
@@ -190,9 +181,7 @@ class SearXNGClient:
 
         body = {"q": f"site:{site} {query}" if site else query, "format": "json"}
         if categories:
-            body["categories"] = ",".join(
-                "social media" if c == "social+media" else c for c in categories
-            )
+            body["categories"] = ",".join("social media" if c == "social+media" else c for c in categories)
         if engines and not categories:
             body["engines"] = ",".join(engines)
         if language:
@@ -206,9 +195,7 @@ class SearXNGClient:
 
         return self._search_once(body, http_method)
 
-    def _search_once(
-        self, body: Dict[str, str], http_method: str
-    ) -> List[Dict[str, Any]]:
+    def _search_once(self, body: Dict[str, str], http_method: str) -> List[Dict[str, Any]]:
         path = "/search"
         if http_method == "GET":
             path += "?" + urlencode(body)
@@ -230,14 +217,10 @@ class SearXNGClient:
                 or not isinstance(data.get("results"), list)
                 or any(not isinstance(r, dict) for r in data["results"])
             ):
-                raise SearXNGJSONError(
-                    "Invalid SearXNG response: expected a list of result objects"
-                )
+                raise SearXNGJSONError("Invalid SearXNG response: expected a list of result objects")
             failures = data.get("unresponsive_engines", [])
             if not isinstance(failures, list) or any(
-                not isinstance(f, (list, tuple))
-                or len(f) != 2
-                or not all(isinstance(v, str) for v in f)
+                not isinstance(f, (list, tuple)) or len(f) != 2 or not all(isinstance(v, str) for v in f)
                 for f in failures
             ):
                 raise SearXNGJSONError("Invalid SearXNG engine diagnostics")

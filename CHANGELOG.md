@@ -21,7 +21,9 @@ preserved commit authorship.
 - Retry transient transport errors and HTTP 500/502/503/504 responses with bounded
   backoff (`--retries`, default 2, range 0–5; new `retries` config key).
 - Preserve per-request headers, including the preferences `Accept` header.
-- Add offline regression tests and a GitHub Actions test-and-build workflow.
+- Add offline regression tests and a GitHub Actions test-and-build workflow;
+  developer tooling now uses ruff for formatting and linting (replacing black
+  and flake8).
 - Document reliability limits in `docs/reliability.md`.
 
 ## 0.8.2

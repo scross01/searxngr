@@ -27,7 +27,6 @@ from .constants import (
     SAFE_SEARCH_OPTIONS,
     URL_HANDLER,
     console,
-    DEBUG,
 )
 
 
@@ -36,9 +35,7 @@ def parse_pre_args() -> argparse.Namespace:
     pre_parser.add_argument("--searxng-url", type=str, dest="searxng_url")
     pre_parser.add_argument("--version", "-v", action="store_true", dest="version")
     pre_parser.add_argument("--config", action="store_true", dest="config")
-    pre_parser.add_argument(
-        "--list-categories", action="store_true", dest="list_categories"
-    )
+    pre_parser.add_argument("--list-categories", action="store_true", dest="list_categories")
     pre_parser.add_argument("--list-engines", action="store_true", dest="list_engines")
     pre_parser.add_argument("--help", "-h", action="store_true", dest="help")
     return pre_parser.parse_known_args()[0]
@@ -66,9 +63,7 @@ def open_url(url: str, url_handler: str) -> bool:
         return False
 
 
-def handle_results(
-    results: list, args: argparse.Namespace, start_at: int = 0
-) -> tuple[bool, list]:
+def handle_results(results: list, args: argparse.Namespace, start_at: int = 0) -> tuple[bool, list]:
     if args.json:
         print(json.dumps(results, indent=2))
         return (False, results)
@@ -156,8 +151,7 @@ def create_parser(cfg: SearxngrConfig) -> argparse.ArgumentParser:
         nargs="*",
         default=cfg.engines,
         metavar="ENGINE",
-        help="list of engines to use for the search "
-        f"(default: {' '.join(cfg.engines) if cfg.engines else 'NOT SET'})",
+        help=f"list of engines to use for the search (default: {' '.join(cfg.engines) if cfg.engines else 'NOT SET'})",
     )
     parser.add_argument(
         "-x",
@@ -368,8 +362,8 @@ def main() -> None:
     else:
         console = Console(history=[query])
 
-    DEBUG = args.debug
-    error_console.print(f"Config: {args}") if DEBUG else None
+    debug_enabled = args.debug
+    error_console.print(f"Config: {args}") if debug_enabled else None
 
     if args.config:
         if not os.path.exists(cfg.config_file):
@@ -392,8 +386,7 @@ def main() -> None:
                 editor = fallback
             else:
                 console.print(
-                    "[red]Error:[/red] No editor found. Set $EDITOR environment variable "
-                    "or install an editor."
+                    "[red]Error:[/red] No editor found. Set $EDITOR environment variable or install an editor."
                 )
                 exit(1)
         try:
@@ -414,9 +407,7 @@ def main() -> None:
         exit(0)
 
     if not args.searxng_url:
-        console.print(
-            "[red]Error:[/red] No SearXNG instance URL set. Use --searxng-url or run `searxngr --config`"
-        )
+        console.print("[red]Error:[/red] No SearXNG instance URL set. Use --searxng-url or run `searxngr --config`")
         console.print("Run `searxngr --help` for more options")
         exit(1)
     from .constants import validate_url_syntax
@@ -428,28 +419,19 @@ def main() -> None:
         )
         exit(1)
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
-        console.print(
-            "[red]Error:[/red] Invalid safe search option. Use 'none', 'moderate', or 'strict'"
-        )
+        console.print("[red]Error:[/red] Invalid safe search option. Use 'none', 'moderate', or 'strict'")
         return
     if args.news and args.videos:
-        console.print(
-            "[red]Error:[/red] You can only use one of --news or --videos at a time."
-        )
+        console.print("[red]Error:[/red] You can only use one of --news or --videos at a time.")
         exit(1)
-    if args.time_range and args.time_range not in set(TIME_RANGE_OPTIONS).union(
-        TIME_RANGE_SHORT_OPTIONS
-    ):
+    if args.time_range and args.time_range not in set(TIME_RANGE_OPTIONS).union(TIME_RANGE_SHORT_OPTIONS):
         console.print(
             "[red]Error:[/red] Invalid time range format. Use 'd', 'day', 'w', 'week', 'm', 'month', or 'y', 'year'"
         )
         return
     if args.time_range in TIME_RANGE_SHORT_OPTIONS:
         args.time_range = (
-            args.time_range.replace("y", "year")
-            .replace("m", "month")
-            .replace("w", "week")
-            .replace("d", "day")
+            args.time_range.replace("y", "year").replace("m", "month").replace("w", "week").replace("d", "day")
         )
     if isinstance(args.categories, list):
         for category in args.categories:
@@ -480,22 +462,16 @@ def main() -> None:
         error_console.print(
             f"[yellow]Warning:[/yellow] The url-handler command '{args.url_handler}' is not found or not executable."
         )
-        error_console.print(
-            "Make sure the command exists in your PATH or provide a full path to the executable."
-        )
+        error_console.print("Make sure the command exists in your PATH or provide a full path to the executable.")
         error_console.print(
             f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
         )
-    if args.secondary_url_handler and not validate_url_handler(
-        args.secondary_url_handler
-    ):
+    if args.secondary_url_handler and not validate_url_handler(args.secondary_url_handler):
         error_console.print(
             f"[yellow]Warning:[/yellow] The secondary-url-handler command "
             f"'{args.secondary_url_handler}' is not found or not executable."
         )
-        error_console.print(
-            "Make sure the command exists in your PATH or provide a full path to the executable."
-        )
+        error_console.print("Make sure the command exists in your PATH or provide a full path to the executable.")
         error_console.print(
             f"[dim]Default commands for your platform: {URL_HANDLER.get(platform.system(), 'unknown')}[/dim]"
         )
@@ -539,8 +515,7 @@ def main() -> None:
                     reliability = f"[green]{r}[/green]"
 
             table.add_row(
-                engine["name"]
-                + (f" [red]({engine['errors']})[red]" if engine["errors"] else ""),
+                engine["name"] + (f" [red]({engine['errors']})[red]" if engine["errors"] else ""),
                 engine["url"],
                 " ".join(engine["bangs"]),
                 " ".join(engine["categories"]),
@@ -575,9 +550,7 @@ def main() -> None:
     while True:
         # Bound work even when an upstream repeats a page or ignores pagination.
         pages_fetched = 0
-        while (
-            not results or len(results) < start_at + args.num
-        ) and pages_fetched < 10:
+        while (not results or len(results) < start_at + args.num) and pages_fetched < 10:
             try:
                 query_results = searxng.search(
                     query,
@@ -616,9 +589,7 @@ def main() -> None:
         if args.np or not sys.stdin.isatty() or not sys.stdout.isatty():
             exit(0)
 
-        new_query, start_at, pageno, results = run_interactive_loop(
-            args, results, query, start_at, pageno, searxng
-        )
+        new_query, start_at, pageno, results = run_interactive_loop(args, results, query, start_at, pageno, searxng)
         query = new_query
 
 

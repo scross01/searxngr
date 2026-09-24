@@ -35,8 +35,8 @@ fmt: ## Format code and docs
 	uv run ruff format searxngr/ tests/
 	uv run mdformat --wrap 80 *.md docs/*.md
 
-lint: ## Run ruff lint (flake8-equivalent rules)
-	-uv run ruff check .
+lint: ## Run ruff lint (flake8-equivalent rules; gates)
+	uv run ruff check .
 
 check: test ## Alias for test
 

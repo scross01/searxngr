@@ -46,9 +46,7 @@ def _extract_engine_info(engine_row: BeautifulSoup) -> Dict[str, Any]:
         return None
 
     label_element = name_element.find("label")
-    engine_name = (
-        label_element.text.strip() if label_element and label_element.text else ""
-    )
+    engine_name = label_element.text.strip() if label_element and label_element.text else ""
 
     if not engine_name:
         return None
@@ -103,9 +101,7 @@ def _extract_categories(engine_row: BeautifulSoup) -> List[str]:
 
     try:
         tooltip_text = tooltip.get_text()
-        categories_match = re.search(
-            r"!bang for its categories(.*?)(?=!bang|$)", tooltip_text, re.DOTALL
-        )
+        categories_match = re.search(r"!bang for its categories(.*?)(?=!bang|$)", tooltip_text, re.DOTALL)
         if categories_match:
             categories_section = categories_match.group(1)
             category_matches = re.findall(r"(![a-zA-Z0-9_]+)", categories_section)

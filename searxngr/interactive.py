@@ -26,9 +26,7 @@ def run_interactive_loop(
 ):
     while True:
         try:
-            new_query = Prompt.ask(
-                "[bold]searxngr[/bold] [dim](? for help)[/dim] ", console=console
-            )
+            new_query = Prompt.ask("[bold]searxngr[/bold] [dim](? for help)[/dim] ", console=console)
         except KeyboardInterrupt:
             exit(1)
         except EOFError:
@@ -63,9 +61,7 @@ def run_interactive_loop(
                 )
             )
             continue
-        elif new_query.strip().isdigit() and int(new_query.strip()) in range(
-            1, (len(results)) + 1
-        ):
+        elif new_query.strip().isdigit() and int(new_query.strip()) in range(1, (len(results)) + 1):
             index = int(new_query.strip()) - 1
             url = results[index].get("url")
             if url:
@@ -86,16 +82,10 @@ def run_interactive_loop(
                 if url:
                     from .cli import open_url
 
-                    handler = (
-                        args.secondary_url_handler
-                        if args.secondary_url_handler
-                        else args.url_handler
-                    )
+                    handler = args.secondary_url_handler if args.secondary_url_handler else args.url_handler
                     open_url(url, handler)
                 else:
-                    console.print(
-                        "[red]Error:[/red] No URL found for the selected result."
-                    )
+                    console.print("[red]Error:[/red] No URL found for the selected result.")
             else:
                 console.print("[red]Error:[/red] Invalid index specified.")
             continue
@@ -110,9 +100,7 @@ def run_interactive_loop(
                 if url:
                     pyperclip.copy(url)
                 else:
-                    console.print(
-                        "[red]Error:[/red] No URL found for the selected result."
-                    )
+                    console.print("[red]Error:[/red] No URL found for the selected result.")
             else:
                 console.print("[red]Error:[/red] Invalid index specified.")
             continue
@@ -178,22 +166,15 @@ def run_interactive_loop(
             continue
         elif new_query.strip() == "t" or new_query.strip().startswith("t "):
             time_range = new_query[2:].strip()
-            if (
-                time_range not in TIME_RANGE_OPTIONS
-                and time_range not in TIME_RANGE_SHORT_OPTIONS
-            ):
+            if time_range not in TIME_RANGE_OPTIONS and time_range not in TIME_RANGE_SHORT_OPTIONS:
                 console.print(
-                    f"[red]Error:[/red] Invalid time range '{time_range}'. "
-                    f"Use one of: {', '.join(TIME_RANGE_OPTIONS)}"
+                    f"[red]Error:[/red] Invalid time range '{time_range}'. Use one of: {', '.join(TIME_RANGE_OPTIONS)}"
                 )
                 continue
             else:
                 if time_range in TIME_RANGE_SHORT_OPTIONS:
                     args.time_range = (
-                        time_range.replace("y", "year")
-                        .replace("m", "month")
-                        .replace("w", "week")
-                        .replace("d", "day")
+                        time_range.replace("y", "year").replace("m", "month").replace("w", "week").replace("d", "day")
                     )
                 else:
                     args.time_range = time_range
@@ -212,9 +193,7 @@ def run_interactive_loop(
                 continue
             else:
                 args.safe_search = safe_search_filter
-                console.print(
-                    f"[green]Safe search filter set to:[/green] {safe_search_filter}"
-                )
+                console.print(f"[green]Safe search filter set to:[/green] {safe_search_filter}")
                 new_query = query
                 start_at = 0
                 pageno = 1
@@ -225,19 +204,13 @@ def run_interactive_loop(
 
             engine_input = new_query[2:].strip()
             if not engine_input:
-                console.print(
-                    "[red]Error:[/red] No engine names specified. Usage: 'e +engine1 -engine2 engine3'"
-                )
+                console.print("[red]Error:[/red] No engine names specified. Usage: 'e +engine1 -engine2 engine3'")
                 continue
 
-            to_add, to_remove, replacement_list, has_modifiers = parse_engine_command(
-                engine_input
-            )
+            to_add, to_remove, replacement_list, has_modifiers = parse_engine_command(engine_input)
 
             if has_modifiers and replacement_list:
-                console.print(
-                    "[yellow]Warning:[/yellow] Plain engine names ignored when using + or - prefixes"
-                )
+                console.print("[yellow]Warning:[/yellow] Plain engine names ignored when using + or - prefixes")
                 replacement_list = []
 
             current_engines = args.engines.copy() if args.engines else []
@@ -250,17 +223,14 @@ def run_interactive_loop(
                     valid_add, invalid_add = validate_engines(to_add, searxng)
                     engines_to_add.extend(valid_add)
                     if invalid_add:
-                        console.print(
-                            f"[yellow]Warning:[/yellow] Invalid engines to add: {', '.join(invalid_add)}"
-                        )
+                        console.print(f"[yellow]Warning:[/yellow] Invalid engines to add: {', '.join(invalid_add)}")
 
                 if to_remove:
                     valid_remove, invalid_remove = validate_engines(to_remove, searxng)
                     engines_to_remove.extend(valid_remove)
                     if invalid_remove:
                         console.print(
-                            f"[yellow]Warning:[/yellow] Invalid engines to remove: "
-                            f"{', '.join(invalid_remove)}"
+                            f"[yellow]Warning:[/yellow] Invalid engines to remove: {', '.join(invalid_remove)}"
                         )
 
                 if engines_to_add or engines_to_remove:
@@ -273,34 +243,22 @@ def run_interactive_loop(
                             current_engines.append(engine)
 
                     args.engines = current_engines
-                    console.print(
-                        f"[green]Engines updated:[/green] {', '.join(current_engines)}"
-                    )
+                    console.print(f"[green]Engines updated:[/green] {', '.join(current_engines)}")
                 else:
-                    console.print(
-                        "[yellow]Warning:[/yellow] No valid engines to add or remove"
-                    )
+                    console.print("[yellow]Warning:[/yellow] No valid engines to add or remove")
             else:
                 if replacement_list:
-                    valid_engines, invalid_engines = validate_engines(
-                        replacement_list, searxng
-                    )
+                    valid_engines, invalid_engines = validate_engines(replacement_list, searxng)
 
                     if valid_engines:
                         args.engines = valid_engines
-                        console.print(
-                            f"[green]Engines set to:[/green] {', '.join(valid_engines)}"
-                        )
+                        console.print(f"[green]Engines set to:[/green] {', '.join(valid_engines)}")
                         if invalid_engines:
                             console.print(
-                                f"[yellow]Warning:[/yellow] Invalid engines ignored: "
-                                f"{', '.join(invalid_engines)}"
+                                f"[yellow]Warning:[/yellow] Invalid engines ignored: {', '.join(invalid_engines)}"
                             )
                     else:
-                        console.print(
-                            "[yellow]Warning:[/yellow] No valid engines provided, "
-                            "keeping current selection"
-                        )
+                        console.print("[yellow]Warning:[/yellow] No valid engines provided, keeping current selection")
                 else:
                     console.print("[yellow]Warning:[/yellow] No engines specified")
 
@@ -315,9 +273,7 @@ def run_interactive_loop(
             break
         elif new_query.strip() == "x":
             args.expand = not args.expand
-            print_results(
-                results, count=args.num, start_at=start_at, expand=args.expand
-            )
+            print_results(results, count=args.num, start_at=start_at, expand=args.expand)
             continue
         elif new_query.strip() == "s":
             console.print(
@@ -326,41 +282,21 @@ def run_interactive_loop(
                     SearXNG URL:       {args.searxng_url}
                     HTTP method:       {args.http_method}
                     Timeout:           {args.timeout}
-                    Verify SSL:        {
-                        "enabled" if not args.no_verify_ssl else "disabled"
-                    }
-                    Result per page:   {
-                        args.num if args.num > 0 else "[dim]default[/dim]"
-                    }
-                    Engines:           {
-                        args.engines if args.engines else "[dim]not set[/dim]"
-                    }
-                    Categories:        {
-                        args.categories if args.categories else "[dim]not set[/dim]"
-                    }
-                    Language:          {
-                        args.language if args.language else "[dim]not set[/dim]"
-                    }
+                    Verify SSL:        {"enabled" if not args.no_verify_ssl else "disabled"}
+                    Result per page:   {args.num if args.num > 0 else "[dim]default[/dim]"}
+                    Engines:           {args.engines if args.engines else "[dim]not set[/dim]"}
+                    Categories:        {args.categories if args.categories else "[dim]not set[/dim]"}
+                    Language:          {args.language if args.language else "[dim]not set[/dim]"}
                     Safe search:       {args.safe_search}
-                    Site filter:       {
-                        args.site if args.site else "[dim]not set[/dim]"
-                    }
-                    Time range filter: {
-                        args.time_range if args.time_range else "[dim]not set[/dim]"
-                    }
-                    Expand URLs:       {
-                        "enabled" if args.expand else "[dim]disabled[/dim]"
-                    }
+                    Site filter:       {args.site if args.site else "[dim]not set[/dim]"}
+                    Time range filter: {args.time_range if args.time_range else "[dim]not set[/dim]"}
+                    Expand URLs:       {"enabled" if args.expand else "[dim]disabled[/dim]"}
                     Max Content Words: {
-                        args.max_content_words
-                        if args.max_content_words != 0
-                        else "[dim]disabled[/dim]"
+                        args.max_content_words if args.max_content_words != 0 else "[dim]disabled[/dim]"
                     }
                     URL Handler:       {args.url_handler}
                     Secondary Handler: {
-                        args.secondary_url_handler
-                        if args.secondary_url_handler
-                        else "[dim]not set[/dim]"
+                        args.secondary_url_handler if args.secondary_url_handler else "[dim]not set[/dim]"
                     }
                     """
                 )
@@ -369,9 +305,7 @@ def run_interactive_loop(
         elif new_query.strip() == "m" or new_query.strip().startswith("m "):
             max_words_str = new_query[2:].strip()
             if not max_words_str:
-                console.print(
-                    "[red]Error:[/red] No max words value specified. Usage: m <number>"
-                )
+                console.print("[red]Error:[/red] No max words value specified. Usage: m <number>")
                 continue
             try:
                 max_words = int(max_words_str)
@@ -388,9 +322,7 @@ def run_interactive_loop(
                 )
                 continue
             except ValueError:
-                console.print(
-                    "[red]Error:[/red] Invalid value. Please enter a non-negative integer."
-                )
+                console.print("[red]Error:[/red] Invalid value. Please enter a non-negative integer.")
             continue
         elif new_query.strip() == "d":
             global DEBUG

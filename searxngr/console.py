@@ -8,9 +8,7 @@ from getpass import getpass
 # This allows the prompt to accept up/down arrows for history navigation
 # based on https://github.com/Textualize/rich/issues/262#issuecomment-2546430217
 class InteractiveConsole(Console):
-    def __init__(
-        self, history: Optional[Union[str, List[str]]] = None, *args: Any, **kwargs: Any
-    ) -> None:
+    def __init__(self, history: Optional[Union[str, List[str]]] = None, *args: Any, **kwargs: Any) -> None:
         self._history = InMemoryHistory(history)
         self._session: Optional[PromptSession] = None
         super().__init__(*args, **kwargs)
