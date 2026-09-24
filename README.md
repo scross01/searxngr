@@ -65,7 +65,7 @@ To set up configuration, run `searxngr --config`:
 ```shell
 $ searxngr --config
 creating initial configuration file /root/.config/searxngr/config.ini
-Enter your SearXNG instance URL [https://searxng.example.com]: https://searxng.my-instance.local
+Enter your SearXNG instance URL [https://searxng.example.com]: https://searxng.example.com
 Disable SSL verification (y/N)? y
 Connection successful.
 Initial setting created. Run 'searxngr --config' again to edit all settings.

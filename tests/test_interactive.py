@@ -22,7 +22,7 @@ class MockArgs:
         self.http_method = "GET"
         self.timeout = 30
         self.no_verify_ssl = False
-        self.searxng_url = "https://example.com"
+        self.searxng_url = "https://searxng.example.com"
 
 
 class TestInteractive:
@@ -121,7 +121,7 @@ class TestInteractive:
     def test_run_interactive_loop_show_settings(self):
         """Test that s command shows settings"""
         mock_args = MockArgs()
-        mock_args.searxng_url = "https://example.com"
+        mock_args.searxng_url = "https://searxng.example.com"
         mock_results = []
 
         with patch("searxngr.interactive.Prompt.ask") as mock_prompt:

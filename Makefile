@@ -1,4 +1,4 @@
-.PHONY: build install test test-integration test-live integration-up integration-down demo clean fmt lint check help
+.PHONY: build install test test-integration test-live integration-up integration-down clean fmt lint check help
 
 # Default: run the offline test suite
 all: test
@@ -26,9 +26,6 @@ integration-up: ## Start the compose SearXNG server only
 
 integration-down: ## Stop the compose SearXNG server
 	docker compose --profile integration -f docker/docker-compose.yml down
-
-demo: ## Rebuild the demo GIF (requires vhs)
-	$(MAKE) -C demo
 
 clean: ## Remove build artifacts and caches
 	uv clean

@@ -9,3 +9,15 @@ wheels/
 # Virtual environments
 .venv
 
+# Editor / agent state and scratch output
+*.swp
+.freebuff/
+.hermes/
+.keeenv
+skills-lock.json
+telemetry-id
+err.log
+out.log
+out.txt
+out.json
+

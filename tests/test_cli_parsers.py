@@ -22,9 +22,9 @@ class TestCLIParsers:
 
     def test_parse_pre_args_with_url(self):
         """Test parse_pre_args with --searxng-url"""
-        with patch("sys.argv", ["searxngr", "--searxng-url", "https://example.com"]):
+        with patch("sys.argv", ["searxngr", "--searxng-url", "https://searxng.example.com"]):
             result = parse_pre_args()
-            assert result.searxng_url == "https://example.com"
+            assert result.searxng_url == "https://searxng.example.com"
 
     def test_parse_pre_args_with_version(self):
         """Test parse_pre_args with --version"""
@@ -58,7 +58,7 @@ class TestCreateParser:
     def mock_config(self):
         """Create a mock config object"""
         config = MagicMock()
-        config.searxng_url = "https://searx.example.com"
+        config.searxng_url = "https://searxng.example.com"
         config.categories = ["general"]
         config.debug = False
         config.engines = ["google"]
@@ -96,7 +96,7 @@ class TestCreateParser:
         """Test parser has --searxng-url with default from config"""
         parser = create_parser(mock_config)
         args = parser.parse_args([])
-        assert args.searxng_url == "https://searx.example.com"
+        assert args.searxng_url == "https://searxng.example.com"
 
     def test_create_parser_has_categories(self, mock_config):
         """Test parser has -c/--categories with default from config"""

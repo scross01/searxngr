@@ -12,7 +12,7 @@ class TestSearXNGClient:
 
     def setup_method(self):
         """Set up test fixtures"""
-        self.base_url = "https://example.com"
+        self.base_url = "https://searxng.example.com"
         self.client = SearXNGClient(url=self.base_url)
 
     def test_client_initialization(self):

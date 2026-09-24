@@ -14,7 +14,7 @@ class TestSearxngrConfig:
             # Create a mock config file
             config_content = """
 [searxngr]
-searxng_url = https://example.com
+searxng_url = https://searxng.example.com
 result_count = 10
 safe_search = moderate
 expand = false
@@ -25,7 +25,7 @@ expand = false
                     config = SearxngrConfig(config_path=temp_dir)
 
                     # Verify default values
-                    assert config.searxng_url == "https://example.com"
+                    assert config.searxng_url == "https://searxng.example.com"
                     assert config.result_count == 10
                     assert config.safe_search == "moderate"
                     assert config.expand is False
@@ -36,7 +36,7 @@ expand = false
             # Create a mock config file
             config_content = """
 [searxngr]
-searxng_url = https://test.com
+searxng_url = https://searxng.example.com
 result_count = 20
 safe_search = strict
 expand = true
@@ -49,7 +49,7 @@ categories = news general
                     config = SearxngrConfig(config_path=temp_dir)
 
                     # Verify loaded values
-                    assert config.searxng_url == "https://test.com"
+                    assert config.searxng_url == "https://searxng.example.com"
                     assert config.result_count == 20
                     assert config.safe_search == "strict"
                     assert config.expand is True

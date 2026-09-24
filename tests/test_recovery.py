@@ -38,7 +38,7 @@ def client_factory():
                 return httpx.Response(response)
             return httpx.Response(200, json=response)
 
-        client = SearXNGClient("https://example.com", **options)
+        client = SearXNGClient("https://searxng.example.com", **options)
         client.client.close()
         client.client = httpx.Client(transport=httpx.MockTransport(handler))
         clients.append(client)
@@ -146,4 +146,4 @@ def test_config_and_cli_preserve_retry_settings(tmp_path):
 @pytest.mark.parametrize("retries", [-1, 6, 1.5])
 def test_invalid_retry_limits_are_rejected(retries):
     with pytest.raises(ValueError):
-        SearXNGClient("https://example.com", retries=retries)
+        SearXNGClient("https://searxng.example.com", retries=retries)
