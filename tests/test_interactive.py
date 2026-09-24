@@ -4,6 +4,18 @@ from unittest.mock import MagicMock, patch
 from searxngr.interactive import run_interactive_loop
 
 
+RESULTS_WITH_URL = [
+    {
+        "title": "Test Result",
+        "url": "https://example.com",
+        "content": "Test content",
+        "engine": "testengine",
+        "category": "general",
+        "engines": ["testengine"],
+    }
+]
+
+
 class MockArgs:
     """Mock args object for testing"""
 
@@ -157,3 +169,86 @@ class TestInteractive:
             )
 
             assert new_query == "invalid_command_xyz"
+
+    def test_open_index_routes_through_cli_open_url(self):
+        """The primary-handler open (index command) must go through
+        cli.open_url — the plan-007 dedup contract"""
+        mock_args = MockArgs()
+
+        with patch("searxngr.interactive.Prompt.ask") as mock_prompt:
+            mock_prompt.side_effect = ["1", "q"]
+
+            with patch("searxngr.cli.open_url") as mock_open:
+                with pytest.raises(SystemExit):
+                    run_interactive_loop(
+                        mock_args,
+                        RESULTS_WITH_URL,
+                        query="test",
+                        start_at=0,
+                        pageno=1,
+                        searxng=MagicMock(),
+                    )
+            mock_open.assert_called_once_with("https://example.com", "open")
+
+    def test_open_secondary_routes_through_cli_open_url(self):
+        """The secondary handler (o command) resolves the handler locally and
+        routes through cli.open_url"""
+        mock_args = MockArgs()
+        mock_args.secondary_url_handler = "firefox"
+
+        with patch("searxngr.interactive.Prompt.ask") as mock_prompt:
+            mock_prompt.side_effect = ["o 1", "q"]
+
+            with patch("searxngr.cli.open_url") as mock_open:
+                with pytest.raises(SystemExit):
+                    run_interactive_loop(
+                        mock_args,
+                        RESULTS_WITH_URL,
+                        query="test",
+                        start_at=0,
+                        pageno=1,
+                        searxng=MagicMock(),
+                    )
+            mock_open.assert_called_once_with("https://example.com", "firefox")
+
+    def test_open_secondary_falls_back_to_primary_handler(self):
+        """o command with no secondary_url_handler configured uses the
+        primary handler"""
+        mock_args = MockArgs()
+        assert mock_args.secondary_url_handler is None
+
+        with patch("searxngr.interactive.Prompt.ask") as mock_prompt:
+            mock_prompt.side_effect = ["o 1", "q"]
+
+            with patch("searxngr.cli.open_url") as mock_open:
+                with pytest.raises(SystemExit):
+                    run_interactive_loop(
+                        mock_args,
+                        RESULTS_WITH_URL,
+                        query="test",
+                        start_at=0,
+                        pageno=1,
+                        searxng=MagicMock(),
+                    )
+            mock_open.assert_called_once_with("https://example.com", "open")
+
+    def test_open_refused_url_does_not_spawn(self):
+        """A non-http(s) result URL is refused by open_url's allowlist; the
+        refusal path must be the shared one (open_url returns False)."""
+        mock_args = MockArgs()
+        results = [{**RESULTS_WITH_URL[0], "url": "file:///etc/passwd"}]
+
+        with patch("searxngr.interactive.Prompt.ask") as mock_prompt:
+            mock_prompt.side_effect = ["1", "q"]
+
+            with patch("searxngr.cli.open_url", return_value=False) as mock_open:
+                with pytest.raises(SystemExit):
+                    run_interactive_loop(
+                        mock_args,
+                        results,
+                        query="test",
+                        start_at=0,
+                        pageno=1,
+                        searxng=MagicMock(),
+                    )
+            mock_open.assert_called_once_with("file:///etc/passwd", "open")
