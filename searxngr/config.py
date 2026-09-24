@@ -3,6 +3,7 @@ import os
 import platform
 import shlex
 import shutil
+import sys
 import textwrap
 
 import httpx
@@ -67,7 +68,7 @@ class SearxngrConfig:
         if not valid:
             console.print(f"[red]Error:[/red] {message}")
             console.print("Please check the URL and try again.")
-            exit(1)
+            sys.exit(1)
         else:
             console.print("Connection successful.")
 
@@ -124,10 +125,10 @@ class SearxngrConfig:
                 f.write(default_config)
         except OSError as e:
             console.print(f"[red]Error:[/red] Could not write config file: {e}")
-            exit(1)
+            sys.exit(1)
 
         console.print("Initial settings created. Run 'searxngr --config' again to edit all settings.")
-        exit(0)
+        sys.exit(0)
 
     def validate_searxng_url(self, url: str, verify_ssl: bool) -> tuple[bool, str]:
         try:

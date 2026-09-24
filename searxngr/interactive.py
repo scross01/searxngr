@@ -1,4 +1,5 @@
 import json
+import sys
 import textwrap
 from typing import Any
 
@@ -29,12 +30,12 @@ def run_interactive_loop(
         try:
             new_query = Prompt.ask("[bold]searxngr[/bold] [dim](? for help)[/dim] ", console=console)
         except KeyboardInterrupt:
-            exit(1)
+            sys.exit(1)
         except EOFError:
-            exit(0)
+            sys.exit(0)
 
         if new_query.strip().lower() in ["q", "quit", "exit"]:
-            exit(0)
+            sys.exit(0)
         elif new_query.strip() in ["?"]:
             console.print(
                 textwrap.dedent(

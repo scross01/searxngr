@@ -368,7 +368,7 @@ def main() -> None:
     if args.config:
         if not os.path.exists(cfg.config_file):
             cfg.create_config_file()
-            exit(0)
+            sys.exit(0)
         console.print(f"opening {cfg.config_file}")
         editor = os.environ.get("EDITOR")
         if not editor:
@@ -388,28 +388,28 @@ def main() -> None:
                 console.print(
                     "[red]Error:[/red] No editor found. Set $EDITOR environment variable or install an editor."
                 )
-                exit(1)
+                sys.exit(1)
         try:
             subprocess.run(shlex.split(editor) + [cfg.config_file], check=True)
         except FileNotFoundError:
             console.print(f"[red]Error:[/red] Editor '{editor}' not found.")
             console.print("Set the EDITOR environment variable or install an editor.")
-            exit(1)
+            sys.exit(1)
         except subprocess.CalledProcessError as e:
             console.print(f"[red]Error opening editor:[/red] {e}")
-            exit(1)
-        exit(0)
+            sys.exit(1)
+        sys.exit(0)
     if args.version:
         console.print(__version__)
-        exit(0)
+        sys.exit(0)
     if pre_args.help:
         parser.print_help()
-        exit(0)
+        sys.exit(0)
 
     if not args.searxng_url:
         console.print("[red]Error:[/red] No SearXNG instance URL set. Use --searxng-url or run `searxngr --config`")
         console.print("Run `searxngr --help` for more options")
-        exit(1)
+        sys.exit(1)
     from .constants import validate_url_syntax
 
     if not validate_url_syntax(args.searxng_url):
@@ -417,13 +417,13 @@ def main() -> None:
             f"[red]Error:[/red] Invalid SearXNG instance URL: {args.searxng_url}. "
             "URL must start with http:// or https:// followed by a hostname."
         )
-        exit(1)
+        sys.exit(1)
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
         console.print("[red]Error:[/red] Invalid safe search option. Use 'none', 'moderate', or 'strict'")
         return
     if args.news and args.videos:
         console.print("[red]Error:[/red] You can only use one of --news or --videos at a time.")
-        exit(1)
+        sys.exit(1)
     if args.time_range and args.time_range not in set(TIME_RANGE_OPTIONS).union(TIME_RANGE_SHORT_OPTIONS):
         console.print(
             "[red]Error:[/red] Invalid time range format. Use 'd', 'day', 'w', 'week', 'm', 'month', or 'y', 'year'"
@@ -436,10 +436,10 @@ def main() -> None:
     if isinstance(args.categories, list):
         for category in args.categories:
             if not cfg.validate_category(category):
-                exit(1)
+                sys.exit(1)
     elif isinstance(args.categories, str):
         if not cfg.validate_category(args.categories):
-            exit(1)
+            sys.exit(1)
         args.categories = [args.categories]
     if args.files:
         args.categories = ["files"]
@@ -494,7 +494,7 @@ def main() -> None:
             engines = searxng.engines()
         except SearXNGError as e:
             console.print(f"[red]Error:[/red] {e}")
-            exit(1)
+            sys.exit(1)
 
         table = Table()
         table.add_column("Engine", style="cyan", no_wrap=True)
@@ -522,13 +522,13 @@ def main() -> None:
                 reliability,
             )
         console.print(table)
-        exit(0)
+        sys.exit(0)
     if args.list_categories:
         try:
             categories = searxng.categories()
         except SearXNGError as e:
             console.print(f"[red]Error:[/red] {e}")
-            exit(1)
+            sys.exit(1)
         table = Table(leading=True)
         table.add_column("Category", style="cyan", no_wrap=True)
         table.add_column("Engines")
@@ -537,11 +537,11 @@ def main() -> None:
             c.sort()
             table.add_row(category, ",".join(c))
         console.print(table)
-        exit(0)
+        sys.exit(0)
 
     if query == "":
         parser.print_usage()
-        exit(0)
+        sys.exit(0)
 
     pageno = 1
     start_at = 0
@@ -567,7 +567,7 @@ def main() -> None:
                 error_console.print(f"Error: {e}", markup=False)
                 if results:
                     break  # Do not discard successful pages on a later failure.
-                exit(1)
+                sys.exit(1)
             seen = {result.get("url") for result in results if result.get("url")}
             new_results = []
             for result in query_results:
@@ -584,10 +584,10 @@ def main() -> None:
 
         continue_loop, results = handle_results(results, args, start_at)
         if not continue_loop:
-            exit(0)
+            sys.exit(0)
 
         if args.np or not sys.stdin.isatty() or not sys.stdout.isatty():
-            exit(0)
+            sys.exit(0)
 
         new_query, start_at, pageno, results = run_interactive_loop(args, results, query, start_at, pageno, searxng)
         query = new_query
