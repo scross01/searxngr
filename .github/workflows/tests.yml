@@ -2,12 +2,27 @@ name: Tests
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Ruff lint
+        run: uv run --locked ruff check .
+      - name: Ruff format check
+        run: uv run --locked ruff format --check .
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -17,8 +32,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - name: Lint (ruff)
-        run: uv run --locked ruff check .
       - name: Run offline tests
         run: uv run --locked --python '${{ matrix.python }}' pytest -q
       - name: Build package
