@@ -60,6 +60,7 @@ Abstracts all communication with SearXNG instances:
   - `SearXNGTimeoutError` - timeout errors
   - `SearXNGHTTPError` - HTTP error responses
   - `SearXNGJSONError` - JSON decode errors
+  - `SearXNGEngineError` - search-engine failures
 
 ### 3. Configuration Management (`searxngr/config.py`)
 
@@ -115,9 +116,11 @@ Global constants and utility functions:
 
 - Default settings and configuration values
 - Helper functions: `parse_engine_command()`, `validate_engines()`,
-  `validate_url_handler()`
-- URL handlers for different platforms
-- Time range and category definitions
+  `validate_url_handler()`, `validate_result_url()` (scheme allowlist for
+  opening result URLs), `validate_url_syntax()` (zero-network URL syntax check
+  at startup)
+- Platform-specific default editors and time-range definitions
+- Search category definitions
 
 ## Component Relationships
 
@@ -214,16 +217,22 @@ flowchart TD
 [searxngr]
 searxng_url = https://searxng.example.com
 result_count = 10
-safe_search = moderate
+safe_search = strict
 engines = duckduckgo google brave
-categories = general news
+categories = general
 expand = false
 language = en
 http_method = GET
 timeout = 30
-basic_auth_username = 
-basic_auth_password = 
-verify_ssl = true
+retries = 2
+max_content_words = 128
+no_verify_ssl = false
+no_user_agent = false
+no_color = false
+url_handler = open
+secondary_url_handler =
+searxng_username =
+searxng_password =
 ```
 
 ### Configuration Precedence
@@ -234,8 +243,8 @@ verify_ssl = true
 
 ### XDG Directory Compliance
 
-- **Primary**: `$XDG_CONFIG_HOME/searxng/config.ini`
-- **Fallback**: `~/.config/searxng/config.ini`
+- **Primary**: `$XDG_CONFIG_HOME/searxngr/config.ini`
+- **Fallback**: `~/.config/searxngr/config.ini`
 - **Development**: Local `config.ini` for testing
 
 ## Search Categories
@@ -376,6 +385,7 @@ The client uses a custom exception hierarchy for testable error handling:
 - **`SearXNGTimeoutError`**: Raised when request times out
 - **`SearXNGHTTPError`**: Raised for HTTP error responses (4xx, 5xx)
 - **`SearXNGJSONError`**: Raised when JSON response cannot be decoded
+- **`SearXNGEngineError`**: Raised for search-engine failures
 
 Exceptions are caught in `cli.py` and displayed to the user with appropriate
 error messages.

@@ -203,10 +203,15 @@ Command line options can be used to modify the output and override the
 configuration defaults.
 
 ```txt
-usage: searxngr [-h] [--searxng-url SEARXNG_URL] [-c [CATEGORY ...]] [--config] [-d] [-e [ENGINE ...]] [-x] [-j]
-                [--http-method METHOD] [--timeout SECONDS] [--json] [-l LANGUAGE] [--list-categories] [--list-engines]
-                [--lucky] [--no-verify-ssl] [--nocolor] [--np] [--noua] [-n N] [--safe-search FILTER] [-w SITE]
-                [-t TIME_RANGE] [--unsafe] [--url-handler UTIL] [-v] [-F] [-M] [-N] [-S] [-V]
+usage: searxngr [-h] [-q QUERY] [--searxng-url SEARXNG_URL]
+                [-c [CATEGORY ...]] [--config] [-d] [-e [ENGINE ...]] [-x]
+                [-j] [--http-method METHOD] [--timeout SECONDS]
+                [--retries {0,1,2,3,4,5}] [--json] [-l LANGUAGE]
+                [--list-categories] [--list-engines] [--lucky]
+                [--no-verify-ssl] [--nocolor] [--np] [--noua] [-n N]
+                [--safe-search FILTER] [-w SITE] [-t TIME_RANGE] [--unsafe]
+                [--url-handler UTIL] [--secondary-url-handler UTIL] [-v] [-F]
+                [-M] [-N] [-S] [-V] [-m N]
                 [QUERY ...]
 
 Perform a search using SearXNG
@@ -216,47 +221,69 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -q, --query QUERY_OPT
-                        explicit search query (alternative to positional query)
+  -q QUERY, --query QUERY
+                        explicit search query (alternative to positional
+                        query)
   --searxng-url SEARXNG_URL
                         SearXNG instance URL (default: NOT SET)
-  -c, --categories [CATEGORY ...]
-                        list of categories to search in: general, news, videos, images, music, map, science, it,
-                        files, social+media (default: None)
-  --config              open the default configuration file using system text editor
+  -c [CATEGORY ...], --categories [CATEGORY ...]
+                        list of categories to search in: general, news,
+                        videos, images, music, map, science, it, files,
+                        social+media (default: None)
+  --config              open the default configuration file using system text
+                        editor
   -d, --debug           show debug output
-  -e, --engines [ENGINE ...]
-                        list of engines to use for the search (default: NOT SET)
+  -e [ENGINE ...], --engines [ENGINE ...]
+                        list of engines to use for the search (default: NOT
+                        SET)
   -x, --expand          Show complete url in search results
-  -m N, --max-content-words N
-                        maximum number of words to display in result content
-                        before truncating (default: 128); N=0 disables
   -j, --first           open the first result in web browser and exit
-  --http-method METHOD  HTTP method to use for search requests. GET or POST (default: GET)
+  --http-method METHOD  HTTP method to use for search requests. GET or POST
+                        (default: GET)
   --timeout SECONDS     HTTP request timeout in seconds (default: 30.0)
+  --retries {0,1,2,3,4,5}
+                        retries per request for transient transport/5xx
+                        failures (default: 2)
   --json                output the search results in JSON format and exit
-  -l, --language LANGUAGE
-                        search results in a specific language (e.g., 'en', 'de', 'fr')
+  -l LANGUAGE, --language LANGUAGE
+                        search results in a specific language (e.g., 'en',
+                        'de', 'fr')
   --list-categories     list available categories
   --list-engines        list available engines
   --lucky               opens a random result in web browser and exit
-  --no-verify-ssl       do not verify SSL certificates of server (not recommended)
+  --no-verify-ssl       do not verify SSL certificates of server (not
+                        recommended)
   --nocolor             disable colored output
   --np, --noprompt      just search and exit, do not prompt
   --noua                disable user agent
-  -n, --num N           show N results per page (default: 10); N=0 uses the servers default per page
-  --safe-search FILTER  Filter results for safe search. Use 'none', 'moderate', or 'strict' (default: strict)
-  -w, --site SITE       search sites using site: operator
-  -t, --time-range TIME_RANGE
-                        search results within a specific time range (day, week, month, year)
-  --unsafe              allow unsafe search results (same as --safe-search none)
+  -n N, --num N         show N results per page (default: 10); N=0 uses the
+                        servers default per page
+  --safe-search FILTER  Filter results for safe search. Use 'none',
+                        'moderate', or 'strict' (default: strict)
+  -w SITE, --site SITE  search sites using site: operator
+  -t TIME_RANGE, --time-range TIME_RANGE
+                        search results within a specific time range (day,
+                        week, month, year)
+  --unsafe              allow unsafe search results (same as --safe-search
+                        none)
   --url-handler UTIL    Command to open URLs in the browser (default: open)
+  --secondary-url-handler UTIL
+                        Command to open URLs using secondary handler
   -v, --version         show program's version number and exit
-  -F, --files           show results from files section. (same as --categories files)
-  -M, --music           show results from music section. (same as --categories music)
-  -N, --news            show results from news section. (same as --categories news)
-  -S, --social          show results from videos section. (same as --categories social+media)
-  -V, --videos          show results from videos section. (same as --categories videos)
+  -F, --files           show results from files section. (same as --categories
+                        files)
+  -M, --music           show results from music section. (same as --categories
+                        music)
+  -N, --news            show results from news section. (same as --categories
+                        news)
+  -S, --social          show results from videos section. (same as
+                        --categories social+media)
+  -V, --videos          show results from videos section. (same as
+                        --categories videos)
+  -m N, --max-content-words N
+                        maximum number of words to display in result content
+                        before truncation (default: 128); N=0 disables
+                        truncation
 ```
 
 ### Listing Available Engines and Categories
