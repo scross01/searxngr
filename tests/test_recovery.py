@@ -1,5 +1,7 @@
 """Deterministic fault injection: retries without live search."""
 
+import io
+
 import httpx
 import pytest
 
@@ -7,6 +9,7 @@ from searxngr.cli import create_parser
 from searxngr.client import (
     SearXNGClient,
     SearXNGConnectionError,
+    SearXNGEngineError,
     SearXNGHTTPError,
     SearXNGJSONError,
     SearXNGTimeoutError,
@@ -47,6 +50,24 @@ def client_factory():
     yield make
     for client in clients:
         client.client.close()
+
+
+@pytest.fixture
+def error_console_proxy(monkeypatch):
+    """Capture client diagnostics through a console that always emits ANSI.
+
+    The client module builds its own stderr console at import time; rich
+    strips escape codes for non-terminals, so the test forces a terminal to
+    observe the styling a TTY user actually sees.
+    """
+    from rich.console import Console
+
+    import searxngr.client as client_module
+
+    buffer = io.StringIO()
+    forced = Console(file=buffer, stderr=True, force_terminal=True, color_system="truecolor")
+    monkeypatch.setattr(client_module, "error_console", forced)
+    return buffer
 
 
 @pytest.mark.parametrize("method", ["GET", "POST"])
@@ -123,6 +144,41 @@ def test_invalid_schema_does_not_crash_or_retry(client_factory, payload):
     with pytest.raises(SearXNGJSONError):
         client.search("query")
     assert len(requests) == 1
+
+
+def test_engine_failure_diagnostic_is_red_on_stderr(client_factory, error_console_proxy, no_wait):
+    """Regression (aeded1f): engine diagnostics keep 0.8.2's red styling.
+
+    v0.8.2 rendered `Engine: <name> [red]<error>[/red]`; the fork's stderr
+    re-route accidentally disabled rich markup, leaving the error plain white.
+    The diagnostic must go to stderr (JSON purity) AND keep the red error
+    text a terminal user sees.
+    """
+    failures = [["google cse", "Suspended: too many requests"]]
+    client, _ = client_factory([{"results": [], "unresponsive_engines": failures}])
+
+    with pytest.raises(SearXNGEngineError, match="search engines failed"):
+        client.search("query")
+
+    rendered = error_console_proxy.getvalue()
+    # Red ANSI wraps the error text, not the engine name (0.8.2 rendering).
+    assert "Engine: google cse \x1b[31mSuspended: too many requests\x1b[0m" in rendered
+    # Markup is parsed, not printed literally.
+    assert "[red]" not in rendered
+
+
+def test_engine_failure_diagnostic_is_plain_when_not_a_terminal(client_factory, capsys):
+    """Same diagnostic through real (non-terminal) consoles: no ANSI codes."""
+    failures = [["google cse", "Suspended: too many requests"]]
+    client, _ = client_factory([{"results": [], "unresponsive_engines": failures}])
+
+    with pytest.raises(SearXNGEngineError, match="search engines failed"):
+        client.search("query")
+
+    captured = capsys.readouterr()
+    assert "Engine: google cse Suspended: too many requests" in captured.err
+    assert "\x1b[" not in captured.err
+    assert captured.out == ""
 
 
 def test_preferences_header_is_preserved(client_factory):
