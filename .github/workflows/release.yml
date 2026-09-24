@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Verify tag matches package version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' searxngr/__version__.py)"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "::error::tag v$TAG does not match package version $VERSION"
+            exit 1
+          fi
+
+      - name: Lint (gate)
+        run: uv run --locked ruff check .
+
+      - name: Run offline tests
+        run: uv run --locked pytest -q
+
+      - name: Build distributions
+        run: uv build --locked
+
+      - name: Prepare draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --target "$GITHUB_SHA" \
+            --title "searxngr $GITHUB_REF_NAME" \
+            --generate-notes \
+            dist/*
