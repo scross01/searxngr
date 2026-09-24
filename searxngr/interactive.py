@@ -71,16 +71,23 @@ def run_interactive_loop(
             index = int(new_query.strip()) - 1
             url = results[index].get("url")
             if url:
-                try:
-                    subprocess.run(shlex.split(args.url_handler) + [url], check=True)
-                except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                    if isinstance(e, FileNotFoundError):
-                        console.print(
-                            f"[yellow]Warning:[/yellow] URL handler '{args.url_handler}' not found, "
-                            "update configuration or set --url-handler"
-                        )
-                    else:
-                        console.print(f"[red]Error opening URL:[/red] {e}")
+                from .constants import validate_result_url
+
+                if validate_result_url(url):
+                    try:
+                        subprocess.run(shlex.split(args.url_handler) + [url], check=True)
+                    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                        if isinstance(e, FileNotFoundError):
+                            console.print(
+                                f"[yellow]Warning:[/yellow] URL handler '{args.url_handler}' not found, "
+                                "update configuration or set --url-handler"
+                            )
+                        else:
+                            console.print(f"[red]Error opening URL:[/red] {e}")
+                else:
+                    console.print(
+                        f"[red]Error:[/red] Refusing to open non-http(s) URL: {url}"
+                    )
             else:
                 console.print("[red]Error:[/red] No URL found for the selected result.")
             continue
@@ -93,21 +100,28 @@ def run_interactive_loop(
                 index = int(index) - 1
                 url = results[index].get("url")
                 if url:
+                    from .constants import validate_result_url
+
                     handler = (
                         args.secondary_url_handler
                         if args.secondary_url_handler
                         else args.url_handler
                     )
-                    try:
-                        subprocess.run(shlex.split(handler) + [url], check=True)
-                    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                        if isinstance(e, FileNotFoundError):
-                            console.print(
-                                f"[yellow]Warning:[/yellow] URL handler '{handler}' not found, "
-                                "update configuration or set --url-handler"
-                            )
-                        else:
-                            console.print(f"[red]Error opening URL:[/red] {e}")
+                    if validate_result_url(url):
+                        try:
+                            subprocess.run(shlex.split(handler) + [url], check=True)
+                        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                            if isinstance(e, FileNotFoundError):
+                                console.print(
+                                    f"[yellow]Warning:[/yellow] URL handler '{handler}' not found, "
+                                    "update configuration or set --url-handler"
+                                )
+                            else:
+                                console.print(f"[red]Error opening URL:[/red] {e}")
+                    else:
+                        console.print(
+                            f"[red]Error:[/red] Refusing to open non-http(s) URL: {url}"
+                        )
                 else:
                     console.print(
                         "[red]Error:[/red] No URL found for the selected result."

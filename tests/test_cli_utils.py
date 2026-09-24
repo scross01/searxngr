@@ -54,3 +54,17 @@ class TestOpenUrl:
         mock_run.assert_called_once()
         called_command = mock_run.call_args[0][0]
         assert called_command == ["open", "https://example.com"]
+
+    @pytest.mark.parametrize(
+        "url", ["file:///etc/passwd", "--some-flag", "magnet:?xt=urn:btih:xyz", ""]
+    )
+    @patch("searxngr.cli.subprocess.run")
+    @patch("searxngr.cli.console")
+    def test_open_url_refuses_non_http_urls(self, mock_console, mock_run, url):
+        """Remote result URLs outside the http(s) allowlist are refused
+        before any process is spawned"""
+        result = open_url(url, "open")
+        assert result is False
+        mock_run.assert_not_called()
+        call_args = mock_console.print.call_args[0][0]
+        assert "Refusing to open" in call_args

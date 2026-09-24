@@ -123,6 +123,25 @@ def validate_url_handler(url_handler: str) -> bool:
         return False
 
 
+# URL schemes a remote search result may use before searxngr hands it to a
+# local URL-handler process. Remote results must never trigger local scheme
+# handlers (file:, smb:, x-man-page:, ...) — extend only as a deliberate,
+# reviewed policy decision.
+ALLOWED_URL_SCHEMES = ("http", "https")
+
+
+def validate_result_url(url: str) -> bool:
+    """Allowlist-check a URL coming from remote search results before it is
+    handed to a local URL-handler process."""
+    if not url or url.startswith("-"):  # never argv-flag-shaped
+        return False
+    try:
+        scheme = urlparse(url).scheme.lower()
+    except ValueError:
+        return False
+    return scheme in ALLOWED_URL_SCHEMES
+
+
 def validate_url_syntax(url: str) -> bool:
     """Syntactic check of a SearXNG instance URL (no network I/O).
 

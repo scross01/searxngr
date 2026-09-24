@@ -18,6 +18,8 @@ import time
 
 import pytest
 
+from searxngr.constants import validate_result_url
+
 SEARXNG_URL = os.environ.get("SEARXNG_URL", "").rstrip("/")
 pytestmark = pytest.mark.skipif(
     not SEARXNG_URL, reason="SEARXNG_URL not set; live SearXNG server required"
@@ -267,3 +269,22 @@ def test_invalid_category_fails_before_search(client):
     result = run_searxngr("-c", "genral", "test")
     assert result.returncode == 1
     assert "Invalid category 'genral'" in result.stdout + result.stderr
+
+
+# --- 001: result-URL allowlist policy ---------------------------------------
+
+
+def test_live_results_pass_url_allowlist(client):
+    """Policy check against real engine output: every URL a live search
+    returns must pass validate_result_url. If an engine ever emits a
+    non-http(s) result (magnet:, ftp:, ...), the CLI would refuse to open
+    it — this surfaces that as a policy decision, not a silent regression."""
+    results = search_json("searxng")
+    assert results, "expected at least one result"
+    rejected = [
+        r.get("url") for r in results if not validate_result_url(r.get("url", ""))
+    ]
+    assert not rejected, (
+        f"live search returned URLs the allowlist rejects: {rejected}; "
+        "extend ALLOWED_URL_SCHEMES deliberately if these should be openable"
+    )

@@ -6,6 +6,7 @@ from searxngr.constants import (
     validate_engines,
     validate_url_handler,
     validate_url_syntax,
+    validate_result_url,
     SAFE_SEARCH_OPTIONS,
     TIME_RANGE_OPTIONS,
     SEARXNG_CATEGORIES,
@@ -114,6 +115,35 @@ class TestConstants:
     def test_validate_url_syntax_rejects_invalid(self, url):
         """Typos, wrong schemes, and scheme-less URLs are rejected"""
         assert validate_url_syntax(url) is False
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://example.com",
+            "http://example.com/a?b=c&d=e",
+            "HTTPS://EXAMPLE.COM/path",
+        ],
+    )
+    def test_validate_result_url_accepts_http_https(self, url):
+        """Result URLs from remote engines: http(s) are openable"""
+        assert validate_result_url(url) is True
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "file:///etc/passwd",  # local scheme handler
+            "smb://server/share",  # network share handler
+            "magnet:?xt=urn:btih:xyz",  # external app handler
+            "ftp://example.com/file",
+            "javascript:alert(1)",
+            "--some-flag",  # argv-flag-shaped
+            "-o Pen」tra missing",  # argv-flag-shaped with non-ascii
+            "",
+        ],
+    )
+    def test_validate_result_url_rejects_non_http(self, url):
+        """Non-http(s) schemes and flag-shaped strings are refused"""
+        assert validate_result_url(url) is False
 
     def test_validate_engines_success(self):
         """Test validate_engines with valid engines"""

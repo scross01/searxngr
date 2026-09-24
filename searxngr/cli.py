@@ -45,6 +45,11 @@ def parse_pre_args() -> argparse.Namespace:
 
 
 def open_url(url: str, url_handler: str) -> bool:
+    from .constants import validate_result_url
+
+    if not validate_result_url(url):
+        console.print(f"[red]Error:[/red] Refusing to open non-http(s) URL: {url}")
+        return False
     try:
         command = shlex.split(url_handler)
         command.append(url)
