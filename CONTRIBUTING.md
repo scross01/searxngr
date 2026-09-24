@@ -84,13 +84,6 @@ make lint               # flake8, informational
 The project follows PEP 8 with a 120-character line limit (configured in
 `pyproject.toml` and `.vscode/settings.json`).
 
-> **Note on `make fmt`:** it runs black and mdformat over the whole tree.
-> Upstream sources are not yet fully black-clean, so running it today
-> reformats many files unrelated to your change. If you want to do a
-> tree-wide formatting pass, do it as its own standalone formatting-only
-> commit and never mix it with functional changes — otherwise review of
-> your actual change becomes impossible.
-
 ## Submitting a pull request
 
 1. Fork the repository and create a topic branch from `main`.
