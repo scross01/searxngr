@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 from urllib.parse import urlencode
 
 import httpx
@@ -55,11 +55,11 @@ class SearXNGClient:
     def __init__(
         self,
         url: str,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        username: str | None = None,
+        password: str | None = None,
         verify_ssl: bool = True,
-        no_user_agent: Optional[bool] = None,
-        timeout: Union[int, float] = 30,
+        no_user_agent: bool | None = None,
+        timeout: int | float = 30,
         retries: int = 2,
     ) -> None:
         if not isinstance(retries, int) or not 0 <= retries <= 5:
@@ -91,7 +91,7 @@ class SearXNGClient:
             del self.client.headers["User-Agent"]
             del self.default_headers["User-Agent"]
 
-    def _request(self, method: str, path: str, headers: Optional[Dict[str, str]] = None, **kwargs) -> httpx.Response:
+    def _request(self, method: str, path: str, headers: dict[str, str] | None = None, **kwargs) -> httpx.Response:
         headers = {**self.default_headers, **(headers or {})}
         for attempt in range(self.retries + 1):
             try:
@@ -126,14 +126,14 @@ class SearXNGClient:
             )
             time.sleep(delay)
 
-    def get(self, path: str, headers: Optional[Dict[str, str]] = None) -> httpx.Response:
+    def get(self, path: str, headers: dict[str, str] | None = None) -> httpx.Response:
         return self._request("get", path, headers)
 
     def post(
         self,
         path: str,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        data: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         return self._request("post", path, headers, data=data)
 
@@ -143,12 +143,12 @@ class SearXNGClient:
         data = response.text
         return data
 
-    def engines(self) -> List[Dict[str, Any]]:
+    def engines(self) -> list[dict[str, Any]]:
         html = self._fetch_preferences()
         data = extract_engines_from_preferences(html)
         return data
 
-    def categories(self) -> Dict[str, set]:
+    def categories(self) -> dict[str, set]:
         html = self._fetch_preferences()
         data = extract_engines_from_preferences(html)
         unique_categories = dict()
@@ -166,14 +166,14 @@ class SearXNGClient:
         self,
         query: str,
         pageno: int = 0,
-        safe_search: Optional[str] = None,
-        categories: Optional[List[str]] = None,
-        engines: Optional[List[str]] = None,
-        language: Optional[str] = None,
-        time_range: Optional[str] = None,
-        site: Optional[str] = None,
+        safe_search: str | None = None,
+        categories: list[str] | None = None,
+        engines: list[str] | None = None,
+        language: str | None = None,
+        time_range: str | None = None,
+        site: str | None = None,
         http_method: str = "GET",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         if http_method not in ("GET", "POST"):
             raise ValueError("Invalid http_method specified. Use 'GET' or 'POST'.")
         if engines and categories:
@@ -195,7 +195,7 @@ class SearXNGClient:
 
         return self._search_once(body, http_method)
 
-    def _search_once(self, body: Dict[str, str], http_method: str) -> List[Dict[str, Any]]:
+    def _search_once(self, body: dict[str, str], http_method: str) -> list[dict[str, Any]]:
         path = "/search"
         if http_method == "GET":
             path += "?" + urlencode(body)

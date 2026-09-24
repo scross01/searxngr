@@ -1,6 +1,6 @@
 import json
 import textwrap
-from typing import Any, Dict, List
+from typing import Any
 
 import pyperclip
 from html2text import html2text
@@ -19,7 +19,7 @@ from .formatter import print_results
 
 def run_interactive_loop(
     args,
-    results: List[Dict[str, Any]],
+    results: list[dict[str, Any]],
     query: str,
     start_at: int,
     pageno: int,

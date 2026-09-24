@@ -1,5 +1,5 @@
 from getpass import getpass
-from typing import Any, List, Optional, Union
+from typing import Any
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
@@ -9,9 +9,9 @@ from rich.console import Console
 # This allows the prompt to accept up/down arrows for history navigation
 # based on https://github.com/Textualize/rich/issues/262#issuecomment-2546430217
 class InteractiveConsole(Console):
-    def __init__(self, history: Optional[Union[str, List[str]]] = None, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, history: str | list[str] | None = None, *args: Any, **kwargs: Any) -> None:
         self._history = InMemoryHistory(history)
-        self._session: Optional[PromptSession] = None
+        self._session: PromptSession | None = None
         super().__init__(*args, **kwargs)
 
     @property
@@ -27,7 +27,7 @@ class InteractiveConsole(Console):
         markup: bool = True,
         emoji: bool = True,
         password: bool = False,
-        stream: Optional[Any] = None,
+        stream: Any | None = None,
     ) -> str:
         if prompt:
             self.print(prompt, markup=markup, emoji=emoji, end="")

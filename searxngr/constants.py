@@ -1,6 +1,5 @@
 import shlex
 import shutil
-from typing import List
 from urllib.parse import urlparse
 
 from .__version__ import __version__
@@ -85,7 +84,7 @@ def parse_engine_command(engine_input: str) -> tuple:
     return to_add, to_remove, replacement_list, has_modifiers
 
 
-def validate_engines(engines: List[str], searxng_client) -> tuple:
+def validate_engines(engines: list[str], searxng_client) -> tuple:
     try:
         available_engines = searxng_client.engines()
         available_engine_names = {engine["name"] for engine in available_engines}

@@ -1,6 +1,6 @@
 import os
 import textwrap
-from typing import Any, Dict, List
+from typing import Any
 from urllib.parse import urlparse
 
 from babel.dates import format_date
@@ -11,7 +11,7 @@ from .constants import DEBUG, MAX_CONTENT_WORDS, console
 
 
 def print_results(
-    results: List[Dict[str, Any]],
+    results: list[dict[str, Any]],
     count: int,
     start_at: int = 0,
     expand: bool = False,

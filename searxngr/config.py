@@ -4,7 +4,6 @@ import platform
 import shlex
 import shutil
 import textwrap
-from typing import List, Optional
 
 import httpx
 from xdg_base_dirs import xdg_config_home
@@ -29,8 +28,8 @@ from .constants import (
 class SearxngrConfig:
     def __init__(
         self,
-        config_path: Optional[str] = None,
-        config_file: Optional[str] = None,
+        config_path: str | None = None,
+        config_file: str | None = None,
         skip_config_creation: bool = False,
     ) -> None:
         if config_path:
@@ -150,8 +149,8 @@ class SearxngrConfig:
             return (False, f"Unable to access JSON API for {url}. {e}")
 
     def get_config_list(
-        self, parser: configparser.ConfigParser, key: str, default: Optional[List[str]]
-    ) -> Optional[List[str]]:
+        self, parser: configparser.ConfigParser, key: str, default: list[str] | None
+    ) -> list[str] | None:
         entry = parser["searxngr"][key] if "searxngr" in parser and key in parser["searxngr"] else default
         if isinstance(entry, str):
             if "," in entry:
@@ -164,7 +163,7 @@ class SearxngrConfig:
             entry = None
         return entry
 
-    def get_config_str(self, parser: configparser.ConfigParser, key: str, default: Optional[str]) -> Optional[str]:
+    def get_config_str(self, parser: configparser.ConfigParser, key: str, default: str | None) -> str | None:
         try:
             return parser["searxngr"][key] if "searxngr" in parser and key in parser["searxngr"] else default
         except (ValueError, KeyError) as ve:

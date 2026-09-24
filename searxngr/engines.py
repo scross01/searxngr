@@ -1,10 +1,10 @@
 import re
-from typing import Any, Dict, List
+from typing import Any
 
 from bs4 import BeautifulSoup
 
 
-def extract_engines_from_preferences(html_content: str) -> List[Dict[str, Any]]:
+def extract_engines_from_preferences(html_content: str) -> list[dict[str, Any]]:
     """
     Extracts engine information from SearXNG preferences HTML.
 
@@ -39,7 +39,7 @@ def extract_engines_from_preferences(html_content: str) -> List[Dict[str, Any]]:
     return sorted_engines
 
 
-def _extract_engine_info(engine_row: BeautifulSoup) -> Dict[str, Any]:
+def _extract_engine_info(engine_row: BeautifulSoup) -> dict[str, Any]:
     """Extract engine information from a single engine row."""
     name_element = engine_row.find("th", class_="name")
     if not name_element:
@@ -76,7 +76,7 @@ def _extract_engine_url(engine_row: BeautifulSoup) -> str:
     return link.get("href", "") if link else ""
 
 
-def _extract_bangs(engine_row: BeautifulSoup) -> List[str]:
+def _extract_bangs(engine_row: BeautifulSoup) -> list[str]:
     """Extract bang commands from shortcut column."""
     bangs = []
     shortcut_cell = engine_row.find("td", class_="shortcut")
@@ -92,7 +92,7 @@ def _extract_bangs(engine_row: BeautifulSoup) -> List[str]:
     return bangs
 
 
-def _extract_categories(engine_row: BeautifulSoup) -> List[str]:
+def _extract_categories(engine_row: BeautifulSoup) -> list[str]:
     """Extract category bangs from tooltip."""
     categories = []
     tooltip = engine_row.find("div", class_="engine-tooltip")
