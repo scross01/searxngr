@@ -1,8 +1,9 @@
-import pytest
-from unittest.mock import patch, MagicMock
 import argparse
+from unittest.mock import MagicMock, patch
 
-from searxngr.cli import parse_pre_args, create_parser, main
+import pytest
+
+from searxngr.cli import create_parser, main, parse_pre_args
 from searxngr.config import SearxngrConfig
 
 

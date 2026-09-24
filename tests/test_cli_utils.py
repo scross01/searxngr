@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import patch, MagicMock
 import subprocess
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from searxngr.cli import open_url
 

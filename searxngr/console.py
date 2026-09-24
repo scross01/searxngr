@@ -1,8 +1,9 @@
-from typing import Optional, List, Union, Any
-from rich.console import Console
+from getpass import getpass
+from typing import Any, List, Optional, Union
+
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import InMemoryHistory
-from getpass import getpass
+from rich.console import Console
 
 
 # This allows the prompt to accept up/down arrows for history navigation

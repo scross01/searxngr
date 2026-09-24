@@ -1,15 +1,15 @@
 import json
 import time
+from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlencode
 
 import httpx
 from rich.console import Console
-from typing import List, Dict, Any, Optional, Union
 
 from .constants import (
-    USER_AGENT,
-    SAFE_SEARCH_OPTIONS,
     PREFERENCES_URL_PATH,
+    SAFE_SEARCH_OPTIONS,
+    USER_AGENT,
 )
 from .engines import extract_engines_from_preferences
 

@@ -1,19 +1,20 @@
 import json
 import textwrap
-from typing import List, Dict, Any
-from rich.prompt import Prompt
+from typing import Any, Dict, List
+
 import pyperclip
 from html2text import html2text
+from rich.prompt import Prompt
 
+from .client import SearXNGClient
 from .constants import (
+    DEBUG,
+    SAFE_SEARCH_OPTIONS,
     TIME_RANGE_OPTIONS,
     TIME_RANGE_SHORT_OPTIONS,
-    SAFE_SEARCH_OPTIONS,
     console,
-    DEBUG,
 )
 from .formatter import print_results
-from .client import SearXNGClient
 
 
 def run_interactive_loop(

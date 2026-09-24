@@ -1,12 +1,13 @@
 import os
 import textwrap
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 from urllib.parse import urlparse
-from dateutil.parser import parse
+
 from babel.dates import format_date
+from dateutil.parser import parse
 from html2text import html2text
 
-from .constants import MAX_CONTENT_WORDS, DEBUG, console
+from .constants import DEBUG, MAX_CONTENT_WORDS, console
 
 
 def print_results(

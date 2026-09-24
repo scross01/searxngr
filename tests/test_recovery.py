@@ -3,6 +3,7 @@
 import httpx
 import pytest
 
+from searxngr.cli import create_parser
 from searxngr.client import (
     SearXNGClient,
     SearXNGConnectionError,
@@ -11,7 +12,6 @@ from searxngr.client import (
     SearXNGTimeoutError,
 )
 from searxngr.config import SearxngrConfig
-from searxngr.cli import create_parser
 
 RESULTS = [{"url": "https://example.com/result", "title": "Recovered"}]
 

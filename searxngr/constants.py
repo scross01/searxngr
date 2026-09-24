@@ -1,10 +1,10 @@
-import shutil
 import shlex
+import shutil
 from typing import List
 from urllib.parse import urlparse
 
-from .console import InteractiveConsole as Console
 from .__version__ import __version__
+from .console import InteractiveConsole as Console
 
 DEBUG = False
 

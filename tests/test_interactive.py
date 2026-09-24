@@ -1,8 +1,8 @@
-import pytest
 from unittest.mock import MagicMock, patch
 
-from searxngr.interactive import run_interactive_loop
+import pytest
 
+from searxngr.interactive import run_interactive_loop
 
 RESULTS_WITH_URL = [
     {

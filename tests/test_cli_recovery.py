@@ -2,11 +2,11 @@
 
 import json
 import os
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import shlex
 import subprocess
 import sys
 import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
 import pytest

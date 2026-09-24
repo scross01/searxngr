@@ -1,5 +1,6 @@
 import os
 from unittest.mock import patch
+
 from searxngr.formatter import print_results
 
 

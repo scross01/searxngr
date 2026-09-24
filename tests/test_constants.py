@@ -1,15 +1,16 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from searxngr.constants import (
+    SAFE_SEARCH_OPTIONS,
+    SEARXNG_CATEGORIES,
+    TIME_RANGE_OPTIONS,
     parse_engine_command,
     validate_engines,
+    validate_result_url,
     validate_url_handler,
     validate_url_syntax,
-    validate_result_url,
-    SAFE_SEARCH_OPTIONS,
-    TIME_RANGE_OPTIONS,
-    SEARXNG_CATEGORIES,
 )
 
 

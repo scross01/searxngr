@@ -11,23 +11,23 @@ import sys
 from rich.table import Table
 
 from .__version__ import __version__
-from .console import InteractiveConsole as Console
-from .config import SearxngrConfig
 from .client import (
     SearXNGClient,
     SearXNGError,
     error_console,
 )
-from .formatter import print_results
-from .interactive import run_interactive_loop
+from .config import SearxngrConfig
+from .console import InteractiveConsole as Console
 from .constants import (
+    SAFE_SEARCH_OPTIONS,
     SEARXNG_CATEGORIES,
     TIME_RANGE_OPTIONS,
     TIME_RANGE_SHORT_OPTIONS,
-    SAFE_SEARCH_OPTIONS,
     URL_HANDLER,
     console,
 )
+from .formatter import print_results
+from .interactive import run_interactive_loop
 
 
 def parse_pre_args() -> argparse.Namespace:

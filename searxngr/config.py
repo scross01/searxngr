@@ -1,26 +1,27 @@
+import configparser
 import os
 import platform
 import shlex
 import shutil
 import textwrap
-import configparser
+from typing import List, Optional
+
 import httpx
-from typing import Optional, List
 from xdg_base_dirs import xdg_config_home
 
 from .constants import (
-    SAMPLE_SEARXNG_URL,
-    RESULT_COUNT,
-    SAFE_SEARCH,
+    CONFIG_FILE,
     ENGINES,
     EXPAND,
-    CONFIG_FILE,
     HTTP_METHOD,
     HTTP_TIMEOUT,
-    URL_HANDLER,
-    SECONDARY_URL_HANDLER,
-    SEARXNG_CATEGORIES,
     MAX_CONTENT_WORDS,
+    RESULT_COUNT,
+    SAFE_SEARCH,
+    SAMPLE_SEARXNG_URL,
+    SEARXNG_CATEGORIES,
+    SECONDARY_URL_HANDLER,
+    URL_HANDLER,
     console,
 )
 
