@@ -26,6 +26,15 @@ various search categories and advanced filtering options.
 Installation requires the
 [`uv`](https://docs.astral.sh/uv/getting-started/installation/) package manager.
 
+### Homebrew (macOS / Linux)
+
+```shell
+brew tap scross01/tools
+brew install searxngr
+```
+
+### uv
+
 To try it without installing (runs from the repo's default branch; add `@v0.9.0`
 to pin a release tag):
 
