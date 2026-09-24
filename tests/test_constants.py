@@ -5,6 +5,7 @@ from searxngr.constants import (
     parse_engine_command,
     validate_engines,
     validate_url_handler,
+    validate_url_syntax,
     SAFE_SEARCH_OPTIONS,
     TIME_RANGE_OPTIONS,
     SEARXNG_CATEGORIES,
@@ -84,6 +85,35 @@ class TestConstants:
             mock_which.return_value = "/usr/bin/xdg-open"
             result = validate_url_handler("xdg-open https://example.com")
             assert result is True
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://searxng.example.com",
+            "http://127.0.0.1:8080",
+            "https://searxng.home.lan/search",
+            "HTTPS://EXAMPLE.COM",
+        ],
+    )
+    def test_validate_url_syntax_accepts_valid(self, url):
+        """Instance URLs with http(s) scheme and a hostname are valid"""
+        assert validate_url_syntax(url) is True
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https:/searxng.home.lan",  # missing slash: host lands in path
+            "notaurl",
+            "ftp://example.com",
+            "file:///etc/passwd",
+            "//example.com",
+            "/search",
+            "",
+        ],
+    )
+    def test_validate_url_syntax_rejects_invalid(self, url):
+        """Typos, wrong schemes, and scheme-less URLs are rejected"""
+        assert validate_url_syntax(url) is False
 
     def test_validate_engines_success(self):
         """Test validate_engines with valid engines"""

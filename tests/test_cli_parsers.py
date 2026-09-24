@@ -2,7 +2,8 @@ import pytest
 from unittest.mock import patch, MagicMock
 import argparse
 
-from searxngr.cli import parse_pre_args, create_parser
+from searxngr.cli import parse_pre_args, create_parser, main
+from searxngr.config import SearxngrConfig
 
 
 class TestCLIParsers:
@@ -145,3 +146,94 @@ class TestCreateParser:
         parser = create_parser(mock_config)
         with pytest.raises(SystemExit):
             parser.parse_args(["--http-method", "INVALID"])
+
+
+class TestMainValidation:
+    """main()-level validation exits: URL syntax and category names."""
+
+    @staticmethod
+    def _mock_config(categories=None):
+        """Config mock with plain values so main()'s validation logic runs."""
+        return MagicMock(
+            searxng_url=None,
+            safe_search=None,
+            categories=categories,
+            time_range=None,
+            url_handler=None,
+            secondary_url_handler=None,
+            debug=False,
+            retries=2,
+            num=10,
+            result_count=10,
+        )
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https:/searxng.home.lan",  # missing slash: host lands in path
+            "notaurl",
+            "ftp://example.com",
+        ],
+    )
+    def test_main_rejects_invalid_url_syntax(self, url, tmp_path, capsys):
+        """A syntactically invalid instance URL fails at startup with a
+        specific message, before any search is attempted."""
+        with (
+            patch("sys.argv", ["searxngr", "--searxng-url", url, "-q", "test"]),
+            patch("searxngr.cli.SearxngrConfig") as mock_cfg,
+        ):
+            mock_cfg.return_value = self._mock_config()
+            with pytest.raises(SystemExit) as exit_info:
+                main()
+            assert exit_info.value.code == 1
+        assert "Invalid SearXNG instance URL" in capsys.readouterr().out
+
+    def test_main_accepts_valid_url_syntax(self, tmp_path):
+        """A syntactically valid URL passes startup validation and proceeds
+        to search (client is constructed; search is mocked)."""
+        with (
+            patch(
+                "sys.argv",
+                ["searxngr", "--searxng-url", "https://searxng.example.com", "--np", "-q", "test"],
+            ),
+            patch("searxngr.cli.SearxngrConfig") as mock_cfg,
+            patch("searxngr.cli.SearXNGClient") as mock_client,
+            patch("searxngr.cli.print_results"),
+        ):
+            mock_cfg.return_value = self._mock_config()
+            mock_client.return_value.search.return_value = [
+                {"url": f"https://example.com/{i}"} for i in range(10)
+            ]
+            with pytest.raises(SystemExit) as exit_info:
+                main()
+            assert exit_info.value.code == 0
+
+    def test_main_rejects_invalid_category(self, capsys):
+        """Pin the invalid-category failure mode: loud exit with the
+        supported-categories message (validate_category prints, main exits 1)."""
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "searxngr",
+                    "--searxng-url",
+                    "https://searxng.example.com",
+                    "-c",
+                    "genral",
+                    "-q",
+                    "test",
+                ],
+            ),
+            patch("searxngr.cli.SearxngrConfig") as mock_cfg,
+        ):
+            mock_cfg.return_value = self._mock_config(categories=["genral"])
+            # Use the real category validation (classmethod bound to the class);
+            # a MagicMock method would be truthy and skip the check.
+            mock_cfg.return_value.validate_category.side_effect = (
+                SearxngrConfig.validate_category
+            )
+            with patch("searxngr.cli.SearXNGClient"):
+                with pytest.raises(SystemExit) as exit_info:
+                    main()
+            assert exit_info.value.code == 1
+        assert "Invalid category 'genral'" in capsys.readouterr().out

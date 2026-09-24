@@ -1,6 +1,7 @@
 import shutil
 import shlex
 from typing import List
+from urllib.parse import urlparse
 
 from .console import InteractiveConsole as Console
 from .__version__ import __version__
@@ -120,3 +121,26 @@ def validate_url_handler(url_handler: str) -> bool:
         return shutil.which(command) is not None
     except (ValueError, IndexError):
         return False
+
+
+def validate_url_syntax(url: str) -> bool:
+    """Syntactic check of a SearXNG instance URL (no network I/O).
+
+    Catches typos like "https:/host" or missing scheme at startup instead of
+    a confusing connection error at search time. Reachability is NOT checked
+    here: probing /search would trigger the instance's full engine fan-out
+    on every invocation.
+    """
+    if not url:
+        return False
+    try:
+        parts = urlparse(url)
+    except ValueError:
+        return False
+    if parts.scheme not in ("http", "https") or not parts.netloc:
+        return False
+    # A trailing-garbage path like "https:/searxng.home.lan" parses with an
+    # empty netloc and the host in the path; reject anything with a path
+    # before the authority was found. urlparse cannot distinguish that
+    # directly, so require the URL to start with scheme://
+    return url.lower().startswith(("http://", "https://"))

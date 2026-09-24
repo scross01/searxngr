@@ -414,6 +414,14 @@ def main() -> None:
         )
         console.print("Run `searxngr --help` for more options")
         exit(1)
+    from .constants import validate_url_syntax
+
+    if not validate_url_syntax(args.searxng_url):
+        console.print(
+            f"[red]Error:[/red] Invalid SearXNG instance URL: {args.searxng_url}. "
+            "URL must start with http:// or https:// followed by a hostname."
+        )
+        exit(1)
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
         console.print(
             "[red]Error:[/red] Invalid safe search option. Use 'none', 'moderate', or 'strict'"
