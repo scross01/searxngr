@@ -43,6 +43,13 @@ uv sync
 uv tool install .
 ```
 
+## Contributing
+
+Development setup, building, and running the tests (including the docker
+integration suite) are documented in
+[CONTRIBUTING.md](CONTRIBUTING.md). Contributions are accepted through
+pull requests.
+
 ## Configuration
 
 The `searxngr` configuration is stored in
