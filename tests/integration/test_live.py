@@ -244,3 +244,26 @@ def test_list_engines_lists_available_engines(client):
     result = run_searxngr("--list-engines")
     assert result.returncode == 0, result.stderr
     assert "google" in result.stdout.lower()
+
+
+# --- 004: startup validation -------------------------------------------------
+
+
+def test_invalid_url_syntax_fails_fast_before_search(client):
+    """A malformed instance URL exits 1 with a specific message and no
+    network work: the check is syntactic and must stay ahead of any search
+    request (and any startup probe — the timing guard encodes that decision)."""
+    start = time.monotonic()
+    result = run_searxngr("--searxng-url", "https:/searxng.home.lan", "test")
+    elapsed = time.monotonic() - start
+    assert result.returncode == 1
+    assert "Invalid SearXNG instance URL" in result.stdout + result.stderr
+    assert elapsed < 10, "startup validation must not perform network I/O"
+
+
+def test_invalid_category_fails_before_search(client):
+    """An unknown category exits 1 with the supported list, before any
+    search request reaches the server."""
+    result = run_searxngr("-c", "genral", "test")
+    assert result.returncode == 1
+    assert "Invalid category 'genral'" in result.stdout + result.stderr
