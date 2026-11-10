@@ -420,7 +420,7 @@ def main() -> None:
         sys.exit(1)
     if args.safe_search and args.safe_search not in SAFE_SEARCH_OPTIONS:
         console.print("[red]Error:[/red] Invalid safe search option. Use 'none', 'moderate', or 'strict'")
-        return
+        sys.exit(1)
     if args.news and args.videos:
         console.print("[red]Error:[/red] You can only use one of --news or --videos at a time.")
         sys.exit(1)
@@ -428,7 +428,7 @@ def main() -> None:
         console.print(
             "[red]Error:[/red] Invalid time range format. Use 'd', 'day', 'w', 'week', 'm', 'month', or 'y', 'year'"
         )
-        return
+        sys.exit(1)
     if args.time_range in TIME_RANGE_SHORT_OPTIONS:
         args.time_range = (
             args.time_range.replace("y", "year").replace("m", "month").replace("w", "week").replace("d", "day")
